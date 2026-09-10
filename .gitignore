@@ -1,0 +1,36 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+auth.json
+
+# PHP / Composer
+/vendor/
+.phpunit.result.cache
+.phpunit.cache
+/.phpunit.cache/
+
+# Node / frontend
+/node_modules/
+/public/build/
+/public/hot
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Laravel runtime
+/storage/*.key
+/bootstrap/cache/*.php
+
+# Local tooling / IDE / OS
+/.idea/
+/.vscode/
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.swp
+*.swo
+*~
