@@ -1,0 +1,43 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "thepbr/thepbr-os-v3",
+    "type": "project",
+    "description": "thePBR OS V3 application foundation.",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.3",
+        "laravel/framework": "~13.31.0",
+        "inertiajs/inertia-laravel": "~3.3.3"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.27",
+        "nunomaduro/collision": "^8.6",
+        "phpunit/phpunit": "^12.5.12"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
+        ],
+        "test": [
+            "@php artisan test"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
