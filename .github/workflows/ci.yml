@@ -1,0 +1,291 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  integrity:
+    name: Integrity / Scope
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          show-progress: false
+
+      - name: Verify repository integrity guardrails
+        run: |
+          set -euo pipefail
+
+          tracked_env="$(
+            git ls-files |
+            grep -E '(^|/)\.env($|\.)' || true
+          )"
+
+          if [[ -n "$tracked_env" ]]; then
+            printf '%s\n' "$tracked_env" >&2
+            echo "Tracked .env-style file detected." >&2
+            exit 1
+          fi
+
+          if [[ -e database/database.sqlite ]]; then
+            echo "SQLite database artifact is not allowed in the V3 CI baseline." >&2
+            exit 1
+          fi
+
+          grep -Fq \
+            "'default' => env('DB_CONNECTION', 'pgsql')" \
+            config/database.php
+
+          grep -Fq \
+            '<env name="DB_CONNECTION" value="pgsql"/>' \
+            phpunit.xml
+
+          echo "Repository integrity guardrails: PASS"
+
+  backend:
+    name: Backend / PostgreSQL
+    needs: integrity
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      APP_MAINTENANCE_DRIVER: file
+      CACHE_STORE: array
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      DB_DATABASE: pbr_ci
+      DB_USERNAME: pbr_ci
+      DB_PASSWORD: pbr_ci_password
+      MAIL_MAILER: array
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: array
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: pbr_ci
+          POSTGRES_USER: pbr_ci
+          POSTGRES_PASSWORD: pbr_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pbr_ci -d pbr_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          show-progress: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # 2.35.5
+        with:
+          php-version: "8.4.24"
+          extensions: pdo_pgsql
+          coverage: none
+          tools: composer:2.7.1
+
+      - name: Verify PHP and Composer runtime
+        run: |
+          set -euo pipefail
+
+          php -r '
+          if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION !== 4) {
+              fwrite(STDERR, "Expected PHP 8.4.\n");
+              exit(1);
+          }
+
+          echo "PHP ", PHP_VERSION, PHP_EOL;
+          '
+
+          composer --version
+
+      - name: Create ephemeral Laravel test environment file
+        run: |
+          set -euo pipefail
+
+          : > .env
+          chmod 600 .env
+
+          test -f .env
+          test ! -s .env
+
+          echo "Ephemeral Laravel test environment file: PASS"
+
+      - name: Validate Composer metadata
+        run: |
+          set -euo pipefail
+          composer validate --strict --no-interaction --no-check-publish
+
+      - name: Audit locked Composer dependencies
+        run: |
+          set -euo pipefail
+          composer audit --locked --no-interaction --no-ansi
+
+      - name: Install Composer dependencies from lock
+        run: |
+          set -euo pipefail
+
+          composer install \
+            --no-interaction \
+            --prefer-dist \
+            --no-progress \
+            --no-ansi
+
+          composer check-platform-reqs
+
+      - name: Run PHP syntax audit
+        run: |
+          set -euo pipefail
+
+          mapfile -d '' php_files < <(
+            find app bootstrap config public routes tests \
+              -type f \
+              -name '*.php' \
+              -print0
+          )
+
+          if (( ${#php_files[@]} == 0 )); then
+            echo "No PHP source files found." >&2
+            exit 1
+          fi
+
+          for file in "${php_files[@]}"; do
+            php -l "$file" >/dev/null
+          done
+
+          printf 'PHP syntax audit: PASS (%d files)\n' "${#php_files[@]}"
+
+      - name: Run Laravel Pint in test mode
+        run: |
+          set -euo pipefail
+          vendor/bin/pint --test
+
+      - name: Verify PostgreSQL integration service
+        run: |
+          set -euo pipefail
+
+          php -r '
+          $dsn = sprintf(
+              "pgsql:host=%s;port=%s;dbname=%s",
+              getenv("DB_HOST"),
+              getenv("DB_PORT"),
+              getenv("DB_DATABASE"),
+          );
+
+          $pdo = new PDO(
+              $dsn,
+              getenv("DB_USERNAME"),
+              getenv("DB_PASSWORD"),
+              [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
+          );
+
+          $result = $pdo->query("SELECT 1")->fetchColumn();
+
+          if ((int) $result !== 1) {
+              fwrite(STDERR, "PostgreSQL SELECT 1 failed.\n");
+              exit(1);
+          }
+
+          echo "PostgreSQL SELECT 1: PASS\n";
+          '
+
+      - name: Run Laravel tests
+        run: |
+          set -euo pipefail
+          composer test
+
+  frontend:
+    name: Frontend / Typecheck / Build
+    needs: integrity
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          show-progress: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22.23.2"
+
+      - name: Verify Node.js runtime
+        run: |
+          set -euo pipefail
+
+          node -e '
+          const major = Number(process.versions.node.split(".")[0]);
+
+          if (major !== 22) {
+            console.error(
+              `Expected Node.js 22, received ${process.versions.node}`
+            );
+            process.exit(1);
+          }
+
+          console.log(`Node.js ${process.versions.node}`);
+          '
+
+          npm --version
+
+      - name: Audit locked npm dependencies
+        run: |
+          set -euo pipefail
+          npm audit --package-lock-only --audit-level=high
+
+      - name: Install npm dependencies from lock
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm ls --all
+
+      - name: Run TypeScript typecheck
+        run: |
+          set -euo pipefail
+          npm run typecheck
+
+      - name: Run frontend production build
+        run: |
+          set -euo pipefail
+          npm run build
+
+          test -f public/build/manifest.json
+
+          build_files="$(
+            find public/build \
+              -type f \
+              -print |
+            LC_ALL=C sort
+          )"
+
+          if [[ -z "$build_files" ]]; then
+            echo "Frontend build produced no files." >&2
+            exit 1
+          fi
+
+          printf '%s\n' "$build_files"
+          echo "Frontend production build: PASS"
