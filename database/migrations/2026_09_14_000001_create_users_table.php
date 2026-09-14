@@ -19,9 +19,9 @@ return new class extends Migration
         });
 
         DB::statement(
-            "ALTER TABLE users
+            'ALTER TABLE users
              ADD CONSTRAINT users_email_canonical_check
-             CHECK (email = lower(btrim(email)))"
+             CHECK (email = lower(btrim(email)))'
         );
 
         DB::statement(
