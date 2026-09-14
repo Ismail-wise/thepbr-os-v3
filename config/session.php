@@ -18,7 +18,7 @@ return [
     |
     */
 
-    'driver' => env('SESSION_DRIVER', 'file'),
+    'driver' => env('SESSION_DRIVER', 'redis'),
 
     /*
     |--------------------------------------------------------------------------
@@ -47,7 +47,7 @@ return [
     |
     */
 
-    'encrypt' => env('SESSION_ENCRYPT', false),
+    'encrypt' => env('SESSION_ENCRYPT', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -73,7 +73,7 @@ return [
     |
     */
 
-    'connection' => env('SESSION_CONNECTION'),
+    'connection' => env('SESSION_CONNECTION', 'default'),
 
     /*
     |--------------------------------------------------------------------------
@@ -101,7 +101,20 @@ return [
     |
     */
 
-    'store' => env('SESSION_STORE'),
+    'store' => env('SESSION_STORE', 'redis'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session Key Prefix
+    |--------------------------------------------------------------------------
+    |
+    | Redis-backed sessions share the default short-lived coordination
+    | database with other non-canonical state. Keep session keys explicitly
+    | namespaced inside the environment-level Redis prefix.
+    |
+    */
+
+    'prefix' => env('SESSION_PREFIX', 'sessions:'),
 
     /*
     |--------------------------------------------------------------------------
