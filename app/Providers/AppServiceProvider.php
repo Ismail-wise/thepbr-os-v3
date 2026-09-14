@@ -2,7 +2,12 @@
 
 namespace App\Providers;
 
+use App\Domain\Identity\ValueObjects\EmailAddress;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use InvalidArgumentException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +24,21 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        RateLimiter::for('login', function (Request $request): Limit {
+            $email = $request->input('email');
+            $rawEmail = is_string($email) ? $email : '';
+
+            try {
+                $normalizedEmail = EmailAddress::from($rawEmail)->value();
+            } catch (InvalidArgumentException) {
+                $normalizedEmail = strtolower(trim($rawEmail));
+            }
+
+            $clientAddress = (string) ($request->ip() ?? '');
+
+            return Limit::perMinute(5)->by(
+                hash('sha256', $normalizedEmail.'|'.$clientAddress),
+            );
+        });
     }
 }

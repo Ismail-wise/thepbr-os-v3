@@ -4,13 +4,16 @@ namespace App\Infrastructure\Persistence\Eloquent\Identity;
 
 use App\Domain\Identity\Enums\AccountStatus;
 use App\Domain\Identity\ValueObjects\EmailAddress;
+use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-final class User extends Model
+final class User extends Model implements AuthenticatableContract
 {
+    use AuthenticatableTrait;
     use HasUuids;
 
     protected $table = 'users';
