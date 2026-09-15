@@ -6,8 +6,10 @@ use App\Domain\Businesses\Enums\BusinessOriginType;
 use App\Domain\Businesses\Enums\BusinessStage;
 use App\Domain\Businesses\Enums\SetupPhase;
 use App\Domain\Businesses\Enums\WorkspaceStatus;
+use App\Infrastructure\Persistence\Eloquent\Members\Membership;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Business extends Model
 {
@@ -32,5 +34,10 @@ final class Business extends Model
             'setup_phase' => SetupPhase::class,
             'workspace_status' => WorkspaceStatus::class,
         ];
+    }
+
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(Membership::class);
     }
 }
