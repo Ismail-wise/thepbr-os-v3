@@ -87,7 +87,7 @@ final class AccountSettingsTest extends TestCase
                 ->where('account.profile.timezone', 'Asia/Yangon'));
     }
 
-    public function test_account_settings_page_exposes_no_business_membership_or_workspace_context(): void
+    public function test_account_settings_page_exposes_empty_workspace_context_without_membership(): void
     {
         $user = $this->createUser('person@example.test');
 
@@ -100,7 +100,8 @@ final class AccountSettingsTest extends TestCase
                 ->component('Account/Settings')
                 ->missing('business')
                 ->missing('membership')
-                ->missing('workspace'));
+                ->where('workspace.businesses', [])
+                ->where('workspace.currentBusiness', null));
     }
 
     public function test_active_user_can_update_own_profile_preferences(): void

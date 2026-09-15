@@ -138,7 +138,7 @@ final class AuthenticationBoundaryTest extends TestCase
         }
     }
 
-    public function test_account_home_is_an_authenticated_identity_proof_surface_only(): void
+    public function test_account_home_exposes_identity_with_empty_workspace_context_without_membership(): void
     {
         $user = $this->createUser('home@example.test');
 
@@ -153,7 +153,8 @@ final class AuthenticationBoundaryTest extends TestCase
                 ->where('account.email', 'home@example.test')
                 ->missing('business')
                 ->missing('membership')
-                ->missing('workspace'));
+                ->where('workspace.businesses', [])
+                ->where('workspace.currentBusiness', null));
     }
 
     public function test_stale_authenticated_session_is_terminated_when_account_is_no_longer_active(): void

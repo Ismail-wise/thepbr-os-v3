@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -42,6 +43,7 @@ const submit = () => {
 </script>
 
 <template>
+    <AuthenticatedLayout>
     <main class="min-h-screen bg-white px-6 py-12 text-slate-950">
         <section class="mx-auto max-w-3xl">
             <header class="flex flex-wrap items-start justify-between gap-6 border-b border-slate-200 pb-6">
@@ -232,4 +234,5 @@ const submit = () => {
             </form>
         </section>
     </main>
+    </AuthenticatedLayout>
 </template>
