@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 
 defineProps<{
     account: {
@@ -28,14 +28,23 @@ const logout = () => {
                     </h1>
                 </div>
 
-                <button
-                    type="button"
-                    :disabled="logoutForm.processing"
-                    class="inline-flex min-h-11 items-center justify-center border border-slate-300 px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-                    @click="logout"
-                >
-                    {{ logoutForm.processing ? 'Signing out…' : 'Sign out' }}
-                </button>
+                <div class="flex flex-wrap items-center gap-3">
+                    <Link
+                        href="/account/settings"
+                        class="inline-flex min-h-11 items-center justify-center border border-slate-300 px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                    >
+                        Profile &amp; Settings
+                    </Link>
+
+                    <button
+                        type="button"
+                        :disabled="logoutForm.processing"
+                        class="inline-flex min-h-11 items-center justify-center border border-slate-300 px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                        @click="logout"
+                    >
+                        {{ logoutForm.processing ? 'Signing out…' : 'Sign out' }}
+                    </button>
+                </div>
             </header>
 
             <section class="py-8">
