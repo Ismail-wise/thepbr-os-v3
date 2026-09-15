@@ -8,7 +8,6 @@ use App\Domain\Businesses\Enums\BusinessStage;
 use App\Domain\Businesses\Enums\WorkspaceStatus;
 use App\Domain\Identity\Enums\AccountStatus;
 use App\Domain\Members\Enums\MembershipAccessStatus;
-use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use App\Infrastructure\Persistence\Eloquent\Members\Membership;
 use Illuminate\Database\QueryException;
@@ -182,12 +181,13 @@ final class BusinessOnboardingTest extends TestCase
             'password_changed_at' => now(),
         ]);
     }
+
     public function test_padded_base_currency_is_rejected_without_persistence(): void
     {
-        $user = \App\Infrastructure\Persistence\Eloquent\Identity\User::query()->create([
+        $user = User::query()->create([
             'email' => 'direct-padded-currency@example.com',
             'password' => 'not-a-real-hash',
-            'status' => \App\Domain\Identity\Enums\AccountStatus::Active,
+            'status' => AccountStatus::Active,
             'password_changed_at' => now(),
         ]);
 
@@ -195,16 +195,16 @@ final class BusinessOnboardingTest extends TestCase
         $this->assertDatabaseCount('memberships', 0);
 
         try {
-            app(\App\Application\Businesses\CreateBusiness::class)->handle(
+            app(CreateBusiness::class)->handle(
                 $user,
                 'Padded Currency Rejection',
-                \App\Domain\Businesses\Enums\BusinessOriginType::StartedThroughPbr,
-                \App\Domain\Businesses\Enums\BusinessStage::Idea,
+                BusinessOriginType::StartedThroughPbr,
+                BusinessStage::Idea,
                 ' USD ',
             );
 
             $this->fail('Padded base currency must not be silently normalized.');
-        } catch (\InvalidArgumentException $exception) {
+        } catch (InvalidArgumentException $exception) {
             $this->assertSame(
                 'Base currency must be a three-letter uppercase currency code.',
                 $exception->getMessage(),
@@ -214,5 +214,4 @@ final class BusinessOnboardingTest extends TestCase
         $this->assertDatabaseCount('businesses', 0);
         $this->assertDatabaseCount('memberships', 0);
     }
-
 }

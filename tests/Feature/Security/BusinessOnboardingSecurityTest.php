@@ -362,12 +362,13 @@ final class BusinessOnboardingSecurityTest extends TestCase
             'password_changed_at' => now(),
         ]);
     }
+
     public function test_padded_base_currency_is_rejected_without_partial_rows(): void
     {
-        $user = \App\Infrastructure\Persistence\Eloquent\Identity\User::query()->create([
+        $user = User::query()->create([
             'email' => 'http-padded-currency@example.com',
             'password' => 'not-a-real-hash',
-            'status' => \App\Domain\Identity\Enums\AccountStatus::Active,
+            'status' => AccountStatus::Active,
             'password_changed_at' => now(),
         ]);
 
@@ -375,8 +376,8 @@ final class BusinessOnboardingSecurityTest extends TestCase
             ->actingAs($user)
             ->post('/businesses', [
                 'name' => 'HTTP Padded Currency Rejection',
-                'origin_type' => \App\Domain\Businesses\Enums\BusinessOriginType::StartedThroughPbr->value,
-                'business_stage' => \App\Domain\Businesses\Enums\BusinessStage::Idea->value,
+                'origin_type' => BusinessOriginType::StartedThroughPbr->value,
+                'business_stage' => BusinessStage::Idea->value,
                 'base_currency' => ' USD ',
             ]);
 
@@ -385,5 +386,4 @@ final class BusinessOnboardingSecurityTest extends TestCase
         $this->assertDatabaseCount('businesses', 0);
         $this->assertDatabaseCount('memberships', 0);
     }
-
 }
