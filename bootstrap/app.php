@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Presentation\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -13,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->alias([
+            'current.business' => EnsureCurrentBusinessContext::class,
+        ]);
+
         $middleware->web(append: [
             HandleInertiaRequests::class,
         ]);

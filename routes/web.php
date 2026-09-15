@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SelectCurrentBusinessController;
 use App\Presentation\Http\Controllers\Account\AccountSettingsController;
 use App\Presentation\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Presentation\Http\Middleware\EnsureActiveAccount;
@@ -17,6 +18,9 @@ Route::middleware('guest')->group(function (): void {
 });
 
 Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void {
+    Route::post('/current-business', SelectCurrentBusinessController::class)
+        ->name('business-context.select');
+
     Route::get('/', function (Request $request) {
         return Inertia::render('AccountHome', [
             'account' => [
