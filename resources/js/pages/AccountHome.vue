@@ -30,6 +30,13 @@ const logout = () => {
 
                 <div class="flex flex-wrap items-center gap-3">
                     <Link
+                        href="/businesses/create"
+                        class="inline-flex min-h-11 items-center justify-center bg-slate-950 px-4 py-2 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                    >
+                        Create Business
+                    </Link>
+
+                    <Link
                         href="/account/settings"
                         class="inline-flex min-h-11 items-center justify-center border border-slate-300 px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
                     >

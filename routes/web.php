@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CreateBusinessController;
 use App\Http\Controllers\SelectCurrentBusinessController;
 use App\Presentation\Http\Controllers\Account\AccountSettingsController;
 use App\Presentation\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -18,6 +19,12 @@ Route::middleware('guest')->group(function (): void {
 });
 
 Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void {
+    Route::get('/businesses/create', [CreateBusinessController::class, 'create'])
+        ->name('businesses.create');
+
+    Route::post('/businesses', [CreateBusinessController::class, 'store'])
+        ->name('businesses.store');
+
     Route::post('/current-business', SelectCurrentBusinessController::class)
         ->name('business-context.select');
 

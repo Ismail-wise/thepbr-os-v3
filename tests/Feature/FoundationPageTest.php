@@ -85,7 +85,10 @@ final class FoundationPageTest extends TestCase
                 || $uri === 'forgot-password'
                 || $uri === 'email/verify'
                 || str_starts_with($uri, 'password/')
-                || str_starts_with($uri, 'business')
+                || (
+                    str_starts_with($uri, 'business')
+                    && ! in_array($uri, ['businesses/create', 'businesses'], true)
+                )
                 || str_starts_with($uri, 'membership'),
                 "Unexpected F1-A4 route URI: {$uri}",
             );
