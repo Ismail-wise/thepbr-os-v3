@@ -328,6 +328,7 @@ final class LocalizationFoundationTest extends TestCase
     {
         $surfacePaths = [
             'resources/js/components/BusinessSwitcher.vue',
+            'resources/js/components/WorkspaceNavigation.vue',
             'resources/js/layouts/AuthenticatedLayout.vue',
             'resources/js/pages/AccountHome.vue',
             'resources/js/pages/Account/Settings.vue',
@@ -337,6 +338,8 @@ final class LocalizationFoundationTest extends TestCase
 
         $knownHardCodedCopy = [
             'Workspace navigation',
+            'Open workspace navigation',
+            'Close workspace navigation',
             'No Business selected',
             'No accessible Businesses',
             'Select a Business',
@@ -377,6 +380,37 @@ final class LocalizationFoundationTest extends TestCase
                 );
             }
         }
+
+        $layoutSource = file_get_contents(
+            base_path('resources/js/layouts/AuthenticatedLayout.vue'),
+        );
+
+        $workspaceNavigationSource = file_get_contents(
+            base_path('resources/js/components/WorkspaceNavigation.vue'),
+        );
+
+        $this->assertIsString($layoutSource);
+        $this->assertIsString($workspaceNavigationSource);
+
+        $this->assertStringContainsString(
+            "t('shell.openNavigation')",
+            $layoutSource,
+        );
+
+        $this->assertStringContainsString(
+            "t('shell.closeNavigation')",
+            $layoutSource,
+        );
+
+        $this->assertStringContainsString(
+            "t('nav.workspaceNavigation')",
+            $workspaceNavigationSource,
+        );
+
+        $this->assertStringContainsString(
+            ':aria-current=',
+            $workspaceNavigationSource,
+        );
 
         $settingsSource = file_get_contents(
             base_path('resources/js/pages/Account/Settings.vue'),

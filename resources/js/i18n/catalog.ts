@@ -21,6 +21,8 @@ const englishCatalog = {
 
     'shell.currentBusiness': 'Current Business',
     'shell.noBusinessSelected': 'No Business selected',
+    'shell.openNavigation': 'Open workspace navigation',
+    'shell.closeNavigation': 'Close workspace navigation',
 
     'businessSwitcher.label': 'Business',
     'businessSwitcher.ariaLabel': 'Select current Business',
@@ -107,6 +109,8 @@ const myanmarCatalog = {
 
     'shell.currentBusiness': 'လက်ရှိလုပ်ငန်း',
     'shell.noBusinessSelected': 'လုပ်ငန်း မရွေးရသေးပါ',
+    'shell.openNavigation': 'လုပ်ငန်းအလုပ်ခွင် လမ်းညွှန်ကို ဖွင့်ရန်',
+    'shell.closeNavigation': 'လုပ်ငန်းအလုပ်ခွင် လမ်းညွှန်ကို ပိတ်ရန်',
 
     'businessSwitcher.label': 'လုပ်ငန်း',
     'businessSwitcher.ariaLabel': 'လက်ရှိလုပ်ငန်းကို ရွေးချယ်ရန်',
@@ -193,6 +197,8 @@ const mixedCatalog = {
 
     'shell.currentBusiness': 'Current Business',
     'shell.noBusinessSelected': 'Business မရွေးရသေးပါ',
+    'shell.openNavigation': 'Business Workspace လမ်းညွှန်ကို ဖွင့်ရန်',
+    'shell.closeNavigation': 'Business Workspace လမ်းညွှန်ကို ပိတ်ရန်',
 
     'businessSwitcher.label': 'Business',
     'businessSwitcher.ariaLabel': 'Current Business ကို ရွေးချယ်ရန်',

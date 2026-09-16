@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { watch } from 'vue';
+import { computed, watch } from 'vue';
 import { useI18n } from '../i18n/useI18n';
 
 type BusinessOption = {
@@ -11,9 +11,14 @@ type BusinessOption = {
 const props = defineProps<{
     businesses: BusinessOption[];
     currentBusiness: BusinessOption | null;
+    selectId?: string;
 }>();
 
 const { t } = useI18n();
+
+const resolvedSelectId = computed(
+    () => props.selectId ?? 'business-switcher',
+);
 
 const form = useForm({
     business_id: props.currentBusiness?.id ?? '',
@@ -44,14 +49,14 @@ const selectBusiness = () => {
 <template>
     <div>
         <label
-            for="business-switcher"
+            :for="resolvedSelectId"
             class="block text-xs font-semibold uppercase tracking-wider text-slate-500"
         >
             {{ t('businessSwitcher.label') }}
         </label>
 
         <select
-            id="business-switcher"
+            :id="resolvedSelectId"
             v-model="form.business_id"
             :disabled="form.processing || businesses.length === 0"
             class="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
