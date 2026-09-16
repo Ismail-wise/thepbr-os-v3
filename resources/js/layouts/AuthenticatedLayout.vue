@@ -2,6 +2,7 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import BusinessSwitcher from '../components/BusinessSwitcher.vue';
+import { useI18n } from '../i18n/useI18n';
 
 type BusinessOption = {
     id: string;
@@ -14,13 +15,16 @@ type WorkspaceContext = {
 };
 
 const page = usePage();
+const { t } = useI18n();
 
 const workspace = computed(
     () => page.props.workspace as WorkspaceContext | null | undefined,
 );
 
 const currentBusinessName = computed(
-    () => workspace.value?.currentBusiness?.name ?? 'No Business selected',
+    () =>
+        workspace.value?.currentBusiness?.name ??
+        t('shell.noBusinessSelected'),
 );
 </script>
 
@@ -35,7 +39,7 @@ const currentBusinessName = computed(
                         href="/"
                         class="inline-flex items-center text-sm font-bold tracking-wide text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
                     >
-                        thePBR OS
+                        {{ t('common.brand') }}
                     </Link>
                 </div>
 
@@ -47,28 +51,28 @@ const currentBusinessName = computed(
                 </div>
 
                 <nav
-                    aria-label="Workspace navigation"
+                    :aria-label="t('nav.workspaceNavigation')"
                     class="border-t border-slate-200 px-3 py-4"
                 >
                     <Link
                         href="/"
                         class="block min-h-11 px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-slate-500"
                     >
-                        Home
+                        {{ t('nav.home') }}
                     </Link>
 
                     <Link
                         href="/businesses/create"
                         class="block min-h-11 px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-slate-500"
                     >
-                        Create Business
+                        {{ t('nav.createBusiness') }}
                     </Link>
 
                     <Link
                         href="/account/settings"
                         class="block min-h-11 px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-slate-500"
                     >
-                        Profile &amp; Settings
+                        {{ t('nav.profileSettings') }}
                     </Link>
                 </nav>
             </aside>
@@ -80,7 +84,7 @@ const currentBusinessName = computed(
                     <p
                         class="text-xs font-semibold uppercase tracking-wider text-slate-500"
                     >
-                        Current Business
+                        {{ t('shell.currentBusiness') }}
                     </p>
                     <p class="mt-1 truncate text-sm font-semibold text-slate-950">
                         {{ currentBusinessName }}

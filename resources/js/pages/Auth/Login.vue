@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
+import { useI18n } from '../../i18n/useI18n';
+
+const { t } = useI18n();
 
 const form = useForm({
     email: '',
@@ -18,15 +21,15 @@ const submit = () => {
     <main class="min-h-screen bg-white px-6 py-16 text-slate-950">
         <section class="mx-auto w-full max-w-md">
             <p class="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                thePBR OS
+                {{ t('common.brand') }}
             </p>
 
             <h1 class="mt-4 text-3xl font-semibold tracking-tight">
-                Sign in
+                {{ t('login.title') }}
             </h1>
 
             <p class="mt-3 text-sm leading-6 text-slate-600">
-                Access your private partnership business workspace.
+                {{ t('login.description') }}
             </p>
 
             <form class="mt-8 space-y-6" @submit.prevent="submit">
@@ -45,7 +48,7 @@ const submit = () => {
                         for="email"
                         class="block text-sm font-medium text-slate-800"
                     >
-                        Email
+                        {{ t('common.email') }}
                     </label>
 
                     <input
@@ -68,7 +71,7 @@ const submit = () => {
                         for="password"
                         class="block text-sm font-medium text-slate-800"
                     >
-                        Password
+                        {{ t('login.password') }}
                     </label>
 
                     <input
@@ -88,7 +91,11 @@ const submit = () => {
                     :disabled="form.processing"
                     class="inline-flex min-h-11 w-full items-center justify-center bg-slate-950 px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                    {{ form.processing ? 'Signing in…' : 'Sign in' }}
+                    {{
+                        form.processing
+                            ? t('login.signingIn')
+                            : t('login.signIn')
+                    }}
                 </button>
             </form>
         </section>

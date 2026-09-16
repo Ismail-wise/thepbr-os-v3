@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
 import { watch } from 'vue';
+import { useI18n } from '../i18n/useI18n';
 
 type BusinessOption = {
     id: string;
@@ -11,6 +12,8 @@ const props = defineProps<{
     businesses: BusinessOption[];
     currentBusiness: BusinessOption | null;
 }>();
+
+const { t } = useI18n();
 
 const form = useForm({
     business_id: props.currentBusiness?.id ?? '',
@@ -44,7 +47,7 @@ const selectBusiness = () => {
             for="business-switcher"
             class="block text-xs font-semibold uppercase tracking-wider text-slate-500"
         >
-            Business
+            {{ t('businessSwitcher.label') }}
         </label>
 
         <select
@@ -52,14 +55,14 @@ const selectBusiness = () => {
             v-model="form.business_id"
             :disabled="form.processing || businesses.length === 0"
             class="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
-            aria-label="Select current Business"
+            :aria-label="t('businessSwitcher.ariaLabel')"
             @change="selectBusiness"
         >
             <option value="">
                 {{
                     businesses.length === 0
-                        ? 'No accessible Businesses'
-                        : 'Select a Business'
+                        ? t('businessSwitcher.noneAccessible')
+                        : t('businessSwitcher.select')
                 }}
             </option>
 
@@ -77,7 +80,7 @@ const selectBusiness = () => {
             role="alert"
             class="mt-2 text-xs font-medium text-red-700"
         >
-            Business could not be selected.
+            {{ t('businessSwitcher.error') }}
         </p>
     </div>
 </template>

@@ -4,6 +4,7 @@ namespace App\Presentation\Http\Middleware;
 
 use App\Application\Businesses\ListAccessibleBusinesses;
 use App\Application\Businesses\ResolveCurrentBusiness;
+use App\Application\Identity\ResolveUiLanguageMode;
 use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
@@ -22,6 +23,7 @@ final class HandleInertiaRequests extends Middleware
     public function __construct(
         private readonly ListAccessibleBusinesses $listAccessibleBusinesses,
         private readonly ResolveCurrentBusiness $resolveCurrentBusiness,
+        private readonly ResolveUiLanguageMode $resolveUiLanguageMode,
     ) {}
 
     /**
@@ -31,8 +33,18 @@ final class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
+            'uiLanguageMode' => $this->uiLanguageMode($request),
             'workspace' => $this->workspace($request),
         ];
+    }
+
+    private function uiLanguageMode(Request $request): string
+    {
+        $user = $request->user();
+
+        return $this->resolveUiLanguageMode
+            ->handle($user instanceof User ? $user : null)
+            ->value;
     }
 
     /**
