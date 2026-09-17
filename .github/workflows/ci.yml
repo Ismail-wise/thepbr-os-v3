@@ -429,3 +429,406 @@ jobs:
 
           printf '%s\n' "$build_files"
           echo "Frontend production build: PASS"
+
+  e2e:
+    name: E2E / Chromium
+    needs:
+      - integrity
+      - backend
+      - frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      APP_DEBUG: "false"
+      APP_MAINTENANCE_DRIVER: file
+      APP_URL: http://127.0.0.1:8000
+      CACHE_STORE: array
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      DB_DATABASE: pbr_ci
+      DB_USERNAME: pbr_ci
+      DB_PASSWORD: pbr_ci_password
+      MAIL_MAILER: array
+      QUEUE_CONNECTION: sync
+      REDIS_CLIENT: phpredis
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: "6382"
+      REDIS_USERNAME: thepbr_os_v3_test_app
+      REDIS_DB: "0"
+      REDIS_CACHE_DB: "1"
+      REDIS_PREFIX: "thepbr-os-v3:test:"
+      SESSION_DRIVER: redis
+      SESSION_STORE: redis
+      SESSION_CONNECTION: default
+      SESSION_PREFIX: "sessions:"
+      SESSION_ENCRYPT: "true"
+      SESSION_SECURE_COOKIE: "false"
+      SESSION_HTTP_ONLY: "true"
+      SESSION_SAME_SITE: lax
+      E2E_BASE_URL: http://127.0.0.1:8000
+      PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: "180000"
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: pbr_ci
+          POSTGRES_USER: pbr_ci
+          POSTGRES_PASSWORD: pbr_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pbr_ci -d pbr_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          show-progress: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # 2.35.5
+        with:
+          php-version: "8.4"
+          extensions: pdo_pgsql, redis
+          coverage: none
+          tools: composer:2.7.1
+          github-token: ""
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22.23.2"
+
+      - name: Verify E2E runtimes
+        run: |
+          set -euo pipefail
+
+          php -r '
+          if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION !== 4) {
+              fwrite(STDERR, "Expected PHP 8.4.\n");
+              exit(1);
+          }
+
+          echo "PHP ", PHP_VERSION, PHP_EOL;
+          '
+
+          node -e '
+          if (process.versions.node !== "22.23.2") {
+            console.error(
+              `Expected Node.js 22.23.2, received ${process.versions.node}`
+            );
+            process.exit(1);
+          }
+
+          console.log(`Node.js ${process.versions.node}`);
+          '
+
+          composer --version
+          npm --version
+
+      - name: Create ephemeral Laravel test environment file
+        run: |
+          set -euo pipefail
+
+          : > .env
+          chmod 600 .env
+
+          test -f .env
+          test ! -s .env
+
+          echo "Ephemeral Laravel test environment file: PASS"
+
+      - name: Install Composer dependencies from lock
+        run: |
+          set -euo pipefail
+
+          composer validate --strict --no-interaction --no-check-publish
+
+          composer install \
+            --no-interaction \
+            --prefer-dist \
+            --no-progress \
+            --no-ansi
+
+          composer check-platform-reqs
+
+      - name: Install npm dependencies from lock
+        run: |
+          set -euo pipefail
+
+          npm ci --no-audit --no-fund
+          npm ls --all
+
+          node -e '
+          const versions = {
+            test: require("@playwright/test/package.json").version,
+            playwright: require("playwright/package.json").version,
+            core: require("playwright-core/package.json").version,
+          };
+
+          for (const [name, version] of Object.entries(versions)) {
+            if (version !== "1.63.0") {
+              console.error(
+                `Expected Playwright 1.63.0 for ${name}, received ${version}`
+              );
+              process.exit(1);
+            }
+          }
+
+          console.log("Playwright dependency identity: PASS");
+          '
+
+      - name: Build frontend assets for browser execution
+        run: |
+          set -euo pipefail
+
+          npm run typecheck
+          npm run build
+
+          test -f public/build/manifest.json
+
+          echo "E2E frontend assets: PASS"
+
+      - name: Install Chromium browser runtime
+        run: |
+          set -euo pipefail
+
+          npx playwright install --with-deps chromium
+
+          npx playwright --version
+
+          echo "Chromium browser runtime: PASS"
+
+      - name: Start isolated Redis session integration service
+        run: |
+          set -euo pipefail
+
+          container="thepbr-os-v3-redis-ci-e2e"
+
+          redis_password="$(
+            openssl rand -hex 32
+          )"
+
+          if [[ -z "$redis_password" ]]; then
+            echo "Failed to generate disposable E2E Redis credential." >&2
+            exit 1
+          fi
+
+          echo "::add-mask::$redis_password"
+
+          docker run \
+            --detach \
+            --name "$container" \
+            --publish 127.0.0.1:6382:6382 \
+            redis:7.0.15-alpine \
+            redis-server \
+              --bind 0.0.0.0 \
+              --protected-mode no \
+              --port 6382 \
+              --databases 2 \
+              --save "" \
+              --appendonly no \
+              --maxmemory 128mb \
+              --maxmemory-policy noeviction \
+            >/dev/null
+
+          ready=0
+
+          for attempt in $(seq 1 30); do
+            if docker exec "$container" \
+              redis-cli -p 6382 --raw PING 2>/dev/null |
+              grep -qx 'PONG'
+            then
+              ready=1
+              break
+            fi
+
+            sleep 1
+          done
+
+          if [[ "$ready" != "1" ]]; then
+            echo "Redis E2E service did not become ready on 6382." >&2
+            exit 1
+          fi
+
+          docker exec "$container" \
+            redis-cli -p 6382 \
+            ACL SETUSER "$REDIS_USERNAME" \
+              on \
+              ">$redis_password" \
+              "~${REDIS_PREFIX}*" \
+              +ping \
+              +select \
+              +get \
+              +set \
+              +setex \
+              +psetex \
+              +del \
+              +unlink \
+              +exists \
+              +expire \
+              +pexpire \
+              +ttl \
+              +pttl \
+              +persist \
+              +touch \
+              +mget \
+              +mset \
+              +incr \
+              +incrby \
+              +decr \
+              +decrby \
+              +info \
+            >/dev/null
+
+          docker exec "$container" \
+            redis-cli -p 6382 \
+            ACL SETUSER default off \
+            >/dev/null
+
+          authenticated_ping="$(
+            docker exec \
+              -e REDISCLI_AUTH="$redis_password" \
+              "$container" \
+              redis-cli \
+                --no-auth-warning \
+                -p 6382 \
+                --user "$REDIS_USERNAME" \
+                --raw \
+                PING
+          )"
+
+          if [[ "$authenticated_ping" != "PONG" ]]; then
+            echo "Authenticated Redis E2E PING failed." >&2
+            exit 1
+          fi
+
+          unauthenticated_ping="$(
+            docker exec "$container" \
+              env -u REDISCLI_AUTH \
+              redis-cli \
+                --no-auth-warning \
+                -p 6382 \
+                --raw \
+                PING 2>&1 || true
+          )"
+
+          if [[ "$unauthenticated_ping" != *"NOAUTH"* ]]; then
+            echo "Unauthenticated Redis E2E access was not denied." >&2
+            exit 1
+          fi
+
+          printf 'REDIS_PASSWORD=%s\n' "$redis_password" >> "$GITHUB_ENV"
+
+          unset redis_password
+
+          echo "Isolated Redis E2E service: PASS"
+
+      - name: Run deterministic F1 browser journeys
+        run: |
+          set -Eeuo pipefail
+
+          server_pid=""
+
+          cleanup() {
+            status=$?
+
+            unset F1_E2E_PASSWORD || true
+
+            if [[ -n "$server_pid" ]]; then
+              kill "$server_pid" >/dev/null 2>&1 || true
+              wait "$server_pid" >/dev/null 2>&1 || true
+            fi
+
+            if [[ "$status" -ne 0 && -f /tmp/f1-a13-e2e-server.log ]]; then
+              echo "Laravel E2E server log:"
+              tail -n 160 /tmp/f1-a13-e2e-server.log || true
+            fi
+
+            exit "$status"
+          }
+
+          trap cleanup EXIT
+
+          e2e_password="PbrA13_$(openssl rand -hex 32)"
+
+          if [[ -z "$e2e_password" ]]; then
+            echo "Failed to generate disposable F1 E2E password." >&2
+            exit 1
+          fi
+
+          echo "::add-mask::$e2e_password"
+
+          export F1_E2E_PASSWORD="$e2e_password"
+
+          php artisan migrate:fresh --force
+
+          php tests/E2E/support/prepare-f1-e2e.php
+
+          unset F1_E2E_PASSWORD
+
+          php artisan serve \
+            --host=127.0.0.1 \
+            --port=8000 \
+            >/tmp/f1-a13-e2e-server.log 2>&1 &
+
+          server_pid=$!
+
+          ready=0
+
+          for attempt in $(seq 1 30); do
+            if curl \
+              --fail \
+              --silent \
+              --show-error \
+              --max-time 2 \
+              http://127.0.0.1:8000/login \
+              >/dev/null
+            then
+              ready=1
+              break
+            fi
+
+            sleep 1
+          done
+
+          if [[ "$ready" != "1" ]]; then
+            echo "Laravel E2E server did not become ready." >&2
+            exit 1
+          fi
+
+          export F1_E2E_PASSWORD="$e2e_password"
+
+          npm run test:e2e -- \
+            --project=chromium-desktop \
+            tests/E2E/f1-boss-uat.spec.ts
+
+          npm run test:e2e -- \
+            --project=chromium-mobile \
+            tests/E2E/f1-boss-uat.spec.ts
+
+          unset F1_E2E_PASSWORD
+          unset e2e_password
+
+          echo "F1-A13 deterministic browser journeys: PASS"
+
+      - name: Stop disposable Redis E2E service
+        if: always()
+        run: |
+          set -euo pipefail
+
+          docker rm \
+            --force \
+            thepbr-os-v3-redis-ci-e2e \
+            >/dev/null 2>&1 || true
+
+          echo "Disposable Redis E2E cleanup: PASS"

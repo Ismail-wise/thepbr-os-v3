@@ -34,3 +34,7 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Playwright E2E runtime artifacts
+/playwright-report/
+/test-results/
