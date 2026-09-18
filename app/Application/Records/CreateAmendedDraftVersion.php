@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace App\Application\Records;
 
 use App\Application\Access\AuthorizeBusinessCapability;
+use App\Application\Events\RecordBusinessOccurrence;
 use App\Domain\Access\ValueObjects\Capability;
+use App\Domain\Audit\ValueObjects\AuditActor;
+use App\Domain\Audit\ValueObjects\SafeAuditMetadata;
+use App\Domain\Events\ValueObjects\OccurrenceTarget;
 use App\Domain\Records\Enums\FormalRecordState;
 use App\Domain\Records\Exceptions\InvalidWorkflowTransition;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
@@ -21,6 +25,7 @@ final class CreateAmendedDraftVersion
 {
     public function __construct(
         private readonly AuthorizeBusinessCapability $authorizeBusinessCapability,
+        private readonly RecordBusinessOccurrence $recordBusinessOccurrence,
     ) {}
 
     public function execute(
@@ -40,11 +45,9 @@ final class CreateAmendedDraftVersion
             $currentBusiness,
             $capability,
         );
-
         if (! $baseDecision->allowed) {
             return null;
         }
-
         $this->assertVersionMetadata(
             $contentHash,
             $changeSummary,
@@ -68,11 +71,9 @@ final class CreateAmendedDraftVersion
                 ->whereKey($sourceVersionId)
                 ->lockForUpdate()
                 ->first();
-
             if ($source === null) {
                 return null;
             }
-
             $sourceDecision = $this->authorizeBusinessCapability->decide(
                 $user,
                 $currentBusiness,
@@ -81,19 +82,15 @@ final class CreateAmendedDraftVersion
                 FormalRecordVersion::class,
                 (string) $source->getKey(),
             );
-
             if (! $sourceDecision->allowed) {
                 return null;
             }
-
             if ($source->frozen_at === null) {
                 throw new InvalidWorkflowTransition(
                     'An amendment predecessor must be a frozen version.',
                 );
             }
-
             $latestState = $this->latestState($source);
-
             if (! in_array(
                 $latestState,
                 [
@@ -106,22 +103,18 @@ final class CreateAmendedDraftVersion
                     'Amendment substrate accepts Effective or Changes Requested predecessors.',
                 );
             }
-
             $family = FormalRecordFamily::query()
                 ->where('business_id', $currentBusiness->getKey())
                 ->whereKey($source->formal_record_family_id)
                 ->lockForUpdate()
                 ->first();
-
             if ($family === null) {
                 return null;
             }
-
             $latestNumber = (int) FormalRecordVersion::query()
                 ->where('business_id', $currentBusiness->getKey())
                 ->where('formal_record_family_id', $family->getKey())
                 ->max('version_number');
-
             $version = FormalRecordVersion::query()->create([
                 'business_id' => $currentBusiness->getKey(),
                 'formal_record_family_id' => $family->getKey(),
@@ -137,7 +130,6 @@ final class CreateAmendedDraftVersion
                 'content_hash' => strtolower($contentHash),
                 'frozen_at' => null,
             ]);
-
             RecordVersionStateTransition::query()->create([
                 'business_id' => $currentBusiness->getKey(),
                 'formal_record_version_id' => $version->getKey(),
@@ -147,6 +139,22 @@ final class CreateAmendedDraftVersion
                 'transitioned_by_user_id' => $user->getKey(),
                 'occurred_at' => now(),
             ]);
+            $this->recordBusinessOccurrence->audit(
+                $currentBusiness,
+                AuditActor::user((string) $user->getKey()),
+                'records.formal_record_version.amended',
+                new OccurrenceTarget(
+                    (string) $currentBusiness->getKey(),
+                    'formal_record_family',
+                    (string) $family->getKey(),
+                    (string) $version->getKey(),
+                ),
+                SafeAuditMetadata::from([
+                    'version_number' => (int) $version->version_number,
+                    'source_version_number' => (int) $source->version_number,
+                ]),
+                now(),
+            );
 
             return $version->fresh();
         });
@@ -177,17 +185,14 @@ final class CreateAmendedDraftVersion
                 'Content hash must be an exact SHA-256 hexadecimal identity.',
             );
         }
-
         if (trim($changeSummary) === '') {
             throw new InvalidArgumentException('Change summary must not be empty.');
         }
-
         if ($effectiveUntil !== null && $effectiveFrom === null) {
             throw new InvalidArgumentException(
                 'A planned effective-until requires effective-from.',
             );
         }
-
         if (
             $effectiveFrom !== null
             && $effectiveUntil !== null

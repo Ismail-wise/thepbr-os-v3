@@ -5,7 +5,12 @@ declare(strict_types=1);
 namespace App\Application\Records;
 
 use App\Application\Access\AuthorizeBusinessCapability;
+use App\Application\Events\RecordBusinessOccurrence;
 use App\Domain\Access\ValueObjects\Capability;
+use App\Domain\Audit\ValueObjects\AuditActor;
+use App\Domain\Audit\ValueObjects\SafeAuditMetadata;
+use App\Domain\Events\ValueObjects\OccurrenceTarget;
+use App\Domain\Events\ValueObjects\SafeBusinessEventPayload;
 use App\Domain\Records\Exceptions\StaleRevision;
 use App\Domain\Records\ValueObjects\Revision;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
@@ -21,6 +26,7 @@ final class FreezeProposalVersion
 {
     public function __construct(
         private readonly AuthorizeBusinessCapability $authorizeBusinessCapability,
+        private readonly RecordBusinessOccurrence $recordBusinessOccurrence,
     ) {}
 
     /**
@@ -40,18 +46,15 @@ final class FreezeProposalVersion
             $currentBusiness,
             $capability,
         );
-
         if (! $baseDecision->allowed) {
             return null;
         }
-
         $recordIds = array_values(
             array_map(
                 static fn (mixed $id): string => trim((string) $id),
                 $formalRecordVersionIds,
             ),
         );
-
         foreach ($recordIds as $recordId) {
             if ($recordId === '') {
                 throw new InvalidArgumentException(
@@ -59,13 +62,11 @@ final class FreezeProposalVersion
                 );
             }
         }
-
         if (count($recordIds) !== count(array_unique($recordIds))) {
             throw new InvalidArgumentException(
                 'A frozen proposal cannot contain duplicate formal-record version bindings.',
             );
         }
-
         sort($recordIds, SORT_STRING);
 
         return DB::transaction(function () use (
@@ -81,11 +82,9 @@ final class FreezeProposalVersion
                 ->whereKey($proposalId)
                 ->lockForUpdate()
                 ->first();
-
             if ($proposal === null) {
                 return null;
             }
-
             $proposalDecision = $this->authorizeBusinessCapability->decide(
                 $user,
                 $currentBusiness,
@@ -94,22 +93,17 @@ final class FreezeProposalVersion
                 Proposal::class,
                 (string) $proposal->getKey(),
             );
-
             if (! $proposalDecision->allowed) {
                 return null;
             }
-
             $revision = new Revision((int) $proposal->revision);
-
             if (! $revision->matches($expectedRevision)) {
                 throw new StaleRevision(
                     $expectedRevision,
                     $revision->value,
                 );
             }
-
             $bindings = [];
-
             foreach ($recordIds as $recordId) {
                 $recordVersion = FormalRecordVersion::query()
                     ->where(
@@ -119,11 +113,9 @@ final class FreezeProposalVersion
                     ->whereKey($recordId)
                     ->lockForUpdate()
                     ->first();
-
                 if ($recordVersion === null) {
                     return null;
                 }
-
                 $recordDecision = $this->authorizeBusinessCapability->decide(
                     $user,
                     $currentBusiness,
@@ -132,17 +124,14 @@ final class FreezeProposalVersion
                     FormalRecordVersion::class,
                     (string) $recordVersion->getKey(),
                 );
-
                 if (! $recordDecision->allowed) {
                     return null;
                 }
-
                 $bindings[] = [
                     'formal_record_version_id' => (string) $recordVersion->getKey(),
                     'captured_content_hash' => (string) $recordVersion->content_hash,
                 ];
             }
-
             $snapshotHash = $this->snapshotHash(
                 (string) $currentBusiness->getKey(),
                 (string) $proposal->getKey(),
@@ -150,12 +139,10 @@ final class FreezeProposalVersion
                 (string) $proposal->content_hash,
                 $bindings,
             );
-
             $latestVersionNumber = (int) ProposalVersion::query()
                 ->where('business_id', $currentBusiness->getKey())
                 ->where('proposal_id', $proposal->getKey())
                 ->max('version_number');
-
             $proposalVersion = ProposalVersion::query()->create([
                 'business_id' => $currentBusiness->getKey(),
                 'proposal_id' => $proposal->getKey(),
@@ -166,7 +153,6 @@ final class FreezeProposalVersion
                 'frozen_by_user_id' => $user->getKey(),
                 'frozen_at' => now(),
             ]);
-
             foreach ($bindings as $binding) {
                 ProposalVersionRecord::query()->create([
                     'business_id' => $currentBusiness->getKey(),
@@ -175,6 +161,51 @@ final class FreezeProposalVersion
                     'captured_content_hash' => $binding['captured_content_hash'],
                 ]);
             }
+            $occurredAt = now();
+            $correlationId =
+                $this->recordBusinessOccurrence->newCorrelationId();
+            $actor = AuditActor::user((string) $user->getKey());
+
+            $this->recordBusinessOccurrence->audit(
+                $currentBusiness,
+                $actor,
+                'records.proposal_version.frozen',
+                new OccurrenceTarget(
+                    (string) $currentBusiness->getKey(),
+                    'proposal',
+                    (string) $proposal->getKey(),
+                    (string) $proposalVersion->getKey(),
+                ),
+                SafeAuditMetadata::from([
+                    'proposal_revision' => (int) $proposalVersion->proposal_revision,
+                    'version_number' => (int) $proposalVersion->version_number,
+                    'record_count' => count($bindings),
+                ]),
+                $occurredAt,
+                $correlationId,
+            );
+
+            $this->recordBusinessOccurrence->businessEvent(
+                $currentBusiness,
+                'records.proposal_version.frozen',
+                new OccurrenceTarget(
+                    (string) $currentBusiness->getKey(),
+                    'proposal',
+                    (string) $proposal->getKey(),
+                    (string) $proposalVersion->getKey(),
+                ),
+                new OccurrenceTarget(
+                    (string) $currentBusiness->getKey(),
+                    'proposal',
+                    (string) $proposal->getKey(),
+                ),
+                SafeBusinessEventPayload::from([
+                    'version_number' => (int) $proposalVersion->version_number,
+                ]),
+                $occurredAt,
+                $actor,
+                $correlationId,
+            );
 
             return $proposalVersion->fresh();
         });
@@ -200,7 +231,6 @@ final class FreezeProposalVersion
                 $right['formal_record_version_id'],
             ),
         );
-
         $lines = [
             'business_id='.$businessId,
             'proposal_id='.$proposalId,
@@ -208,7 +238,6 @@ final class FreezeProposalVersion
             'proposal_content_hash='.$proposalContentHash,
             'record_count='.count($bindings),
         ];
-
         foreach ($bindings as $binding) {
             $lines[] = sprintf(
                 'record=%s|%s',

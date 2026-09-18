@@ -5,7 +5,12 @@ declare(strict_types=1);
 namespace App\Application\Records;
 
 use App\Application\Access\AuthorizeBusinessCapability;
+use App\Application\Events\RecordBusinessOccurrence;
 use App\Domain\Access\ValueObjects\Capability;
+use App\Domain\Audit\ValueObjects\AuditActor;
+use App\Domain\Audit\ValueObjects\SafeAuditMetadata;
+use App\Domain\Events\ValueObjects\OccurrenceTarget;
+use App\Domain\Events\ValueObjects\SafeBusinessEventPayload;
 use App\Domain\Records\Enums\FormalRecordState;
 use App\Domain\Records\Exceptions\InvalidWorkflowTransition;
 use App\Domain\Records\ValueObjects\RequirementResult;
@@ -31,6 +36,7 @@ final class TransitionFormalRecordVersion
 {
     public function __construct(
         private readonly AuthorizeBusinessCapability $authorizeBusinessCapability,
+        private readonly RecordBusinessOccurrence $recordBusinessOccurrence,
         private readonly FormalRecordWorkflow $workflow,
     ) {}
 
@@ -51,11 +57,9 @@ final class TransitionFormalRecordVersion
             $currentBusiness,
             $capability,
         );
-
         if (! $baseDecision->allowed) {
             return null;
         }
-
         if ($targetState === FormalRecordState::Superseded) {
             throw new InvalidWorkflowTransition(
                 'Superseded is established only by atomic effective-head replacement.',
@@ -75,11 +79,9 @@ final class TransitionFormalRecordVersion
                 ->whereKey($formalRecordVersionId)
                 ->lockForUpdate()
                 ->first();
-
             if ($version === null) {
                 return null;
             }
-
             $resourceDecision = $this->authorizeBusinessCapability->decide(
                 $user,
                 $currentBusiness,
@@ -88,34 +90,26 @@ final class TransitionFormalRecordVersion
                 FormalRecordVersion::class,
                 (string) $version->getKey(),
             );
-
             if (! $resourceDecision->allowed) {
                 return null;
             }
-
             $family = FormalRecordFamily::query()
                 ->where('business_id', $currentBusiness->getKey())
                 ->whereKey($version->formal_record_family_id)
                 ->lockForUpdate()
                 ->first();
-
             if ($family === null) {
                 return null;
             }
-
             $latest = $this->latestTransition($version);
-
             if ($latest === null) {
                 throw new InvalidWorkflowTransition(
                     'Formal-record version has no lifecycle state.',
                 );
             }
-
             $from = $latest->to_state;
-
             $this->workflow->assertCanTransition($from, $targetState);
             $this->workflow->assertRequirements($requirements);
-
             if (
                 $targetState->requiresFrozenVersion()
                 && $version->frozen_at === null
@@ -124,23 +118,19 @@ final class TransitionFormalRecordVersion
                     'The target lifecycle state requires a frozen version.',
                 );
             }
-
             $head = null;
             $oldVersion = null;
-
             if ($targetState === FormalRecordState::Effective) {
                 if ($version->effective_from === null) {
                     throw new InvalidWorkflowTransition(
                         'An Effective version requires effective-from.',
                     );
                 }
-
                 if ($version->effective_from->isFuture()) {
                     throw new InvalidWorkflowTransition(
                         'A future-effective version cannot become current early.',
                     );
                 }
-
                 if (
                     $version->effective_until !== null
                     && ! $version->effective_until->isFuture()
@@ -149,7 +139,6 @@ final class TransitionFormalRecordVersion
                         'An already-ended planned effective period cannot become current.',
                     );
                 }
-
                 $head = RecordFamilyEffectiveHead::query()
                     ->where('business_id', $currentBusiness->getKey())
                     ->where(
@@ -158,7 +147,6 @@ final class TransitionFormalRecordVersion
                     )
                     ->lockForUpdate()
                     ->first();
-
                 if (
                     $head !== null
                     && (string) $head->formal_record_version_id
@@ -173,13 +161,11 @@ final class TransitionFormalRecordVersion
                         ->whereKey($head->formal_record_version_id)
                         ->lockForUpdate()
                         ->first();
-
                     if ($oldVersion === null) {
                         throw new InvalidWorkflowTransition(
                             'Current effective head is internally inconsistent.',
                         );
                     }
-
                     $oldDecision = $this->authorizeBusinessCapability->decide(
                         $user,
                         $currentBusiness,
@@ -188,19 +174,15 @@ final class TransitionFormalRecordVersion
                         FormalRecordVersion::class,
                         (string) $oldVersion->getKey(),
                     );
-
                     if (! $oldDecision->allowed) {
                         return null;
                     }
-
                     $oldState = $this->latestTransition($oldVersion)?->to_state;
-
                     if ($oldState !== FormalRecordState::Effective) {
                         throw new InvalidWorkflowTransition(
                             'Current effective head does not point to an Effective version.',
                         );
                     }
-
                     if (
                         $oldVersion->effective_from === null
                         || $version->effective_from
@@ -212,7 +194,6 @@ final class TransitionFormalRecordVersion
                     }
                 }
             }
-
             $this->appendTransition(
                 $user,
                 $currentBusiness,
@@ -220,7 +201,6 @@ final class TransitionFormalRecordVersion
                 $latest,
                 $targetState,
             );
-
             if ($targetState === FormalRecordState::Effective) {
                 if ($oldVersion !== null && $head !== null) {
                     RecordVersionSupersession::query()->create([
@@ -230,20 +210,16 @@ final class TransitionFormalRecordVersion
                         'superseding_version_id' => $version->getKey(),
                         'superseded_at' => $version->effective_from,
                     ]);
-
                     $oldLatest = $this->latestTransition($oldVersion);
-
                     if ($oldLatest === null) {
                         throw new InvalidWorkflowTransition(
                             'Superseded version has no lifecycle state.',
                         );
                     }
-
                     $this->workflow->assertCanTransition(
                         $oldLatest->to_state,
                         FormalRecordState::Superseded,
                     );
-
                     $this->appendTransition(
                         $user,
                         $currentBusiness,
@@ -251,7 +227,6 @@ final class TransitionFormalRecordVersion
                         $oldLatest,
                         FormalRecordState::Superseded,
                     );
-
                     $head->fill([
                         'formal_record_version_id' => $version->getKey(),
                         'activated_at' => now(),
@@ -265,6 +240,103 @@ final class TransitionFormalRecordVersion
                         'activated_at' => now(),
                     ]);
                 }
+            }
+            $occurredAt = now();
+            $correlationId =
+                $this->recordBusinessOccurrence->newCorrelationId();
+            $actor = AuditActor::user((string) $user->getKey());
+
+            $this->recordBusinessOccurrence->audit(
+                $currentBusiness,
+                $actor,
+                'records.formal_record_version.transitioned',
+                new OccurrenceTarget(
+                    (string) $currentBusiness->getKey(),
+                    'formal_record_family',
+                    (string) $family->getKey(),
+                    (string) $version->getKey(),
+                ),
+                SafeAuditMetadata::from([
+                    'version_number' => (int) $version->version_number,
+                    'from_state' => $from->value,
+                    'to_state' => $targetState->value,
+                ]),
+                $occurredAt,
+                $correlationId,
+            );
+
+            $this->recordBusinessOccurrence->businessEvent(
+                $currentBusiness,
+                'records.formal_record_version.state_changed',
+                new OccurrenceTarget(
+                    (string) $currentBusiness->getKey(),
+                    'formal_record_version',
+                    (string) $version->getKey(),
+                    (string) $version->getKey(),
+                ),
+                new OccurrenceTarget(
+                    (string) $currentBusiness->getKey(),
+                    'formal_record_version',
+                    (string) $version->getKey(),
+                ),
+                SafeBusinessEventPayload::from([
+                    'version_number' => (int) $version->version_number,
+                    'from_state' => $from->value,
+                    'to_state' => $targetState->value,
+                ]),
+                $occurredAt,
+                $actor,
+                $correlationId,
+            );
+
+            if ($targetState === FormalRecordState::Effective) {
+                $this->recordBusinessOccurrence->businessEvent(
+                    $currentBusiness,
+                    'records.formal_record_effective_head.changed',
+                    new OccurrenceTarget(
+                        (string) $currentBusiness->getKey(),
+                        'formal_record_family',
+                        (string) $family->getKey(),
+                        (string) $version->getKey(),
+                    ),
+                    new OccurrenceTarget(
+                        (string) $currentBusiness->getKey(),
+                        'formal_record_version',
+                        (string) $version->getKey(),
+                    ),
+                    SafeBusinessEventPayload::from([
+                        'version_number' => (int) $version->version_number,
+                    ]),
+                    $occurredAt,
+                    $actor,
+                    $correlationId,
+                );
+            }
+
+            if ($oldVersion !== null) {
+                $this->recordBusinessOccurrence->businessEvent(
+                    $currentBusiness,
+                    'records.formal_record_version.superseded',
+                    new OccurrenceTarget(
+                        (string) $currentBusiness->getKey(),
+                        'formal_record_version',
+                        (string) $oldVersion->getKey(),
+                        (string) $oldVersion->getKey(),
+                    ),
+                    new OccurrenceTarget(
+                        (string) $currentBusiness->getKey(),
+                        'formal_record_version',
+                        (string) $oldVersion->getKey(),
+                    ),
+                    SafeBusinessEventPayload::from([
+                        'version_number' => (int) $oldVersion->version_number,
+                        'from_state' => FormalRecordState::Effective->value,
+                        'to_state' => FormalRecordState::Superseded->value,
+                    ]),
+                    $occurredAt,
+                    $actor,
+                    $correlationId,
+                );
             }
 
             return $version->fresh();

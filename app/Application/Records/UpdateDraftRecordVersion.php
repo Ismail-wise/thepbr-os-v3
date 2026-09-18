@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace App\Application\Records;
 
 use App\Application\Access\AuthorizeBusinessCapability;
+use App\Application\Events\RecordBusinessOccurrence;
 use App\Domain\Access\ValueObjects\Capability;
+use App\Domain\Audit\ValueObjects\AuditActor;
+use App\Domain\Audit\ValueObjects\SafeAuditMetadata;
+use App\Domain\Events\ValueObjects\OccurrenceTarget;
 use App\Domain\Records\Enums\FormalRecordState;
 use App\Domain\Records\Exceptions\InvalidWorkflowTransition;
 use App\Domain\Records\Exceptions\StaleRevision;
@@ -22,6 +26,7 @@ final class UpdateDraftRecordVersion
 {
     public function __construct(
         private readonly AuthorizeBusinessCapability $authorizeBusinessCapability,
+        private readonly RecordBusinessOccurrence $recordBusinessOccurrence,
     ) {}
 
     public function execute(
@@ -42,11 +47,9 @@ final class UpdateDraftRecordVersion
             $currentBusiness,
             $capability,
         );
-
         if (! $baseDecision->allowed) {
             return null;
         }
-
         $this->assertVersionMetadata(
             $contentHash,
             $changeSummary,
@@ -71,11 +74,9 @@ final class UpdateDraftRecordVersion
                 ->whereKey($formalRecordVersionId)
                 ->lockForUpdate()
                 ->first();
-
             if ($version === null) {
                 return null;
             }
-
             $resourceDecision = $this->authorizeBusinessCapability->decide(
                 $user,
                 $currentBusiness,
@@ -84,34 +85,27 @@ final class UpdateDraftRecordVersion
                 FormalRecordVersion::class,
                 (string) $version->getKey(),
             );
-
             if (! $resourceDecision->allowed) {
                 return null;
             }
-
             if ($version->frozen_at !== null) {
                 throw new InvalidWorkflowTransition(
                     'Frozen formal-record versions cannot be edited.',
                 );
             }
-
             $latestState = $this->latestState($version);
-
             if ($latestState !== FormalRecordState::Draft) {
                 throw new InvalidWorkflowTransition(
                     'Only Draft formal-record versions are editable.',
                 );
             }
-
             $revision = new Revision((int) $version->revision);
-
             if (! $revision->matches($expectedRevision)) {
                 throw new StaleRevision(
                     $expectedRevision,
                     $revision->value,
                 );
             }
-
             $version->fill([
                 'revision' => $revision->next()->value,
                 'change_summary' => trim($changeSummary),
@@ -122,6 +116,23 @@ final class UpdateDraftRecordVersion
                 'content_hash' => strtolower($contentHash),
             ]);
             $version->save();
+
+            $this->recordBusinessOccurrence->audit(
+                $currentBusiness,
+                AuditActor::user((string) $user->getKey()),
+                'records.formal_record_version.updated',
+                new OccurrenceTarget(
+                    (string) $currentBusiness->getKey(),
+                    'formal_record_family',
+                    (string) $version->formal_record_family_id,
+                    (string) $version->getKey(),
+                ),
+                SafeAuditMetadata::from([
+                    'version_number' => (int) $version->version_number,
+                    'revision' => (int) $version->revision,
+                ]),
+                now(),
+            );
 
             return $version->fresh();
         });
@@ -152,17 +163,14 @@ final class UpdateDraftRecordVersion
                 'Content hash must be an exact SHA-256 hexadecimal identity.',
             );
         }
-
         if (trim($changeSummary) === '') {
             throw new InvalidArgumentException('Change summary must not be empty.');
         }
-
         if ($effectiveUntil !== null && $effectiveFrom === null) {
             throw new InvalidArgumentException(
                 'A planned effective-until requires effective-from.',
             );
         }
-
         if (
             $effectiveFrom !== null
             && $effectiveUntil !== null

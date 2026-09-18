@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace App\Application\Records;
 
 use App\Application\Access\AuthorizeBusinessCapability;
+use App\Application\Events\RecordBusinessOccurrence;
 use App\Domain\Access\ValueObjects\Capability;
+use App\Domain\Audit\ValueObjects\AuditActor;
+use App\Domain\Audit\ValueObjects\SafeAuditMetadata;
+use App\Domain\Events\ValueObjects\OccurrenceTarget;
 use App\Domain\Records\Exceptions\StaleRevision;
 use App\Domain\Records\ValueObjects\Revision;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
@@ -18,6 +22,7 @@ final class UpdateProposal
 {
     public function __construct(
         private readonly AuthorizeBusinessCapability $authorizeBusinessCapability,
+        private readonly RecordBusinessOccurrence $recordBusinessOccurrence,
     ) {}
 
     public function execute(
@@ -34,11 +39,9 @@ final class UpdateProposal
             $currentBusiness,
             $capability,
         );
-
         if (! $baseDecision->allowed) {
             return null;
         }
-
         $this->assertContentHash($contentHash);
 
         return DB::transaction(function () use (
@@ -54,11 +57,9 @@ final class UpdateProposal
                 ->whereKey($proposalId)
                 ->lockForUpdate()
                 ->first();
-
             if ($proposal === null) {
                 return null;
             }
-
             $resourceDecision = $this->authorizeBusinessCapability->decide(
                 $user,
                 $currentBusiness,
@@ -67,26 +68,37 @@ final class UpdateProposal
                 Proposal::class,
                 (string) $proposal->getKey(),
             );
-
             if (! $resourceDecision->allowed) {
                 return null;
             }
-
             $revision = new Revision((int) $proposal->revision);
-
             if (! $revision->matches($expectedRevision)) {
                 throw new StaleRevision(
                     $expectedRevision,
                     $revision->value,
                 );
             }
-
             $proposal->fill([
                 'revision' => $revision->next()->value,
                 'content_hash' => strtolower($contentHash),
                 'last_changed_by_user_id' => $user->getKey(),
             ]);
             $proposal->save();
+
+            $this->recordBusinessOccurrence->audit(
+                $currentBusiness,
+                AuditActor::user((string) $user->getKey()),
+                'records.proposal.updated',
+                new OccurrenceTarget(
+                    (string) $currentBusiness->getKey(),
+                    'proposal',
+                    (string) $proposal->getKey(),
+                ),
+                SafeAuditMetadata::from([
+                    'revision' => (int) $proposal->revision,
+                ]),
+                now(),
+            );
 
             return $proposal->fresh();
         });
