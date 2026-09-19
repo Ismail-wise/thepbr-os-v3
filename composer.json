@@ -6,8 +6,9 @@
     "license": "proprietary",
     "require": {
         "php": "^8.3",
+        "inertiajs/inertia-laravel": "~3.3.3",
         "laravel/framework": "~13.31.0",
-        "inertiajs/inertia-laravel": "~3.3.3"
+        "league/flysystem-aws-s3-v3": "^3.35.3"
     },
     "require-dev": {
         "laravel/pint": "^1.27",

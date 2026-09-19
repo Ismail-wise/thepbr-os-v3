@@ -60,6 +60,18 @@ return [
             'report' => false,
         ],
 
+        'business_documents' => [
+            'driver' => 's3',
+            'key' => env('PBR_DOCUMENTS_S3_KEY'),
+            'secret' => env('PBR_DOCUMENTS_S3_SECRET'),
+            'region' => env('PBR_DOCUMENTS_S3_REGION', 'us-east-1'),
+            'bucket' => env('PBR_DOCUMENTS_S3_BUCKET'),
+            'endpoint' => env('PBR_DOCUMENTS_S3_ENDPOINT'),
+            'use_path_style_endpoint' => env('PBR_DOCUMENTS_S3_PATH_STYLE', true),
+            'throw' => true,
+            'report' => false,
+        ],
+
     ],
 
     /*

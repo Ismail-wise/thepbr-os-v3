@@ -88,6 +88,12 @@ jobs:
       SESSION_SECURE_COOKIE: "false"
       SESSION_HTTP_ONLY: "true"
       SESSION_SAME_SITE: lax
+      PBR_DOCUMENTS_S3_KEY: pbrcidocs
+      PBR_DOCUMENTS_S3_BUCKET: thepbr-os-v3-ci-documents
+      PBR_DOCUMENTS_S3_ENDPOINT: http://127.0.0.1:9010
+      PBR_DOCUMENTS_S3_REGION: us-east-1
+      PBR_DOCUMENTS_S3_PATH_STYLE: "true"
+      PBR_DOCUMENTS_S3_INTEGRATION: "true"
 
     services:
       postgres:
@@ -168,6 +174,384 @@ jobs:
             --no-ansi
 
           composer check-platform-reqs
+
+      - name: Start isolated MinIO document integration service
+        run: |
+          set -Eeuo pipefail
+
+          work="/tmp/thepbr-os-v3-minio-ci"
+          minio_src="$work/minio-src"
+          minio_bin="$work/minio"
+          minio_data="$work/data"
+          minio_log="$work/minio.log"
+
+          go_root="$work/go"
+          go_tar="$work/go1.24.8.linux-amd64.tar.gz"
+
+          mc_bin="$work/mc"
+          mc_sum="$work/mc.sha256sum"
+          policy_file="$work/policy.json"
+
+          minio_release="RELEASE.2025-10-15T17-29-55Z"
+          minio_commit="9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a"
+
+          go_sha="6842c516ca66c89d648a7f1dbe28e28c47b61b59f8f06633eb2ceb1188e9251d"
+
+          mc_release="RELEASE.2025-08-13T08-35-41Z"
+          mc_sha="01f866e9c5f9b87c2b09116fa5d7c06695b106242d829a8bb32990c00312e891"
+          mc_sum_sha="721575d09254b86e9d10e04c936165b7df00384da18ca44399386352da964a4c"
+
+          root_user="pbrciroot"
+          app_user="$PBR_DOCUMENTS_S3_KEY"
+          bucket="$PBR_DOCUMENTS_S3_BUCKET"
+          policy_name="thepbr-os-v3-ci-documents-app"
+
+          rm -rf "$work"
+          mkdir -p "$work" "$minio_data"
+
+          root_secret="$(openssl rand -hex 32)"
+          app_secret="$(openssl rand -hex 32)"
+
+          if [[ -z "$root_secret" || -z "$app_secret" ]]; then
+            echo "Failed to generate disposable MinIO credentials." >&2
+            exit 1
+          fi
+
+          echo "::add-mask::$root_secret"
+          echo "::add-mask::$app_secret"
+
+          curl \
+            --fail \
+            --location \
+            --silent \
+            --show-error \
+            --retry 3 \
+            --output "$go_tar" \
+            https://go.dev/dl/go1.24.8.linux-amd64.tar.gz
+
+          printf '%s  %s\n' "$go_sha" "$go_tar" |
+            sha256sum --check --strict -
+
+          mkdir -p "$go_root"
+
+          tar \
+            --extract \
+            --gzip \
+            --file "$go_tar" \
+            --directory "$go_root" \
+            --strip-components=1
+
+          export GOROOT="$go_root"
+          export GOPATH="$work/gopath"
+          export GOCACHE="$work/gocache"
+          export GOMODCACHE="$work/gomodcache"
+          export PATH="$GOROOT/bin:$PATH"
+
+          go version |
+            grep -Fx 'go version go1.24.8 linux/amd64'
+
+          git init -q "$minio_src"
+
+          git -C "$minio_src" remote add \
+            origin \
+            https://github.com/minio/minio.git
+
+          git -C "$minio_src" fetch \
+            --quiet \
+            --depth=1 \
+            origin \
+            "refs/tags/${minio_release}:refs/tags/${minio_release}"
+
+          git -C "$minio_src" checkout \
+            --quiet \
+            --detach \
+            "refs/tags/${minio_release}"
+
+          actual_commit="$(
+            git -C "$minio_src" rev-parse HEAD
+          )"
+
+          if [[ "$actual_commit" != "$minio_commit" ]]; then
+            echo "MinIO source commit mismatch." >&2
+            exit 1
+          fi
+
+          cd "$minio_src"
+
+          ldflags="$(
+            MINIO_RELEASE=RELEASE \
+              go run buildscripts/gen-ldflags.go
+          )"
+
+          MINIO_RELEASE=RELEASE \
+          CGO_ENABLED=0 \
+          GOOS=linux \
+          GOARCH=amd64 \
+            go build \
+              -tags kqueue \
+              -trimpath \
+              --ldflags "$ldflags" \
+              -o "$minio_bin"
+
+          minio_version="$("$minio_bin" --version)"
+
+          printf '%s\n' "$minio_version"
+
+          printf '%s\n' "$minio_version" |
+            grep -Fq "$minio_release"
+
+          printf '%s\n' "$minio_version" |
+            grep -Fq "$minio_commit"
+
+          printf '%s\n' "$minio_version" |
+            grep -Fq 'go1.24.8 linux/amd64'
+
+          cd "$GITHUB_WORKSPACE"
+
+          rm -rf \
+            "$minio_src" \
+            "$go_root" \
+            "$go_tar" \
+            "$GOPATH" \
+            "$GOCACHE" \
+            "$GOMODCACHE"
+
+          nohup env \
+            MINIO_ROOT_USER="$root_user" \
+            MINIO_ROOT_PASSWORD="$root_secret" \
+            "$minio_bin" \
+              server \
+              "$minio_data" \
+              --address 127.0.0.1:9010 \
+              --console-address 127.0.0.1:9011 \
+              >"$minio_log" 2>&1 &
+
+          minio_pid=$!
+
+          printf 'MINIO_CI_PID=%s\n' "$minio_pid" >> "$GITHUB_ENV"
+
+          ready=0
+
+          for attempt in $(seq 1 60); do
+            if curl \
+              --fail \
+              --silent \
+              --show-error \
+              --max-time 2 \
+              http://127.0.0.1:9010/minio/health/ready \
+              >/dev/null 2>&1
+            then
+              ready=1
+              break
+            fi
+
+            sleep 1
+          done
+
+          if [[ "$ready" != "1" ]]; then
+            echo "MinIO CI service did not become ready." >&2
+            cat "$minio_log" || true
+            exit 1
+          fi
+
+          if ! kill -0 "$minio_pid" 2>/dev/null; then
+            echo "MinIO CI service exited unexpectedly." >&2
+            cat "$minio_log" || true
+            exit 1
+          fi
+
+          listener_lines="$(
+            ss -H -ltnp 2>/dev/null |
+              grep -F "pid=${minio_pid}," || true
+          )"
+
+          if [[ -z "$listener_lines" ]]; then
+            echo "MinIO CI listener inventory is empty." >&2
+            exit 1
+          fi
+
+          printf '%s\n' "$listener_lines"
+
+          while IFS= read -r line; do
+            [[ -n "$line" ]] || continue
+
+            addr="$(
+              printf '%s\n' "$line" |
+                awk '{print $4}'
+            )"
+
+            case "$addr" in
+              127.0.0.1:9010|127.0.0.1:9011|"[::1]:9010"|"[::1]:9011")
+                ;;
+              *)
+                echo "Forbidden MinIO CI listener: $addr" >&2
+                exit 1
+                ;;
+            esac
+          done <<< "$listener_lines"
+
+          printf '%s\n' "$listener_lines" |
+            awk '$4 == "127.0.0.1:9010" { found=1 } END { exit(found ? 0 : 1) }'
+
+          printf '%s\n' "$listener_lines" |
+            awk '$4 == "127.0.0.1:9011" { found=1 } END { exit(found ? 0 : 1) }'
+
+          mc_asset="mc.linux-amd64.${mc_release}"
+          mc_sum_asset="${mc_asset}.sha256sum"
+          mc_base="https://github.com/minio/mc/releases/download/${mc_release}"
+
+          curl \
+            --fail \
+            --location \
+            --silent \
+            --show-error \
+            --retry 3 \
+            --output "$mc_bin" \
+            "${mc_base}/${mc_asset}"
+
+          curl \
+            --fail \
+            --location \
+            --silent \
+            --show-error \
+            --retry 3 \
+            --output "$mc_sum" \
+            "${mc_base}/${mc_sum_asset}"
+
+          printf '%s  %s\n' "$mc_sha" "$mc_bin" |
+            sha256sum --check --strict -
+
+          printf '%s  %s\n' "$mc_sum_sha" "$mc_sum" |
+            sha256sum --check --strict -
+
+          reported_mc_sha="$(
+            awk 'NR == 1 { print $1 }' "$mc_sum"
+          )"
+
+          if [[ "$reported_mc_sha" != "$mc_sha" ]]; then
+            echo "Official mc checksum mismatch." >&2
+            exit 1
+          fi
+
+          chmod 0700 "$mc_bin"
+
+          export MC_CONFIG_DIR="$work/mc-config"
+          export MC_NO_COLOR=1
+          export MC_DISABLE_PAGER=1
+
+          mkdir -p "$MC_CONFIG_DIR"
+          chmod 0700 "$MC_CONFIG_DIR"
+
+          export MC_HOST_ciroot="http://${root_user}:${root_secret}@127.0.0.1:9010"
+
+          "$mc_bin" admin info ciroot >/dev/null
+
+          existing_buckets="$("$mc_bin" ls ciroot)"
+
+          if [[ -n "$(printf '%s' "$existing_buckets" | tr -d '[:space:]')" ]]; then
+            echo "Fresh CI MinIO unexpectedly contains buckets." >&2
+            exit 1
+          fi
+
+          "$mc_bin" mb "ciroot/${bucket}"
+
+          cat > "$policy_file" <<POLICY
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "s3:GetBucketLocation",
+                  "s3:ListBucket",
+                  "s3:ListBucketMultipartUploads"
+                ],
+                "Resource": [
+                  "arn:aws:s3:::${bucket}"
+                ]
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "s3:GetObject",
+                  "s3:PutObject",
+                  "s3:DeleteObject",
+                  "s3:AbortMultipartUpload",
+                  "s3:ListMultipartUploadParts"
+                ],
+                "Resource": [
+                  "arn:aws:s3:::${bucket}/*"
+                ]
+              }
+            ]
+          }
+          POLICY
+
+          "$mc_bin" admin policy create \
+            ciroot \
+            "$policy_name" \
+            "$policy_file"
+
+          "$mc_bin" admin user add \
+            ciroot \
+            "$app_user" \
+            "$app_secret"
+
+          "$mc_bin" admin policy attach \
+            ciroot \
+            "$policy_name" \
+            --user "$app_user"
+
+          app_info="$(
+            "$mc_bin" admin user info \
+              ciroot \
+              "$app_user"
+          )"
+
+          printf '%s\n' "$app_info"
+
+          printf '%s\n' "$app_info" |
+            grep -Fq "PolicyName: ${policy_name}"
+
+          printf '%s\n' "$app_info" |
+            grep -Fq 'Status: enabled'
+
+          anonymous_policy="$(
+            "$mc_bin" anonymous get \
+              "ciroot/${bucket}"
+          )"
+
+          printf '%s\n' "$anonymous_policy" |
+            grep -Fqi 'private'
+
+          export MC_HOST_ciapp="http://${app_user}:${app_secret}@127.0.0.1:9010"
+
+          "$mc_bin" ls "ciapp/${bucket}" >/dev/null
+
+          set +e
+          "$mc_bin" admin info ciapp >/dev/null 2>&1
+          app_admin_rc=$?
+          set -e
+
+          if [[ "$app_admin_rc" -eq 0 ]]; then
+            echo "CI application identity unexpectedly has admin access." >&2
+            exit 1
+          fi
+
+          printf 'PBR_DOCUMENTS_S3_SECRET=%s\n' "$app_secret" >> "$GITHUB_ENV"
+
+          unset MC_HOST_ciroot
+          unset MC_HOST_ciapp
+          unset root_secret
+          unset app_secret
+
+          rm -rf \
+            "$mc_bin" \
+            "$mc_sum" \
+            "$MC_CONFIG_DIR" \
+            "$policy_file"
+
+          echo "Isolated MinIO document integration service: PASS"
 
       - name: Run PHP syntax audit
         run: |
@@ -350,10 +734,35 @@ jobs:
           echo "PostgreSQL SELECT 1: PASS\n";
           '
 
+      - name: Run private S3 document integration test
+        run: |
+          set -euo pipefail
+
+          test "$PBR_DOCUMENTS_S3_INTEGRATION" = "true"
+          test -n "${PBR_DOCUMENTS_S3_SECRET:-}"
+
+          php artisan test \
+            tests/Feature/Documents/DocumentS3IntegrationTest.php \
+            --colors=never
+
       - name: Run Laravel tests
         run: |
           set -euo pipefail
           composer test
+
+      - name: Stop disposable MinIO document integration service
+        if: always()
+        run: |
+          set -euo pipefail
+
+          if [[ -n "${MINIO_CI_PID:-}" ]]; then
+            kill "$MINIO_CI_PID" >/dev/null 2>&1 || true
+            wait "$MINIO_CI_PID" >/dev/null 2>&1 || true
+          fi
+
+          rm -rf /tmp/thepbr-os-v3-minio-ci
+
+          echo "Disposable MinIO document integration cleanup: PASS"
 
   frontend:
     name: Frontend / Typecheck / Build
