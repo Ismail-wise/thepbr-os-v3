@@ -3,6 +3,7 @@
 use App\Http\Controllers\CreateBusinessController;
 use App\Http\Controllers\SelectCurrentBusinessController;
 use App\Http\Middleware\EnsureCurrentBusinessContext;
+use App\Presentation\Http\Controllers\Access\WorkspaceAccessController;
 use App\Presentation\Http\Controllers\Account\AccountSettingsController;
 use App\Presentation\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Presentation\Http\Controllers\Records\ActivityController;
@@ -40,6 +41,11 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
 
     Route::middleware(EnsureCurrentBusinessContext::class)
         ->group(function (): void {
+            Route::get(
+                '/workspace/access',
+                WorkspaceAccessController::class,
+            )->name('workspace.access.index');
+
             Route::get(
                 '/records/documents',
                 [DocumentVaultController::class, 'index'],

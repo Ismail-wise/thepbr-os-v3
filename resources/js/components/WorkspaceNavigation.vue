@@ -56,6 +56,20 @@ const isDocumentVaultCurrent = computed(
         </Link>
 
         <Link
+            href="/workspace/access"
+            :aria-current="isCurrent('/workspace/access') ? 'page' : undefined"
+            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
+            :class="
+                isCurrent('/workspace/access')
+                    ? 'border-slate-950 bg-slate-100 text-slate-950'
+                    : 'border-transparent text-slate-700'
+            "
+            @click="emit('navigate')"
+        >
+            {{ t('nav.workspaceAccess') }}
+        </Link>
+
+        <Link
             href="/records/documents"
             :aria-current="isDocumentVaultCurrent ? 'page' : undefined"
             class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
@@ -67,6 +81,20 @@ const isDocumentVaultCurrent = computed(
             @click="emit('navigate')"
         >
             {{ t('nav.documentVault') }}
+        </Link>
+
+        <Link
+            href="/records/activity"
+            :aria-current="isCurrent('/records/activity') ? 'page' : undefined"
+            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
+            :class="
+                isCurrent('/records/activity')
+                    ? 'border-slate-950 bg-slate-100 text-slate-950'
+                    : 'border-transparent text-slate-700'
+            "
+            @click="emit('navigate')"
+        >
+            {{ t('nav.activity') }}
         </Link>
 
         <Link
