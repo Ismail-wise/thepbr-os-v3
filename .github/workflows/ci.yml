@@ -308,13 +308,14 @@ jobs:
 
           cd "$GITHUB_WORKSPACE"
 
+          "$GOROOT/bin/go" clean -modcache
+
           rm -rf \
             "$minio_src" \
             "$go_root" \
             "$go_tar" \
             "$GOPATH" \
-            "$GOCACHE" \
-            "$GOMODCACHE"
+            "$GOCACHE"
 
           nohup env \
             MINIO_ROOT_USER="$root_user" \
@@ -760,7 +761,19 @@ jobs:
             wait "$MINIO_CI_PID" >/dev/null 2>&1 || true
           fi
 
-          rm -rf /tmp/thepbr-os-v3-minio-ci
+          work="/tmp/thepbr-os-v3-minio-ci"
+          go_bin="$work/go/bin/go"
+          gomodcache="$work/gomodcache"
+
+          if [[ -x "$go_bin" && -d "$gomodcache" ]]; then
+            GOROOT="$work/go" \
+            GOPATH="$work/gopath" \
+            GOCACHE="$work/gocache" \
+            GOMODCACHE="$gomodcache" \
+              "$go_bin" clean -modcache
+          fi
+
+          rm -rf "$work"
 
           echo "Disposable MinIO document integration cleanup: PASS"
 
