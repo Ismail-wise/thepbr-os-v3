@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Presentation\Http\Controllers\Access\WorkspaceAccessController;
 use App\Presentation\Http\Controllers\Account\AccountSettingsController;
 use App\Presentation\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Presentation\Http\Controllers\Governance\GovernanceWorkspaceController;
 use App\Presentation\Http\Controllers\Records\ActivityController;
 use App\Presentation\Http\Controllers\Records\DocumentVaultController;
 use App\Presentation\Http\Controllers\Records\EvidenceController;
@@ -45,6 +46,96 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 '/workspace/access',
                 WorkspaceAccessController::class,
             )->name('workspace.access.index');
+
+            Route::get(
+                '/governance',
+                [GovernanceWorkspaceController::class, 'index'],
+            )->name('governance.index');
+
+            Route::post(
+                '/governance/decisions/{decision}/approvals',
+                [GovernanceWorkspaceController::class, 'approval'],
+            )->name('governance.decisions.approvals.store');
+
+            Route::post(
+                '/governance/decisions/{decision}/votes',
+                [GovernanceWorkspaceController::class, 'vote'],
+            )->name('governance.decisions.votes.store');
+
+            Route::post(
+                '/governance/decisions/{decision}/recusal',
+                [GovernanceWorkspaceController::class, 'recuse'],
+            )->name('governance.decisions.recusal.store');
+
+            Route::post(
+                '/governance/decisions/{decision}/resolve',
+                [GovernanceWorkspaceController::class, 'resolveDecision'],
+            )->name('governance.decisions.resolve');
+
+            Route::post(
+                '/governance/decisions/{decision}/signature-requests',
+                [GovernanceWorkspaceController::class, 'createSignatureRequest'],
+            )->name('governance.decisions.signature-requests.store');
+
+            Route::post(
+                '/governance/signature-requests/{signatureRequest}/send',
+                [GovernanceWorkspaceController::class, 'sendSignatureRequest'],
+            )->name('governance.signature-requests.send');
+
+            Route::post(
+                '/governance/signature-requests/{signatureRequest}/sign',
+                [GovernanceWorkspaceController::class, 'sign'],
+            )->name('governance.signature-requests.sign');
+
+            Route::post(
+                '/governance/signature-requests/{signatureRequest}/decline',
+                [GovernanceWorkspaceController::class, 'declineSignature'],
+            )->name('governance.signature-requests.decline');
+
+            Route::post(
+                '/governance/signature-requests/{signatureRequest}/complete',
+                [GovernanceWorkspaceController::class, 'completeSignatureRequest'],
+            )->name('governance.signature-requests.complete');
+
+            Route::post(
+                '/governance/decisions/{decision}/prepare-effect',
+                [GovernanceWorkspaceController::class, 'prepareEffect'],
+            )->name('governance.decisions.prepare-effect');
+
+            Route::post(
+                '/governance/decisions/{decision}/make-effective',
+                [GovernanceWorkspaceController::class, 'makeEffective'],
+            )->name('governance.decisions.make-effective');
+
+            Route::post(
+                '/governance/decisions/{decision}/actions',
+                [GovernanceWorkspaceController::class, 'createAction'],
+            )->name('governance.decisions.actions.store');
+
+            Route::post(
+                '/governance/actions/{action}/status',
+                [GovernanceWorkspaceController::class, 'updateAction'],
+            )->name('governance.actions.status.update');
+
+            Route::post(
+                '/governance/reviews/{review}/complete',
+                [GovernanceWorkspaceController::class, 'completeReview'],
+            )->name('governance.reviews.complete');
+
+            Route::post(
+                '/governance/record-versions/{formalRecordVersion}/amendments',
+                [GovernanceWorkspaceController::class, 'createAmendment'],
+            )->name('governance.amendments.store');
+
+            Route::post(
+                '/governance/amendments/{amendment}/resolve',
+                [GovernanceWorkspaceController::class, 'resolveAmendment'],
+            )->name('governance.amendments.resolve');
+
+            Route::post(
+                '/governance/notifications/{notification}/read',
+                [GovernanceWorkspaceController::class, 'markNotificationRead'],
+            )->name('governance.notifications.read');
 
             Route::get(
                 '/records/documents',

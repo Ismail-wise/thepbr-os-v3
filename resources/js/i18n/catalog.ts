@@ -16,6 +16,7 @@ const englishCatalog = {
     'nav.documentVault': 'Document Vault',
     'nav.workspaceAccess': 'Workspace Access',
     'nav.activity': 'Activity',
+    'nav.governance': 'Governance',
     'access.title': 'Workspace Access',
     'access.description':
         'Review authorized system permission profiles and your current access assignments for this Business.',
@@ -188,6 +189,7 @@ const myanmarCatalog = {
     'nav.documentVault': 'စာရွက်စာတမ်း မှတ်တမ်းတိုက်',
     'nav.workspaceAccess': 'လုပ်ငန်းအသုံးပြုခွင့်',
     'nav.activity': 'လုပ်ငန်းလှုပ်ရှားမှု',
+    'nav.governance': 'အုပ်ချုပ်ဆုံးဖြတ်မှု',
     'access.title': 'လုပ်ငန်းအသုံးပြုခွင့်',
     'access.description':
         'လက်ရှိလုပ်ငန်းအတွက် သင်ကြည့်ရှုခွင့်ရှိသော system permission profile များနှင့် သင့် access assignment များကို စစ်ဆေးနိုင်ပါတယ်။',
@@ -361,6 +363,7 @@ const mixedCatalog = {
     'nav.documentVault': 'Document Vault · စာရွက်စာတမ်း မှတ်တမ်းတိုက်',
     'nav.workspaceAccess': 'Workspace Access · လုပ်ငန်းအသုံးပြုခွင့်',
     'nav.activity': 'Activity · လုပ်ငန်းလှုပ်ရှားမှု',
+    'nav.governance': 'Governance · အုပ်ချုပ်ဆုံးဖြတ်မှု',
     'access.title': 'Workspace Access · လုပ်ငန်းအသုံးပြုခွင့်',
     'access.description':
         'ဒီ Business အတွက် သင်ကြည့်ရှုခွင့်ရှိတဲ့ system Permission Profiles နဲ့ current access assignments ကို စစ်ဆေးနိုင်ပါတယ်။',

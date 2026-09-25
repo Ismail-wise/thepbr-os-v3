@@ -2,6 +2,7 @@
 
 namespace App\Application\Businesses;
 
+use App\Application\Access\ProvisionStandardAccessProfiles;
 use App\Domain\Businesses\Enums\BusinessOriginType;
 use App\Domain\Businesses\Enums\BusinessStage;
 use App\Domain\Members\Enums\MembershipAccessStatus;
@@ -13,6 +14,10 @@ use InvalidArgumentException;
 
 final class CreateBusiness
 {
+    public function __construct(
+        private readonly ProvisionStandardAccessProfiles $accessProfiles,
+    ) {}
+
     public function handle(
         User $user,
         string $name,
@@ -51,11 +56,16 @@ final class CreateBusiness
                 'base_currency' => $baseCurrency,
             ]);
 
-            Membership::query()->create([
+            $membership = Membership::query()->create([
                 'user_id' => $user->getKey(),
                 'business_id' => $business->getKey(),
                 'access_status' => MembershipAccessStatus::Active,
             ]);
+
+            $this->accessProfiles->execute(
+                $business,
+                $membership,
+            );
 
             return $business->refresh();
         });
