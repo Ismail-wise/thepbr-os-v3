@@ -40,8 +40,7 @@ final class GovernanceWorkspacePageTest extends TestCase
         $response = $this
             ->actingAs($user)
             ->withSession([
-                EnsureCurrentBusinessContext::SESSION_KEY =>
-                    (string) $business->getKey(),
+                EnsureCurrentBusinessContext::SESSION_KEY => (string) $business->getKey(),
             ])
             ->get('/governance');
 
@@ -110,8 +109,7 @@ final class GovernanceWorkspacePageTest extends TestCase
         $this
             ->actingAs($user)
             ->withSession([
-                EnsureCurrentBusinessContext::SESSION_KEY =>
-                    (string) $business->getKey(),
+                EnsureCurrentBusinessContext::SESSION_KEY => (string) $business->getKey(),
             ])
             ->get('/governance')
             ->assertNotFound();

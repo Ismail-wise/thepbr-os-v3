@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Http\Controllers\Governance;
 
+use App\Application\Governance\CastGovernanceVote;
 use App\Application\Governance\CompleteGovernanceReview;
 use App\Application\Governance\CompleteSignatureRequest;
 use App\Application\Governance\CreateAmendmentRequest;
@@ -21,7 +22,6 @@ use App\Application\Governance\ResolveGovernanceDecision;
 use App\Application\Governance\SendSignatureRequest;
 use App\Application\Governance\SignGovernanceDocument;
 use App\Application\Governance\UpdateGovernanceActionStatus;
-use App\Application\Governance\CastGovernanceVote;
 use App\Domain\Governance\Enums\ActionStatus;
 use App\Domain\Governance\Enums\ApprovalOutcome;
 use App\Domain\Governance\Enums\ReviewOutcome;

@@ -417,12 +417,12 @@ return new class extends Migration
         );
 
         DB::statement(
-            "ALTER TABLE actions
+            'ALTER TABLE actions
              ADD CONSTRAINT actions_target_check
              CHECK (
                  decision_id IS NOT NULL
                  OR formal_record_version_id IS NOT NULL
-             )",
+             )',
         );
 
         DB::statement(

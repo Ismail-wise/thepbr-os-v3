@@ -240,12 +240,9 @@ final class ResolveGovernanceDecision
             }
 
             $decision->fill([
-                'status' =>
-                    DecisionStatus::Decided->value,
-                'outcome' =>
-                    DecisionOutcome::Approved->value,
-                'resolved_at' =>
-                    now(),
+                'status' => DecisionStatus::Decided->value,
+                'outcome' => DecisionOutcome::Approved->value,
+                'resolved_at' => now(),
             ]);
 
             /*
@@ -271,14 +268,10 @@ final class ResolveGovernanceDecision
                     (string) $decision->proposal_version_id,
                 ),
                 SafeAuditMetadata::from([
-                    'outcome' =>
-                        DecisionOutcome::Approved->value,
-                    'approval_count' =>
-                        $approvalCount,
-                    'supporting_vote_count' =>
-                        $supportingVoteCount,
-                    'quorum_present_count' =>
-                        $quorumPresentCount,
+                    'outcome' => DecisionOutcome::Approved->value,
+                    'approval_count' => $approvalCount,
+                    'supporting_vote_count' => $supportingVoteCount,
+                    'quorum_present_count' => $quorumPresentCount,
                 ]),
                 $occurredAt,
                 $correlationId,
@@ -299,8 +292,7 @@ final class ResolveGovernanceDecision
                     (string) $decision->getKey(),
                 ),
                 SafeBusinessEventPayload::from([
-                    'outcome' =>
-                        DecisionOutcome::Approved->value,
+                    'outcome' => DecisionOutcome::Approved->value,
                 ]),
                 $occurredAt,
                 $actor,

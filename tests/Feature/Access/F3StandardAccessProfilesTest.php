@@ -58,8 +58,7 @@ final class F3StandardAccessProfilesTest extends TestCase
             ->all();
 
         $expected = array_map(
-            static fn (StandardAccessProfile $profile): string =>
-                $profile->value,
+            static fn (StandardAccessProfile $profile): string => $profile->value,
             StandardAccessProfile::cases(),
         );
 

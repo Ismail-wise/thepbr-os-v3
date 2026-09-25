@@ -50,16 +50,13 @@ final readonly class AuthorityEvaluation
         }
 
         return match ($this->threshold->method) {
-            DecisionMethod::Approval =>
-                $this->approvalCount
+            DecisionMethod::Approval => $this->approvalCount
                     >= $this->threshold->requiredApprovals,
 
-            DecisionMethod::Vote =>
-                $this->supportingVoteCount
+            DecisionMethod::Vote => $this->supportingVoteCount
                     >= $this->threshold->requiredVotes,
 
-            DecisionMethod::ApprovalAndVote =>
-                $this->approvalCount
+            DecisionMethod::ApprovalAndVote => $this->approvalCount
                     >= $this->threshold->requiredApprovals
                 && $this->supportingVoteCount
                     >= $this->threshold->requiredVotes,

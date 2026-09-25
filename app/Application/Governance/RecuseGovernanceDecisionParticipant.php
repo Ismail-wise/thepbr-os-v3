@@ -137,14 +137,10 @@ final class RecuseGovernanceDecisionParticipant
             }
 
             $participant->fill([
-                'status' =>
-                    ParticipantStatus::Recused->value,
-                'recusal_reason' =>
-                    $reason,
-                'recused_by_membership_id' =>
-                    $membership->getKey(),
-                'recused_at' =>
-                    now(),
+                'status' => ParticipantStatus::Recused->value,
+                'recusal_reason' => $reason,
+                'recused_by_membership_id' => $membership->getKey(),
+                'recused_at' => now(),
             ]);
 
             $participant->save();
@@ -185,26 +181,16 @@ final class RecuseGovernanceDecisionParticipant
                 && ! $existingVote
             ) {
                 Vote::query()->create([
-                    'business_id' =>
-                        $currentBusiness->getKey(),
-                    'decision_id' =>
-                        $decision->getKey(),
-                    'proposal_version_id' =>
-                        $decision->proposal_version_id,
-                    'authority_snapshot_id' =>
-                        $decision->authority_snapshot_id,
-                    'approval_requirement_id' =>
-                        $voteRequirement->getKey(),
-                    'decision_participant_id' =>
-                        $participant->getKey(),
-                    'membership_id' =>
-                        $membership->getKey(),
-                    'choice' =>
-                        VoteChoice::Recused->value,
-                    'rationale' =>
-                        null,
-                    'cast_at' =>
-                        now(),
+                    'business_id' => $currentBusiness->getKey(),
+                    'decision_id' => $decision->getKey(),
+                    'proposal_version_id' => $decision->proposal_version_id,
+                    'authority_snapshot_id' => $decision->authority_snapshot_id,
+                    'approval_requirement_id' => $voteRequirement->getKey(),
+                    'decision_participant_id' => $participant->getKey(),
+                    'membership_id' => $membership->getKey(),
+                    'choice' => VoteChoice::Recused->value,
+                    'rationale' => null,
+                    'cast_at' => now(),
                 ]);
             }
 
@@ -225,10 +211,8 @@ final class RecuseGovernanceDecisionParticipant
                     (string) $decision->proposal_version_id,
                 ),
                 SafeAuditMetadata::from([
-                    'decision_id' =>
-                        (string) $decision->getKey(),
-                    'self_recusal' =>
-                        true,
+                    'decision_id' => (string) $decision->getKey(),
+                    'self_recusal' => true,
                 ]),
                 $occurredAt,
                 $correlationId,

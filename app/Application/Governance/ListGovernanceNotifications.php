@@ -30,7 +30,7 @@ final class ListGovernanceNotifications
         );
 
         if ($membership === null) {
-            return new Collection();
+            return new Collection;
         }
 
         $limit = max(1, min($limit, 100));
@@ -44,12 +44,11 @@ final class ListGovernanceNotifications
 
         return $candidates
             ->filter(
-                fn (GovernanceNotification $notification): bool =>
-                    $this->visibility->allows(
-                        $user,
-                        $business,
-                        $notification,
-                    ),
+                fn (GovernanceNotification $notification): bool => $this->visibility->allows(
+                    $user,
+                    $business,
+                    $notification,
+                ),
             )
             ->take($limit)
             ->values();

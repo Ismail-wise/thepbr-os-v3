@@ -19,7 +19,7 @@ final class RecordGovernanceOccurrence
     ) {}
 
     /**
-     * @param array<string, bool|float|int|string|null> $metadata
+     * @param  array<string, bool|float|int|string|null>  $metadata
      */
     public function record(
         User $user,

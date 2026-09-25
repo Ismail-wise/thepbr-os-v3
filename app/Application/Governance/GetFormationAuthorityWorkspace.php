@@ -198,16 +198,11 @@ final class GetFormationAuthorityWorkspace
                                     FormationAuthorityPolicyActor $actor,
                                 ): array {
                                     return [
-                                        'membership_id' =>
-                                            (string) $actor->membership_id,
-                                        'capacity' =>
-                                            (string) $actor->capacity,
-                                        'can_approve' =>
-                                            (bool) $actor->can_approve,
-                                        'can_vote' =>
-                                            (bool) $actor->can_vote,
-                                        'can_sign' =>
-                                            (bool) $actor->can_sign,
+                                        'membership_id' => (string) $actor->membership_id,
+                                        'capacity' => (string) $actor->capacity,
+                                        'can_approve' => (bool) $actor->can_approve,
+                                        'can_vote' => (bool) $actor->can_vote,
+                                        'can_sign' => (bool) $actor->can_sign,
                                     ];
                                 },
                             )
@@ -217,20 +212,13 @@ final class GetFormationAuthorityWorkspace
                     return [
                         'id' => (string) $rule->getKey(),
                         'sequence' => (int) $rule->sequence,
-                        'decision_type' =>
-                            (string) $rule->decision_type,
-                        'decision_method' =>
-                            $rule->decision_method->value,
-                        'required_approvals' =>
-                            (int) $rule->required_approvals,
-                        'required_votes' =>
-                            (int) $rule->required_votes,
-                        'quorum_count' =>
-                            (int) $rule->quorum_count,
-                        'signature_required' =>
-                            (bool) $rule->signature_required,
-                        'reserved_matter' =>
-                            (bool) $rule->reserved_matter,
+                        'decision_type' => (string) $rule->decision_type,
+                        'decision_method' => $rule->decision_method->value,
+                        'required_approvals' => (int) $rule->required_approvals,
+                        'required_votes' => (int) $rule->required_votes,
+                        'quorum_count' => (int) $rule->quorum_count,
+                        'signature_required' => (bool) $rule->signature_required,
+                        'reserved_matter' => (bool) $rule->reserved_matter,
                         'amount_min' => $rule->amount_min,
                         'amount_max' => $rule->amount_max,
                         'actors' => $actors,
@@ -242,12 +230,9 @@ final class GetFormationAuthorityWorkspace
 
         return [
             'authority_mode' => $mode,
-            'source_version_id' =>
-                (string) $sourceVersion->getKey(),
-            'source_content_hash' =>
-                (string) $sourceVersion->content_hash,
-            'source_state' =>
-                $latestState?->to_state->value,
+            'source_version_id' => (string) $sourceVersion->getKey(),
+            'source_content_hash' => (string) $sourceVersion->content_hash,
+            'source_state' => $latestState?->to_state->value,
             'rules' => $rules,
         ];
     }

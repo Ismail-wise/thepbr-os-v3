@@ -265,9 +265,9 @@ return new class extends Migration
         );
 
         DB::statement(
-            "ALTER TABLE governance_delegations
+            'ALTER TABLE governance_delegations
              ADD CONSTRAINT governance_delegations_members_distinct
-             CHECK (delegator_membership_id <> delegate_membership_id)",
+             CHECK (delegator_membership_id <> delegate_membership_id)',
         );
         DB::statement(
             "ALTER TABLE governance_delegations
@@ -288,9 +288,9 @@ return new class extends Migration
              CHECK (status IN ('active', 'revoked'))",
         );
         DB::statement(
-            "ALTER TABLE governance_delegations
+            'ALTER TABLE governance_delegations
              ADD CONSTRAINT governance_delegations_effective_range
-             CHECK (expires_at IS NULL OR expires_at > effective_from)",
+             CHECK (expires_at IS NULL OR expires_at > effective_from)',
         );
         DB::statement(
             "ALTER TABLE governance_delegations
@@ -326,9 +326,9 @@ return new class extends Migration
              CHECK (status IN ('active', 'revoked'))",
         );
         DB::statement(
-            "ALTER TABLE emergency_authority_grants
+            'ALTER TABLE emergency_authority_grants
              ADD CONSTRAINT emergency_authority_effective_range
-             CHECK (expires_at > effective_from)",
+             CHECK (expires_at > effective_from)',
         );
         DB::statement(
             "ALTER TABLE emergency_authority_grants

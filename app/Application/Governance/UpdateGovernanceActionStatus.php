@@ -54,7 +54,6 @@ final class UpdateGovernanceActionStatus
             $actionId,
             $status,
             $blockedReason,
-            $membership,
         ): ?Action {
             $action = Action::query()
                 ->where('business_id', $business->getKey())

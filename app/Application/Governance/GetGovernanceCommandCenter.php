@@ -81,14 +81,13 @@ final class GetGovernanceCommandCenter
             ->limit(50)
             ->get()
             ->filter(
-                fn (Decision $decision): bool =>
-                    $this->actorContext->canAccessResource(
-                        $user,
-                        $business,
-                        CapabilityCatalog::GOVERNANCE_RECORDS_VIEW,
-                        Decision::class,
-                        (string) $decision->getKey(),
-                    ),
+                fn (Decision $decision): bool => $this->actorContext->canAccessResource(
+                    $user,
+                    $business,
+                    CapabilityCatalog::GOVERNANCE_RECORDS_VIEW,
+                    Decision::class,
+                    (string) $decision->getKey(),
+                ),
             )
             ->map(function (Decision $decision) use (
                 $user,
@@ -208,8 +207,7 @@ final class GetGovernanceCommandCenter
 
                 return [
                     'id' => $decisionId,
-                    'proposalVersionId' =>
-                        (string) $decision->proposal_version_id,
+                    'proposalVersionId' => (string) $decision->proposal_version_id,
                     'recordVersionIds' => $recordVersionIds,
                     'type' => (string) $decision->decision_type,
                     'amount' => $decision->decision_amount,
@@ -218,16 +216,11 @@ final class GetGovernanceCommandCenter
                     'openedAt' => $this->timestamp($decision->opened_at),
                     'resolvedAt' => $this->timestamp($decision->resolved_at),
                     'method' => $snapshot?->decision_method->value,
-                    'requiredApprovals' =>
-                        (int) ($snapshot?->required_approvals ?? 0),
-                    'requiredVotes' =>
-                        (int) ($snapshot?->required_votes ?? 0),
-                    'quorumCount' =>
-                        (int) ($snapshot?->quorum_count ?? 0),
-                    'signatureRequired' =>
-                        (bool) ($snapshot?->signature_required ?? false),
-                    'reservedMatter' =>
-                        (bool) ($snapshot?->reserved_matter ?? false),
+                    'requiredApprovals' => (int) ($snapshot?->required_approvals ?? 0),
+                    'requiredVotes' => (int) ($snapshot?->required_votes ?? 0),
+                    'quorumCount' => (int) ($snapshot?->quorum_count ?? 0),
+                    'signatureRequired' => (bool) ($snapshot?->signature_required ?? false),
+                    'reservedMatter' => (bool) ($snapshot?->reserved_matter ?? false),
                     'progress' => [
                         'approvals' => $approvalCount,
                         'supportingVotes' => $supportingVoteCount,
@@ -270,14 +263,13 @@ final class GetGovernanceCommandCenter
             ->limit(50)
             ->get()
             ->filter(
-                fn (SignatureRequest $request): bool =>
-                    $this->actorContext->canAccessResource(
-                        $user,
-                        $business,
-                        CapabilityCatalog::GOVERNANCE_RECORDS_VIEW,
-                        SignatureRequest::class,
-                        (string) $request->getKey(),
-                    ),
+                fn (SignatureRequest $request): bool => $this->actorContext->canAccessResource(
+                    $user,
+                    $business,
+                    CapabilityCatalog::GOVERNANCE_RECORDS_VIEW,
+                    SignatureRequest::class,
+                    (string) $request->getKey(),
+                ),
             )
             ->map(function (SignatureRequest $request) use (
                 $user,
@@ -336,10 +328,8 @@ final class GetGovernanceCommandCenter
                 return [
                     'id' => $requestId,
                     'decisionId' => (string) $request->decision_id,
-                    'documentVersionId' =>
-                        (string) $request->document_version_id,
-                    'documentHash' =>
-                        (string) $request->document_content_sha256,
+                    'documentVersionId' => (string) $request->document_version_id,
+                    'documentHash' => (string) $request->document_content_sha256,
                     'status' => $request->status->value,
                     'requestedAt' => $this->timestamp($request->requested_at),
                     'sentAt' => $this->timestamp($request->sent_at),
@@ -386,14 +376,13 @@ final class GetGovernanceCommandCenter
             ->limit(50)
             ->get()
             ->filter(
-                fn (Action $action): bool =>
-                    $this->actorContext->canAccessResource(
-                        $user,
-                        $business,
-                        CapabilityCatalog::GOVERNANCE_RECORDS_VIEW,
-                        Action::class,
-                        (string) $action->getKey(),
-                    ),
+                fn (Action $action): bool => $this->actorContext->canAccessResource(
+                    $user,
+                    $business,
+                    CapabilityCatalog::GOVERNANCE_RECORDS_VIEW,
+                    Action::class,
+                    (string) $action->getKey(),
+                ),
             )
             ->map(function (Action $action) use (
                 $user,
@@ -407,12 +396,10 @@ final class GetGovernanceCommandCenter
                     'decisionId' => $action->decision_id === null
                         ? null
                         : (string) $action->decision_id,
-                    'formalRecordVersionId' =>
-                        $action->formal_record_version_id === null
+                    'formalRecordVersionId' => $action->formal_record_version_id === null
                             ? null
                             : (string) $action->formal_record_version_id,
-                    'assignedMembershipId' =>
-                        (string) $action->assigned_membership_id,
+                    'assignedMembershipId' => (string) $action->assigned_membership_id,
                     'title' => (string) $action->title,
                     'description' => $action->description,
                     'status' => $action->status->value,
@@ -437,14 +424,13 @@ final class GetGovernanceCommandCenter
             ->limit(50)
             ->get()
             ->filter(
-                fn (Review $review): bool =>
-                    $this->actorContext->canAccessResource(
-                        $user,
-                        $business,
-                        CapabilityCatalog::GOVERNANCE_RECORDS_VIEW,
-                        Review::class,
-                        (string) $review->getKey(),
-                    ),
+                fn (Review $review): bool => $this->actorContext->canAccessResource(
+                    $user,
+                    $business,
+                    CapabilityCatalog::GOVERNANCE_RECORDS_VIEW,
+                    Review::class,
+                    (string) $review->getKey(),
+                ),
             )
             ->map(function (Review $review) use (
                 $user,
@@ -456,10 +442,8 @@ final class GetGovernanceCommandCenter
 
                 return [
                     'id' => $id,
-                    'formalRecordVersionId' =>
-                        (string) $review->formal_record_version_id,
-                    'reviewerMembershipId' =>
-                        (string) $review->reviewer_membership_id,
+                    'formalRecordVersionId' => (string) $review->formal_record_version_id,
+                    'reviewerMembershipId' => (string) $review->reviewer_membership_id,
                     'status' => (string) $review->status,
                     'outcome' => $review->outcome?->value,
                     'notes' => $review->notes,
@@ -486,14 +470,13 @@ final class GetGovernanceCommandCenter
             ->limit(50)
             ->get()
             ->filter(
-                fn (AmendmentRequest $request): bool =>
-                    $this->actorContext->canAccessResource(
-                        $user,
-                        $business,
-                        CapabilityCatalog::GOVERNANCE_RECORDS_VIEW,
-                        AmendmentRequest::class,
-                        (string) $request->getKey(),
-                    ),
+                fn (AmendmentRequest $request): bool => $this->actorContext->canAccessResource(
+                    $user,
+                    $business,
+                    CapabilityCatalog::GOVERNANCE_RECORDS_VIEW,
+                    AmendmentRequest::class,
+                    (string) $request->getKey(),
+                ),
             )
             ->map(function (AmendmentRequest $request) use (
                 $user,
@@ -504,8 +487,7 @@ final class GetGovernanceCommandCenter
 
                 return [
                     'id' => $id,
-                    'formalRecordVersionId' =>
-                        (string) $request->formal_record_version_id,
+                    'formalRecordVersionId' => (string) $request->formal_record_version_id,
                     'reviewId' => $request->review_id === null
                         ? null
                         : (string) $request->review_id,
@@ -560,31 +542,27 @@ final class GetGovernanceCommandCenter
 
         $needsAttention = $decisions
             ->filter(
-                static fn (array $decision): bool =>
-                    $decision['actions']['canApprove']
+                static fn (array $decision): bool => $decision['actions']['canApprove']
                     || $decision['actions']['canVote']
                     || $decision['actions']['canResolve'],
             )
             ->count()
             + $signatureRequests
                 ->filter(
-                    static fn (array $request): bool =>
-                        $request['canSign']
+                    static fn (array $request): bool => $request['canSign']
                         || $request['canComplete']
                         || $request['canSend'],
                 )
                 ->count()
             + $actions
                 ->filter(
-                    static fn (array $action): bool =>
-                        $action['canManage']
+                    static fn (array $action): bool => $action['canManage']
                         && $action['status'] !== 'completed',
                 )
                 ->count()
             + $reviews
                 ->filter(
-                    static fn (array $review): bool =>
-                        $review['canComplete'],
+                    static fn (array $review): bool => $review['canComplete'],
                 )
                 ->count();
 

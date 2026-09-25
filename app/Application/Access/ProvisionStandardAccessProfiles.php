@@ -93,8 +93,7 @@ final class ProvisionStandardAccessProfiles
                         ]);
 
                     foreach (
-                        $this->resourceTypesFor($capability)
-                        as $resourceType
+                        $this->resourceTypesFor($capability) as $resourceType
                     ) {
                         AccessPolicy::query()->firstOrCreate([
                             'business_id' => $business->getKey(),

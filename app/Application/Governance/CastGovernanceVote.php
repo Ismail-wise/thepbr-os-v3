@@ -154,26 +154,16 @@ final class CastGovernanceVote
             }
 
             $vote = Vote::query()->create([
-                'business_id' =>
-                    $currentBusiness->getKey(),
-                'decision_id' =>
-                    $decision->getKey(),
-                'proposal_version_id' =>
-                    $decision->proposal_version_id,
-                'authority_snapshot_id' =>
-                    $decision->authority_snapshot_id,
-                'approval_requirement_id' =>
-                    $requirement->getKey(),
-                'decision_participant_id' =>
-                    $participant->getKey(),
-                'membership_id' =>
-                    $membership->getKey(),
-                'choice' =>
-                    $choice->value,
-                'rationale' =>
-                    $rationale,
-                'cast_at' =>
-                    now(),
+                'business_id' => $currentBusiness->getKey(),
+                'decision_id' => $decision->getKey(),
+                'proposal_version_id' => $decision->proposal_version_id,
+                'authority_snapshot_id' => $decision->authority_snapshot_id,
+                'approval_requirement_id' => $requirement->getKey(),
+                'decision_participant_id' => $participant->getKey(),
+                'membership_id' => $membership->getKey(),
+                'choice' => $choice->value,
+                'rationale' => $rationale,
+                'cast_at' => now(),
             ]);
 
             $occurredAt = now();
@@ -193,10 +183,8 @@ final class CastGovernanceVote
                     (string) $decision->proposal_version_id,
                 ),
                 SafeAuditMetadata::from([
-                    'decision_id' =>
-                        (string) $decision->getKey(),
-                    'choice' =>
-                        $choice->value,
+                    'decision_id' => (string) $decision->getKey(),
+                    'choice' => $choice->value,
                 ]),
                 $occurredAt,
                 $correlationId,

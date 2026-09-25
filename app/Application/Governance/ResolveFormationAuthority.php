@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Application\Governance;
 
+use App\Domain\Governance\ValueObjects\DecisionType;
 use App\Domain\Members\Enums\MembershipAccessStatus;
 use App\Domain\Records\Enums\FormalRecordState;
-use App\Domain\Governance\ValueObjects\DecisionType;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Governance\FormationAuthorityEstablishment;
 use App\Infrastructure\Persistence\Eloquent\Governance\FormationAuthorityPolicyActor;

@@ -147,26 +147,16 @@ final class RecordGovernanceApproval
             }
 
             $approval = Approval::query()->create([
-                'business_id' =>
-                    $currentBusiness->getKey(),
-                'decision_id' =>
-                    $decision->getKey(),
-                'proposal_version_id' =>
-                    $decision->proposal_version_id,
-                'authority_snapshot_id' =>
-                    $decision->authority_snapshot_id,
-                'approval_requirement_id' =>
-                    $requirement->getKey(),
-                'decision_participant_id' =>
-                    $participant->getKey(),
-                'membership_id' =>
-                    $membership->getKey(),
-                'outcome' =>
-                    $outcome->value,
-                'rationale' =>
-                    $rationale,
-                'recorded_at' =>
-                    now(),
+                'business_id' => $currentBusiness->getKey(),
+                'decision_id' => $decision->getKey(),
+                'proposal_version_id' => $decision->proposal_version_id,
+                'authority_snapshot_id' => $decision->authority_snapshot_id,
+                'approval_requirement_id' => $requirement->getKey(),
+                'decision_participant_id' => $participant->getKey(),
+                'membership_id' => $membership->getKey(),
+                'outcome' => $outcome->value,
+                'rationale' => $rationale,
+                'recorded_at' => now(),
             ]);
 
             $occurredAt = now();
@@ -186,10 +176,8 @@ final class RecordGovernanceApproval
                     (string) $decision->proposal_version_id,
                 ),
                 SafeAuditMetadata::from([
-                    'decision_id' =>
-                        (string) $decision->getKey(),
-                    'outcome' =>
-                        $outcome->value,
+                    'decision_id' => (string) $decision->getKey(),
+                    'outcome' => $outcome->value,
                 ]),
                 $occurredAt,
                 $correlationId,
