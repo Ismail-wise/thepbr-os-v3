@@ -1172,6 +1172,14 @@ jobs:
               wait "$server_pid" >/dev/null 2>&1 || true
             fi
 
+            for attempt in $(seq 1 50); do
+              if ! ss -H -ltn 'sport = :8000' | grep -q .; then
+                break
+              fi
+
+              sleep 0.1
+            done
+
             if ss -H -ltn 'sport = :8000' | grep -q .; then
               echo "F1 E2E server cleanup left port 8000 occupied." >&2
               ss -H -ltnp 'sport = :8000' || true
@@ -1273,6 +1281,14 @@ jobs:
               wait "$server_pid" >/dev/null 2>&1 || true
             fi
 
+            for attempt in $(seq 1 50); do
+              if ! ss -H -ltn 'sport = :8000' | grep -q .; then
+                break
+              fi
+
+              sleep 0.1
+            done
+
             if ss -H -ltn 'sport = :8000' | grep -q .; then
               echo "F2 E2E server cleanup left port 8000 occupied." >&2
               ss -H -ltnp 'sport = :8000' || true
@@ -1372,6 +1388,14 @@ jobs:
               kill -- "-$server_pid" >/dev/null 2>&1 || true
               wait "$server_pid" >/dev/null 2>&1 || true
             fi
+
+            for attempt in $(seq 1 50); do
+              if ! ss -H -ltn 'sport = :8000' | grep -q .; then
+                break
+              fi
+
+              sleep 0.1
+            done
 
             if ss -H -ltn 'sport = :8000' | grep -q .; then
               echo "F4 E2E server cleanup left port 8000 occupied." >&2
