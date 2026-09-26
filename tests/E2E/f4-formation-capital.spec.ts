@@ -160,7 +160,8 @@ test(
         ).toBeVisible();
 
         await expect(
-            page.getByText('reviewed', {
+            page.getByRole('cell', {
+                name: 'reviewed',
                 exact: true,
             }),
         ).toBeVisible();
