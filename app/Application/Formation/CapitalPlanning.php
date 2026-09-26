@@ -21,7 +21,6 @@ use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
-use RuntimeException;
 
 final class CapitalPlanning
 {
@@ -74,11 +73,9 @@ final class CapitalPlanning
             $fields = [
                 'name' => trim($name),
                 'pre_opening_costs' => $requirement->preOpening,
-                'initial_assets_inventory' =>
-                    $requirement->initialAssetsInventory,
+                'initial_assets_inventory' => $requirement->initialAssetsInventory,
                 'working_capital' => $requirement->workingCapital,
-                'contingency_reserve' =>
-                    $requirement->contingencyReserve,
+                'contingency_reserve' => $requirement->contingencyReserve,
                 'available_funding' => $requirement->availableFunding,
                 'total_requirement' => $requirement->totalRequirement,
                 'funding_gap' => $requirement->fundingGap,
@@ -203,10 +200,8 @@ final class CapitalPlanning
             if ($existing !== null) {
                 return [
                     'id' => (string) $existing->id,
-                    'formal_record_version_id' =>
-                        (string) $existing->formal_record_version_id,
-                    'proposal_version_id' =>
-                        (string) $existing->proposal_version_id,
+                    'formal_record_version_id' => (string) $existing->formal_record_version_id,
+                    'proposal_version_id' => (string) $existing->proposal_version_id,
                 ];
             }
 
@@ -216,20 +211,13 @@ final class CapitalPlanning
                 'scenario_kind' => (string) $scenario->scenario_kind,
                 'scenario_name' => (string) $scenario->name,
                 'scenario_revision' => (int) $scenario->revision,
-                'pre_opening_costs' =>
-                    (string) $scenario->pre_opening_costs,
-                'initial_assets_inventory' =>
-                    (string) $scenario->initial_assets_inventory,
-                'working_capital' =>
-                    (string) $scenario->working_capital,
-                'contingency_reserve' =>
-                    (string) $scenario->contingency_reserve,
-                'available_funding' =>
-                    (string) $scenario->available_funding,
-                'total_requirement' =>
-                    (string) $scenario->total_requirement,
-                'funding_gap' =>
-                    (string) $scenario->funding_gap,
+                'pre_opening_costs' => (string) $scenario->pre_opening_costs,
+                'initial_assets_inventory' => (string) $scenario->initial_assets_inventory,
+                'working_capital' => (string) $scenario->working_capital,
+                'contingency_reserve' => (string) $scenario->contingency_reserve,
+                'available_funding' => (string) $scenario->available_funding,
+                'total_requirement' => (string) $scenario->total_requirement,
+                'funding_gap' => (string) $scenario->funding_gap,
                 'notes' => $scenario->notes,
             ];
 
@@ -338,14 +326,11 @@ final class CapitalPlanning
                 'capital_scenario_id' => $scenario->id,
                 'scenario_revision' => $scenario->revision,
                 'formal_record_family_id' => $familyId,
-                'formal_record_version_id' =>
-                    $recordVersion->getKey(),
+                'formal_record_version_id' => $recordVersion->getKey(),
                 'proposal_id' => $proposal->getKey(),
-                'proposal_version_id' =>
-                    $proposalVersion->getKey(),
+                'proposal_version_id' => $proposalVersion->getKey(),
                 'content_hash' => $contentHash,
-                'created_by_membership_id' =>
-                    $membership->getKey(),
+                'created_by_membership_id' => $membership->getKey(),
                 'created_at' => now(),
             ]);
 
@@ -357,17 +342,14 @@ final class CapitalPlanning
                 $promotionId,
                 [
                     'scenario_kind' => $kind,
-                    'scenario_revision' =>
-                        (int) $scenario->revision,
+                    'scenario_revision' => (int) $scenario->revision,
                 ],
             );
 
             return [
                 'id' => $promotionId,
-                'formal_record_version_id' =>
-                    (string) $recordVersion->getKey(),
-                'proposal_version_id' =>
-                    (string) $proposalVersion->getKey(),
+                'formal_record_version_id' => (string) $recordVersion->getKey(),
+                'proposal_version_id' => (string) $proposalVersion->getKey(),
             ];
         });
     }
@@ -473,18 +455,12 @@ final class CapitalPlanning
             'scenario_kind' => (string) $scenario->scenario_kind,
             'scenario_name' => (string) $scenario->name,
             'revision' => (int) $scenario->revision,
-            'pre_opening_costs' =>
-                (string) $scenario->pre_opening_costs,
-            'initial_assets_inventory' =>
-                (string) $scenario->initial_assets_inventory,
-            'working_capital' =>
-                (string) $scenario->working_capital,
-            'contingency_reserve' =>
-                (string) $scenario->contingency_reserve,
-            'total_requirement' =>
-                (string) $scenario->total_requirement,
-            'available_funding' =>
-                (string) $scenario->available_funding,
+            'pre_opening_costs' => (string) $scenario->pre_opening_costs,
+            'initial_assets_inventory' => (string) $scenario->initial_assets_inventory,
+            'working_capital' => (string) $scenario->working_capital,
+            'contingency_reserve' => (string) $scenario->contingency_reserve,
+            'total_requirement' => (string) $scenario->total_requirement,
+            'available_funding' => (string) $scenario->available_funding,
             'funding_gap' => (string) $scenario->funding_gap,
             'notes' => $scenario->notes,
         ];

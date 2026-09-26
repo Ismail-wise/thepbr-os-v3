@@ -65,21 +65,15 @@ final class GetFormationWorkspace
 
                     return [
                         'id' => (string) $row->id,
-                        'capital_scenario_id' =>
-                            (string) $row->capital_scenario_id,
-                        'scenario_revision' =>
-                            (int) $row->scenario_revision,
-                        'formal_record_version_id' =>
-                            (string) $row->formal_record_version_id,
-                        'proposal_version_id' =>
-                            (string) $row->proposal_version_id,
-                        'content_hash' =>
-                            (string) $row->content_hash,
+                        'capital_scenario_id' => (string) $row->capital_scenario_id,
+                        'scenario_revision' => (int) $row->scenario_revision,
+                        'formal_record_version_id' => (string) $row->formal_record_version_id,
+                        'proposal_version_id' => (string) $row->proposal_version_id,
+                        'content_hash' => (string) $row->content_hash,
                         'state' => $state === null
                             ? null
                             : (string) $state,
-                        'created_at' =>
-                            (string) $row->created_at,
+                        'created_at' => (string) $row->created_at,
                     ];
                 })
                 ->all()
@@ -123,14 +117,10 @@ final class GetFormationWorkspace
             if ($effective !== null) {
                 $effectivePromotion = [
                     'id' => (string) $effective->id,
-                    'formal_record_version_id' =>
-                        (string) $effective->formal_record_version_id,
-                    'capital_scenario_id' =>
-                        (string) $effective->capital_scenario_id,
-                    'scenario_revision' =>
-                        (int) $effective->scenario_revision,
-                    'activated_at' =>
-                        (string) $effective->activated_at,
+                    'formal_record_version_id' => (string) $effective->formal_record_version_id,
+                    'capital_scenario_id' => (string) $effective->capital_scenario_id,
+                    'scenario_revision' => (int) $effective->scenario_revision,
+                    'activated_at' => (string) $effective->activated_at,
                 ];
             }
         }
@@ -257,10 +247,8 @@ final class GetFormationWorkspace
                     : [],
                 'promotions' => $promotions,
                 'current_effective' => $effectivePromotion,
-                'formula' =>
-                    'Pre-opening + Initial Assets/Inventory + Working Capital + Contingency Reserve',
-                'scenario_notice' =>
-                    'Scenario is planning only and never changes live truth.',
+                'formula' => 'Pre-opening + Initial Assets/Inventory + Working Capital + Contingency Reserve',
+                'scenario_notice' => 'Scenario is planning only and never changes live truth.',
             ],
         ];
     }

@@ -9,11 +9,17 @@ use InvalidArgumentException;
 final readonly class CapitalRequirement
 {
     public string $preOpening;
+
     public string $initialAssetsInventory;
+
     public string $workingCapital;
+
     public string $contingencyReserve;
+
     public string $availableFunding;
+
     public string $totalRequirement;
+
     public string $fundingGap;
 
     public function __construct(

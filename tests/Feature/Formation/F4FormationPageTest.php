@@ -39,8 +39,7 @@ final class F4FormationPageTest extends TestCase
 
         $this->actingAs($user)
             ->withSession([
-                EnsureCurrentBusinessContext::SESSION_KEY =>
-                    (string) $business->getKey(),
+                EnsureCurrentBusinessContext::SESSION_KEY => (string) $business->getKey(),
             ])
             ->get('/formation')
             ->assertOk()
@@ -83,8 +82,7 @@ final class F4FormationPageTest extends TestCase
 
         $this->actingAs($user)
             ->withSession([
-                EnsureCurrentBusinessContext::SESSION_KEY =>
-                    (string) $business->getKey(),
+                EnsureCurrentBusinessContext::SESSION_KEY => (string) $business->getKey(),
             ])
             ->get('/formation')
             ->assertNotFound();

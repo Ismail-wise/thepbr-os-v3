@@ -27,7 +27,7 @@ final class NewBusinessPlanning
     ) {}
 
     /**
-     * @param array{summary:?string,problem:?string,target_customer:?string,proposed_solution:?string} $fields
+     * @param  array{summary:?string,problem:?string,target_customer:?string,proposed_solution:?string}  $fields
      */
     public function saveIdea(
         User $user,
@@ -296,7 +296,7 @@ final class NewBusinessPlanning
     }
 
     /**
-     * @param array<string, ?string> $fields
+     * @param  array<string, ?string>  $fields
      */
     public function savePartnershipFit(
         User $user,
@@ -420,7 +420,7 @@ final class NewBusinessPlanning
     }
 
     /**
-     * @param array<string, mixed> $fields
+     * @param  array<string, mixed>  $fields
      * @return array<string, mixed>
      */
     private function saveSingleton(

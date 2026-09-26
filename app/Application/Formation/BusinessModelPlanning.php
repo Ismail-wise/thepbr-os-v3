@@ -20,7 +20,7 @@ final class BusinessModelPlanning
     ) {}
 
     /**
-     * @param array<string, ?string> $blocks
+     * @param  array<string, ?string>  $blocks
      * @return array{id:string,revision:int}|null
      */
     public function saveBmc(

@@ -247,8 +247,7 @@ final class FormationController
                     'role_expectations' => $data['role_expectations'] ?? null,
                     'decision_process' => $data['decision_process'] ?? null,
                     'risk_tolerance' => $data['risk_tolerance'] ?? null,
-                    'unresolved_questions' =>
-                        $data['unresolved_questions'] ?? null,
+                    'unresolved_questions' => $data['unresolved_questions'] ?? null,
                 ],
             ),
         );
@@ -661,8 +660,7 @@ final class FormationController
         fputcsv(
             $handle,
             array_map(
-                static fn (mixed $value): string =>
-                    $value === null ? '' : (string) $value,
+                static fn (mixed $value): string => $value === null ? '' : (string) $value,
                 array_values($scenario),
             ),
         );
@@ -680,11 +678,10 @@ final class FormationController
             200,
             [
                 'Content-Type' => 'text/csv; charset=UTF-8',
-                'Content-Disposition' =>
-                    sprintf(
-                        'attachment; filename="capital-%s-scenario.csv"',
-                        $kind,
-                    ),
+                'Content-Disposition' => sprintf(
+                    'attachment; filename="capital-%s-scenario.csv"',
+                    $kind,
+                ),
                 'Cache-Control' => 'private, no-store',
             ],
         );

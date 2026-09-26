@@ -21,7 +21,7 @@ final class ExistingBusinessBaseline
     ) {}
 
     /**
-     * @param array<string, mixed> $fields
+     * @param  array<string, mixed>  $fields
      */
     public function saveProfile(
         User $user,
@@ -252,7 +252,7 @@ final class ExistingBusinessBaseline
     }
 
     /**
-     * @param array<string, mixed> $fields
+     * @param  array<string, mixed>  $fields
      */
     private function append(
         User $user,
@@ -289,7 +289,7 @@ final class ExistingBusinessBaseline
     }
 
     /**
-     * @param array<string, mixed> $fields
+     * @param  array<string, mixed>  $fields
      * @return array<string, mixed>
      */
     private function saveAndRecord(
