@@ -1168,7 +1168,7 @@ jobs:
             unset F1_E2E_PASSWORD || true
 
             if [[ -n "$server_pid" ]]; then
-              kill "$server_pid" >/dev/null 2>&1 || true
+              kill -- "-$server_pid" >/dev/null 2>&1 || true
               wait "$server_pid" >/dev/null 2>&1 || true
             fi
 
@@ -1211,9 +1211,9 @@ jobs:
             exit 1
           fi
 
-          php -S 127.0.0.1:8000 \
-            -t public \
-            vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php \
+          setsid php artisan serve \
+            --host=127.0.0.1 \
+            --port=8000 \
             >/tmp/f1-a13-e2e-server.log 2>&1 &
 
           server_pid=$!
@@ -1269,7 +1269,7 @@ jobs:
             unset F2_E2E_PASSWORD || true
 
             if [[ -n "$server_pid" ]]; then
-              kill "$server_pid" >/dev/null 2>&1 || true
+              kill -- "-$server_pid" >/dev/null 2>&1 || true
               wait "$server_pid" >/dev/null 2>&1 || true
             fi
 
@@ -1315,9 +1315,9 @@ jobs:
             exit 1
           fi
 
-          php -S 127.0.0.1:8000 \
-            -t public \
-            vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php \
+          setsid php artisan serve \
+            --host=127.0.0.1 \
+            --port=8000 \
             >/tmp/f2-integrated-e2e-server.log 2>&1 &
 
           server_pid=$!
@@ -1369,7 +1369,7 @@ jobs:
             unset F4_E2E_PASSWORD || true
 
             if [[ -n "$server_pid" ]]; then
-              kill "$server_pid" >/dev/null 2>&1 || true
+              kill -- "-$server_pid" >/dev/null 2>&1 || true
               wait "$server_pid" >/dev/null 2>&1 || true
             fi
 
@@ -1415,9 +1415,9 @@ jobs:
             exit 1
           fi
 
-          php -S 127.0.0.1:8000 \
-            -t public \
-            vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php \
+          setsid php artisan serve \
+            --host=127.0.0.1 \
+            --port=8000 \
             >/tmp/f4-e2e-server.log 2>&1 &
 
           server_pid=$!
