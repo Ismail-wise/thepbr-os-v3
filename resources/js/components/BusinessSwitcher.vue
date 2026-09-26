@@ -42,6 +42,7 @@ const selectBusiness = () => {
 
     form.post('/current-business', {
         preserveScroll: true,
+        preserveState: false,
     });
 };
 </script>
