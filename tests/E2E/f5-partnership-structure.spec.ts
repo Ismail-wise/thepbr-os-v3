@@ -97,20 +97,36 @@ test(
             }),
         ).toBeVisible();
 
-        await expect(
-            page.getByText(PARTNER, {
-                exact: true,
-            }).first(),
-        ).toBeVisible();
+        const partnerRow = page
+            .getByRole('row')
+            .filter({
+                has: page.getByText(PARTNER, {
+                    exact: true,
+                }),
+            })
+            .filter({
+                hasText: 'in_review',
+            })
+            .filter({
+                hasText: 'visionary',
+            });
+
+        await expect(partnerRow).toBeVisible();
 
         await expect(
-            page.getByText('in_review', {
+            partnerRow.getByText(PARTNER, {
                 exact: true,
             }),
         ).toBeVisible();
 
         await expect(
-            page.getByText('visionary', {
+            partnerRow.getByText('in_review', {
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            partnerRow.getByText('visionary', {
                 exact: true,
             }),
         ).toBeVisible();
