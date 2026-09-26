@@ -178,8 +178,9 @@ test(
         });
 
         await workflow
-            .getByText('Add Contribution', {
-                exact: true,
+            .locator('summary')
+            .filter({
+                hasText: /^Add Contribution$/,
             })
             .click();
 
@@ -231,8 +232,9 @@ test(
         ).toBeVisible();
 
         await workflow
-            .getByText('Create Ownership Scenario', {
-                exact: true,
+            .locator('summary')
+            .filter({
+                hasText: /^Create Ownership Scenario$/,
             })
             .click();
 
