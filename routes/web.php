@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Presentation\Http\Controllers\Access\WorkspaceAccessController;
 use App\Presentation\Http\Controllers\Account\AccountSettingsController;
 use App\Presentation\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Presentation\Http\Controllers\Formation\FormationController;
 use App\Presentation\Http\Controllers\Governance\GovernanceWorkspaceController;
 use App\Presentation\Http\Controllers\Records\ActivityController;
 use App\Presentation\Http\Controllers\Records\DocumentVaultController;
@@ -46,6 +47,126 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 '/workspace/access',
                 WorkspaceAccessController::class,
             )->name('workspace.access.index');
+
+            Route::get(
+                '/formation',
+                [FormationController::class, 'index'],
+            )->name('formation.index');
+
+            Route::put(
+                '/formation/new/idea',
+                [FormationController::class, 'saveIdea'],
+            )->name('formation.new.idea.update');
+
+            Route::put(
+                '/formation/bmc',
+                [FormationController::class, 'saveBmc'],
+            )->name('formation.bmc.update');
+
+            Route::post(
+                '/formation/new/assumptions',
+                [FormationController::class, 'addAssumption'],
+            )->name('formation.new.assumptions.store');
+
+            Route::post(
+                '/formation/new/validations',
+                [FormationController::class, 'addValidation'],
+            )->name('formation.new.validations.store');
+
+            Route::post(
+                '/formation/new/validations/{validationActivity}/evidence',
+                [FormationController::class, 'linkValidationEvidence'],
+            )->name('formation.new.validations.evidence.store');
+
+            Route::post(
+                '/formation/new/feasibility',
+                [FormationController::class, 'addFeasibility'],
+            )->name('formation.new.feasibility.store');
+
+            Route::put(
+                '/formation/new/partnership-fit',
+                [FormationController::class, 'savePartnershipFit'],
+            )->name('formation.new.partnership-fit.update');
+
+            Route::post(
+                '/formation/new/direction',
+                [FormationController::class, 'recordDirection'],
+            )->name('formation.new.direction.store');
+
+            Route::put(
+                '/formation/existing/profile',
+                [FormationController::class, 'saveExistingProfile'],
+            )->name('formation.existing.profile.update');
+
+            Route::post(
+                '/formation/existing/financial-snapshots',
+                [FormationController::class, 'addFinancialSnapshot'],
+            )->name('formation.existing.financial-snapshots.store');
+
+            Route::post(
+                '/formation/existing/assets',
+                [FormationController::class, 'addAsset'],
+            )->name('formation.existing.assets.store');
+
+            Route::post(
+                '/formation/existing/liabilities',
+                [FormationController::class, 'addLiability'],
+            )->name('formation.existing.liabilities.store');
+
+            Route::post(
+                '/formation/existing/owner-positions',
+                [FormationController::class, 'addOwnerPosition'],
+            )->name('formation.existing.owner-positions.store');
+
+            Route::post(
+                '/formation/existing/obligations',
+                [FormationController::class, 'addObligation'],
+            )->name('formation.existing.obligations.store');
+
+            Route::post(
+                '/formation/existing/risks',
+                [FormationController::class, 'addRisk'],
+            )->name('formation.existing.risks.store');
+
+            Route::post(
+                '/formation/existing/constraints',
+                [FormationController::class, 'addConstraint'],
+            )->name('formation.existing.constraints.store');
+
+            Route::put(
+                '/formation/existing/gap',
+                [FormationController::class, 'saveGap'],
+            )->name('formation.existing.gap.update');
+
+            Route::put(
+                '/formation/existing/conversion',
+                [FormationController::class, 'saveConversion'],
+            )->name('formation.existing.conversion.update');
+
+            Route::post(
+                '/formation/existing/valuations',
+                [FormationController::class, 'addValuation'],
+            )->name('formation.existing.valuations.store');
+
+            Route::put(
+                '/formation/capital/scenarios/{kind}',
+                [FormationController::class, 'saveCapitalScenario'],
+            )->name('formation.capital.scenarios.update');
+
+            Route::post(
+                '/formation/capital/scenarios/{kind}/promote',
+                [FormationController::class, 'promoteCapitalScenario'],
+            )->name('formation.capital.scenarios.promote');
+
+            Route::post(
+                '/formation/capital/promotions/{promotion}/content-review',
+                [FormationController::class, 'advanceCapitalContentReview'],
+            )->name('formation.capital.promotions.content-review');
+
+            Route::get(
+                '/formation/capital/scenarios/{kind}/export',
+                [FormationController::class, 'exportCapitalScenario'],
+            )->name('formation.capital.scenarios.export');
 
             Route::get(
                 '/governance',
