@@ -571,10 +571,12 @@ const capitalForms = reactive(
     >,
 );
 
-const post = (url: string, data: Record<string, unknown>) =>
+type PostData = NonNullable<Parameters<typeof router.post>[1]>;
+
+const post = (url: string, data: PostData = {}) =>
     router.post(url, data, { preserveScroll: true });
 
-const put = (url: string, data: Record<string, unknown>) =>
+const put = (url: string, data: PostData = {}) =>
     router.put(url, data, { preserveScroll: true });
 
 const saveIdea = () =>
