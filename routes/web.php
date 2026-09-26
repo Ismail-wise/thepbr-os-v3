@@ -8,6 +8,8 @@ use App\Presentation\Http\Controllers\Account\AccountSettingsController;
 use App\Presentation\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Presentation\Http\Controllers\Formation\FormationController;
 use App\Presentation\Http\Controllers\Governance\GovernanceWorkspaceController;
+use App\Presentation\Http\Controllers\Partnership\PartnershipWorkflowController;
+use App\Presentation\Http\Controllers\Partnership\PartnershipWorkspaceController;
 use App\Presentation\Http\Controllers\Records\ActivityController;
 use App\Presentation\Http\Controllers\Records\DocumentVaultController;
 use App\Presentation\Http\Controllers\Records\EvidenceController;
@@ -167,6 +169,96 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 '/formation/capital/scenarios/{kind}/export',
                 [FormationController::class, 'exportCapitalScenario'],
             )->name('formation.capital.scenarios.export');
+
+            Route::get(
+                '/partnership',
+                [PartnershipWorkspaceController::class, 'index'],
+            )->name('partnership.index');
+
+            Route::post(
+                '/partnership/partners',
+                [PartnershipWorkspaceController::class, 'createPartner'],
+            )->name('partnership.partners.store');
+
+            Route::post(
+                '/partnership/partners/{partner}/invite',
+                [PartnershipWorkspaceController::class, 'invitePartner'],
+            )->name('partnership.partners.invite');
+
+            Route::put(
+                '/partnership/partners/{partner}/due-diligence',
+                [PartnershipWorkspaceController::class, 'saveDueDiligence'],
+            )->name('partnership.partners.due-diligence.update');
+
+            Route::post(
+                '/partnership/partners/{partner}/partner-dynamics',
+                [PartnershipWorkspaceController::class, 'recordPartnerDynamics'],
+            )->name('partnership.partners.partner-dynamics.store');
+
+            Route::post(
+                '/partnership/contributions',
+                [PartnershipWorkflowController::class, 'createContribution'],
+            )->name('partnership.contributions.store');
+
+            Route::put(
+                '/partnership/contributions/{contribution}/review',
+                [PartnershipWorkflowController::class, 'reviewContribution'],
+            )->name('partnership.contributions.review');
+
+            Route::post(
+                '/partnership/contributions/{contribution}/governance',
+                [PartnershipWorkflowController::class, 'submitContributionGovernance'],
+            )->name('partnership.contributions.governance.store');
+
+            Route::post(
+                '/partnership/contribution-submissions/{submission}/content-review',
+                [PartnershipWorkflowController::class, 'advanceContributionReview'],
+            )->name('partnership.contribution-submissions.review');
+
+            Route::post(
+                '/partnership/contribution-submissions/{submission}/sync-decision',
+                [PartnershipWorkflowController::class, 'syncContributionDecision'],
+            )->name('partnership.contribution-submissions.sync');
+
+            Route::post(
+                '/partnership/contributions/{contribution}/delivery',
+                [PartnershipWorkflowController::class, 'recordDelivery'],
+            )->name('partnership.contributions.delivery');
+
+            Route::post(
+                '/partnership/ownership/scenarios',
+                [PartnershipWorkflowController::class, 'createOwnershipScenario'],
+            )->name('partnership.ownership.scenarios.store');
+
+            Route::put(
+                '/partnership/ownership/scenarios/{scenario}/share-classes/{shareClass}',
+                [PartnershipWorkflowController::class, 'setShareClassRights'],
+            )->name('partnership.ownership.share-classes.update');
+
+            Route::put(
+                '/partnership/ownership/scenarios/{scenario}/positions/{position}/vesting',
+                [PartnershipWorkflowController::class, 'setVesting'],
+            )->name('partnership.ownership.vesting.update');
+
+            Route::post(
+                '/partnership/ownership/scenarios/{scenario}/freeze',
+                [PartnershipWorkflowController::class, 'freezeOwnershipScenario'],
+            )->name('partnership.ownership.scenarios.freeze');
+
+            Route::post(
+                '/partnership/ownership/scenarios/{scenario}/governance',
+                [PartnershipWorkflowController::class, 'submitOwnershipGovernance'],
+            )->name('partnership.ownership.governance.store');
+
+            Route::post(
+                '/partnership/ownership-submissions/{submission}/content-review',
+                [PartnershipWorkflowController::class, 'advanceOwnershipReview'],
+            )->name('partnership.ownership-submissions.review');
+
+            Route::post(
+                '/partnership/ownership-submissions/{submission}/effect',
+                [PartnershipWorkflowController::class, 'effectOwnership'],
+            )->name('partnership.ownership-submissions.effect');
 
             Route::get(
                 '/governance',

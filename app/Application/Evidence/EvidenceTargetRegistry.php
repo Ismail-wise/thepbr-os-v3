@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\Evidence;
 
+use App\Domain\Access\CapabilityCatalog;
+use App\Infrastructure\Persistence\Eloquent\Partnership\Contribution;
 use App\Infrastructure\Persistence\Eloquent\Records\FormalRecordVersion;
 use App\Infrastructure\Persistence\Eloquent\Records\ProposalVersion;
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +19,7 @@ final class EvidenceTargetRegistry
     private const array TARGETS = [
         'formal_record_version' => FormalRecordVersion::class,
         'proposal_version' => ProposalVersion::class,
+        'contribution' => Contribution::class,
     ];
 
     /**
@@ -25,6 +28,20 @@ final class EvidenceTargetRegistry
     public function supportedTypes(): array
     {
         return array_keys(self::TARGETS);
+    }
+
+    public function requiredManageCapability(
+        string $targetType,
+    ): string {
+        if (! array_key_exists($targetType, self::TARGETS)) {
+            throw new InvalidArgumentException(
+                'Unsupported evidence target type.',
+            );
+        }
+
+        return $targetType === 'contribution'
+            ? CapabilityCatalog::CONTRIBUTIONS_MANAGE
+            : CapabilityCatalog::RECORDS_MANAGE;
     }
 
     public function resolve(

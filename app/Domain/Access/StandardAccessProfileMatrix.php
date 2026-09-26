@@ -27,6 +27,9 @@ final class StandardAccessProfileMatrix
             CapabilityCatalog::BUSINESS_MODEL_VIEW,
             CapabilityCatalog::LEGAL_VIEW,
             CapabilityCatalog::CAPITAL_VIEW,
+            CapabilityCatalog::PARTNERS_VIEW,
+            CapabilityCatalog::CONTRIBUTIONS_VIEW,
+            CapabilityCatalog::OWNERSHIP_VIEW,
         ];
 
         return match ($profile) {
@@ -50,12 +53,22 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::LEGAL_MANAGE,
                 CapabilityCatalog::CAPITAL_VIEW,
                 CapabilityCatalog::CAPITAL_MANAGE,
+                CapabilityCatalog::PARTNERS_VIEW,
+                CapabilityCatalog::PARTNERS_MANAGE,
+                CapabilityCatalog::DUE_DILIGENCE_VIEW,
+                CapabilityCatalog::DUE_DILIGENCE_MANAGE,
+                CapabilityCatalog::CONTRIBUTIONS_VIEW,
+                CapabilityCatalog::OWNERSHIP_VIEW,
+                CapabilityCatalog::CONTRIBUTIONS_MANAGE,
+                CapabilityCatalog::OWNERSHIP_MANAGE,
             ],
+
             StandardAccessProfile::Partner => [
                 ...$view,
                 CapabilityCatalog::GOVERNANCE_RECORDS_MANAGE,
                 CapabilityCatalog::GOVERNANCE_SIGNATURE_ACT,
             ],
+
             StandardAccessProfile::ManagingPartnerCeo => [
                 CapabilityCatalog::PERMISSION_PROFILES_VIEW,
                 CapabilityCatalog::RECORDS_VIEW,
@@ -73,7 +86,16 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::LEGAL_MANAGE,
                 CapabilityCatalog::CAPITAL_VIEW,
                 CapabilityCatalog::CAPITAL_MANAGE,
+                CapabilityCatalog::PARTNERS_VIEW,
+                CapabilityCatalog::PARTNERS_MANAGE,
+                CapabilityCatalog::DUE_DILIGENCE_VIEW,
+                CapabilityCatalog::DUE_DILIGENCE_MANAGE,
+                CapabilityCatalog::CONTRIBUTIONS_VIEW,
+                CapabilityCatalog::OWNERSHIP_VIEW,
+                CapabilityCatalog::CONTRIBUTIONS_MANAGE,
+                CapabilityCatalog::OWNERSHIP_MANAGE,
             ],
+
             StandardAccessProfile::FinanceOwner => [
                 CapabilityCatalog::RECORDS_VIEW,
                 CapabilityCatalog::RECORDS_MANAGE,
@@ -82,7 +104,12 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::LEGAL_VIEW,
                 CapabilityCatalog::CAPITAL_VIEW,
                 CapabilityCatalog::CAPITAL_MANAGE,
+                CapabilityCatalog::PARTNERS_VIEW,
+                CapabilityCatalog::CONTRIBUTIONS_VIEW,
+                CapabilityCatalog::OWNERSHIP_VIEW,
+                CapabilityCatalog::CONTRIBUTIONS_MANAGE,
             ],
+
             StandardAccessProfile::GovernanceSecretary => [
                 CapabilityCatalog::PERMISSION_PROFILES_VIEW,
                 CapabilityCatalog::RECORDS_VIEW,
@@ -95,10 +122,27 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::GOVERNANCE_SIGNATURE_ACT,
                 CapabilityCatalog::GOVERNANCE_ACTION_MANAGE,
                 CapabilityCatalog::LEGAL_VIEW,
+                CapabilityCatalog::PARTNERS_VIEW,
+                CapabilityCatalog::PARTNERS_MANAGE,
+                CapabilityCatalog::DUE_DILIGENCE_VIEW,
+                CapabilityCatalog::DUE_DILIGENCE_MANAGE,
+                CapabilityCatalog::CONTRIBUTIONS_VIEW,
+                CapabilityCatalog::OWNERSHIP_VIEW,
+                CapabilityCatalog::CONTRIBUTIONS_MANAGE,
+                CapabilityCatalog::OWNERSHIP_MANAGE,
             ],
-            StandardAccessProfile::AdvisorConsultant,
-            StandardAccessProfile::AuditorViewer,
-            StandardAccessProfile::ExternalAccountantLegalAdvisor => $view,
+
+            StandardAccessProfile::AdvisorConsultant => [
+                ...$view,
+                CapabilityCatalog::DUE_DILIGENCE_VIEW,
+            ],
+
+            StandardAccessProfile::AuditorViewer => $view,
+
+            StandardAccessProfile::ExternalAccountantLegalAdvisor => [
+                ...$view,
+                CapabilityCatalog::DUE_DILIGENCE_VIEW,
+            ],
         };
     }
 }

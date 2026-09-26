@@ -15,13 +15,66 @@ use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use App\Infrastructure\Persistence\Eloquent\Members\Membership;
+use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Redis;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 final class GovernanceWorkspacePageTest extends TestCase
 {
     use RefreshDatabase;
+
+    /** @var array<string, true> */
+    private array $capturedSessionIds = [];
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->capturedSessionIds = [];
+
+        $this->app['events']->listen(
+            RequestHandled::class,
+            function (RequestHandled $event): void {
+                if (! $event->request->hasSession()) {
+                    return;
+                }
+
+                $sessionId =
+                    $event->request->session()->getId();
+
+                if ($sessionId !== '') {
+                    $this->capturedSessionIds[$sessionId] = true;
+                }
+            },
+        );
+    }
+
+    protected function tearDown(): void
+    {
+        try {
+            if (
+                config('session.driver') === 'redis'
+                && $this->capturedSessionIds !== []
+            ) {
+                $sessionPrefix =
+                    (string) config('session.prefix', '');
+
+                $redis = Redis::connection('default');
+
+                foreach (
+                    array_keys($this->capturedSessionIds) as $sessionId
+                ) {
+                    $redis->del(
+                        $sessionPrefix.$sessionId,
+                    );
+                }
+            }
+        } finally {
+            parent::tearDown();
+        }
+    }
 
     public function test_workspace_owner_can_open_zero_state_governance_command_center_without_receiving_governance_authority(): void
     {

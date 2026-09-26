@@ -212,7 +212,11 @@ final class EvidencePrivacyTest extends TestCase
         );
 
         $this->assertSame(
-            ['formal_record_version', 'proposal_version'],
+            [
+                'formal_record_version',
+                'proposal_version',
+                'contribution',
+            ],
             $registry->supportedTypes(),
         );
 

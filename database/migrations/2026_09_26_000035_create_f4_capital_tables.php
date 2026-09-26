@@ -174,11 +174,16 @@ SQL);
 
     public function down(): void
     {
+        /*
+         * capital_plan_promotions owns a trigger that depends on
+         * pbr_protect_capital_plan_promotion(). Drop the table first so the
+         * trigger is removed before its shared function, without CASCADE.
+         */
+        Schema::dropIfExists('capital_plan_promotions');
+        Schema::dropIfExists('capital_scenarios');
+
         DB::unprepared(
             'DROP FUNCTION IF EXISTS pbr_protect_capital_plan_promotion();',
         );
-
-        Schema::dropIfExists('capital_plan_promotions');
-        Schema::dropIfExists('capital_scenarios');
     }
 };

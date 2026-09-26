@@ -15,13 +15,56 @@ use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use App\Infrastructure\Persistence\Eloquent\Members\Membership;
+use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Redis;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 final class F4FormationPageTest extends TestCase
 {
     use RefreshDatabase;
+
+    /**
+     * @var list<string>
+     */
+    private array $capturedSessionIds = [];
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->app['events']->listen(
+            RequestHandled::class,
+            function (RequestHandled $event): void {
+                if (! $event->request->hasSession()) {
+                    return;
+                }
+
+                $sessionId = $event->request->session()->getId();
+
+                if ($sessionId !== '') {
+                    $this->capturedSessionIds[] = $sessionId;
+                }
+            },
+        );
+    }
+
+    protected function tearDown(): void
+    {
+        try {
+            if (config('session.driver') === 'redis') {
+                $redis = Redis::connection('default');
+                $prefix = (string) config('session.prefix', '');
+
+                foreach (array_unique($this->capturedSessionIds) as $sessionId) {
+                    $redis->del($prefix.$sessionId);
+                }
+            }
+        } finally {
+            parent::tearDown();
+        }
+    }
 
     public function test_workspace_owner_can_open_new_business_formation_workspace(): void
     {

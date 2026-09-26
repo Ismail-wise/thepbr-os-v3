@@ -44,6 +44,18 @@ final class CapabilityCatalog
 
     public const string CAPITAL_MANAGE = 'capital.manage';
 
+    public const string PARTNERS_VIEW = 'partners.view';
+
+    public const string PARTNERS_MANAGE = 'partners.manage';
+
+    public const string DUE_DILIGENCE_VIEW = 'due_diligence.view';
+
+    public const string DUE_DILIGENCE_MANAGE = 'due_diligence.manage';
+
+    public const string CONTRIBUTIONS_VIEW = 'contributions.view';
+
+    public const string CONTRIBUTIONS_MANAGE = 'contributions.manage';
+
     /**
      * System capabilities only.
      *
@@ -53,9 +65,15 @@ final class CapabilityCatalog
      *
      * @return list<string>
      */
+    public const OWNERSHIP_VIEW = 'ownership.view';
+
+    public const OWNERSHIP_MANAGE = 'ownership.manage';
+
     public static function all(): array
     {
         return [
+            self::OWNERSHIP_VIEW,
+            self::OWNERSHIP_MANAGE,
             self::PERMISSION_PROFILES_VIEW,
             self::RECORDS_VIEW,
             self::RECORDS_MANAGE,
@@ -75,6 +93,12 @@ final class CapabilityCatalog
             self::LEGAL_MANAGE,
             self::CAPITAL_VIEW,
             self::CAPITAL_MANAGE,
+            self::PARTNERS_VIEW,
+            self::PARTNERS_MANAGE,
+            self::DUE_DILIGENCE_VIEW,
+            self::DUE_DILIGENCE_MANAGE,
+            self::CONTRIBUTIONS_VIEW,
+            self::CONTRIBUTIONS_MANAGE,
         ];
     }
 }

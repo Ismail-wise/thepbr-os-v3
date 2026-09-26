@@ -321,10 +321,6 @@ SQL);
 
     public function down(): void
     {
-        DB::unprepared(
-            'DROP FUNCTION IF EXISTS pbr_protect_formation_direction_history();',
-        );
-
         Schema::dropIfExists('valuations');
         Schema::dropIfExists('partnership_conversion_plans');
         Schema::dropIfExists('gap_assessments');
@@ -344,5 +340,9 @@ SQL);
         Schema::dropIfExists('formation_assumptions');
         Schema::dropIfExists('business_model_canvases');
         Schema::dropIfExists('business_ideas');
+
+        DB::unprepared(
+            'DROP FUNCTION IF EXISTS pbr_protect_formation_direction_history();',
+        );
     }
 };

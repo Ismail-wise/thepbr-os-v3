@@ -6,6 +6,7 @@ namespace App\Application\Evidence;
 
 use App\Application\Documents\AuthorizeDocumentAccess;
 use App\Application\Events\RecordBusinessOccurrence;
+use App\Domain\Access\CapabilityCatalog;
 use App\Domain\Audit\ValueObjects\AuditActor;
 use App\Domain\Audit\ValueObjects\SafeAuditMetadata;
 use App\Domain\Documents\Enums\DocumentAccessRight;
@@ -38,6 +39,20 @@ final class LinkEvidence
                 $user,
                 $currentBusiness,
                 'records.manage',
+            ) === null
+        ) {
+            return null;
+        }
+
+        $targetCapability =
+            $this->targets->requiredManageCapability($targetType);
+
+        if (
+            $targetCapability !== CapabilityCatalog::RECORDS_MANAGE
+            && $this->authorization->activeMembershipWithCapability(
+                $user,
+                $currentBusiness,
+                $targetCapability,
             ) === null
         ) {
             return null;

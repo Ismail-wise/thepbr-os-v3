@@ -1480,6 +1480,121 @@ jobs:
 
           echo "F4 deterministic browser journey: PASS"
 
+      - name: Run deterministic F5 partnership structure browser journey
+        run: |
+          set -Eeuo pipefail
+
+          server_pid=""
+
+          cleanup() {
+            status=$?
+            trap - EXIT
+
+            unset F5_E2E_PASSWORD || true
+
+            if [[ -n "$server_pid" ]]; then
+              kill -- "-$server_pid" >/dev/null 2>&1 || true
+              wait "$server_pid" >/dev/null 2>&1 || true
+            fi
+
+            for attempt in $(seq 1 50); do
+              if ! ss -H -ltn 'sport = :8000' | grep -q .; then
+                break
+              fi
+
+              sleep 0.1
+            done
+
+            if ss -H -ltn 'sport = :8000' | grep -q .; then
+              echo "F5 E2E server cleanup left port 8000 occupied." >&2
+              ss -H -ltnp 'sport = :8000' || true
+              status=1
+            fi
+
+            if [[ "$status" -ne 0 && -f /tmp/f5-e2e-server.log ]]; then
+              echo "Laravel F5 E2E server log:"
+              tail -n 160 /tmp/f5-e2e-server.log || true
+            fi
+
+            exit "$status"
+          }
+
+          trap cleanup EXIT
+
+          test -f tests/E2E/f5-partnership-structure.spec.ts
+          test -f tests/E2E/support/prepare-f5-e2e.php
+
+          f5_e2e_password="PbrF5_$(openssl rand -hex 32)"
+
+          if [[ -z "$f5_e2e_password" ]]; then
+            echo "Failed to generate disposable F5 E2E password." >&2
+            exit 1
+          fi
+
+          echo "::add-mask::$f5_e2e_password"
+
+          export F5_E2E_PASSWORD="$f5_e2e_password"
+
+          php artisan migrate:fresh --force
+
+          fixture_output="$(
+            php tests/E2E/support/prepare-f5-e2e.php
+          )"
+
+          printf '%s\n' "$fixture_output"
+
+          printf '%s\n' "$fixture_output" |
+            grep -qx 'F5_E2E_FIXTURE=PASS'
+
+          unset F5_E2E_PASSWORD
+
+          if ss -H -ltn 'sport = :8000' | grep -q .; then
+            echo "F5 E2E refused occupied port 8000." >&2
+            ss -H -ltnp 'sport = :8000' || true
+            exit 1
+          fi
+
+          setsid php artisan serve \
+            --host=127.0.0.1 \
+            --port=8000 \
+            >/tmp/f5-e2e-server.log 2>&1 &
+
+          server_pid=$!
+
+          ready=0
+
+          for attempt in $(seq 1 30); do
+            if curl \
+              --fail \
+              --silent \
+              --show-error \
+              --max-time 2 \
+              http://127.0.0.1:8000/login \
+              >/dev/null
+            then
+              ready=1
+              break
+            fi
+
+            sleep 1
+          done
+
+          if [[ "$ready" != "1" ]]; then
+            echo "Laravel F5 E2E server did not become ready." >&2
+            exit 1
+          fi
+
+          export F5_E2E_PASSWORD="$f5_e2e_password"
+
+          npm run test:e2e -- \
+            --project=chromium-desktop \
+            tests/E2E/f5-partnership-structure.spec.ts
+
+          unset F5_E2E_PASSWORD
+          unset f5_e2e_password
+
+          echo "F5 deterministic browser journey: PASS"
+
       - name: Stop disposable Redis E2E service
         if: always()
         run: |
