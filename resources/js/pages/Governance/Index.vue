@@ -5,10 +5,41 @@ import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
 
 type LanguageMode = 'en' | 'my' | 'mixed';
 
+type RecordVersionRow = {
+    id: string;
+    versionNumber: number;
+    state: string | null;
+};
+
+type ProposalVersionRow = {
+    id: string;
+    proposalId: string;
+    versionNumber: number;
+    proposalRevision: number;
+    proposalContentHash: string;
+    snapshotHash: string;
+    frozenAt: string | null;
+    recordVersions: RecordVersionRow[];
+    review: null | {
+        id: string;
+        reviewerMembershipId: string;
+        status: string;
+        outcome: string | null;
+        notes: string | null;
+        dueAt: string | null;
+        resolvedAt: string | null;
+    };
+    decisionIds: string[];
+    canCreateReview: boolean;
+    canCompleteReview: boolean;
+    canOpenDecision: boolean;
+};
+
 type DecisionRow = {
     id: string;
     proposalVersionId: string;
     recordVersionIds: string[];
+    recordVersions: RecordVersionRow[];
     type: string;
     amount: string | null;
     status: string;
@@ -138,6 +169,7 @@ type GovernanceWorkspace = {
         pendingSignatures: number;
         openActions: number;
     };
+    proposalVersions: ProposalVersionRow[];
     decisions: DecisionRow[];
     signatureRequests: SignatureRow[];
     actions: ActionRow[];
@@ -217,6 +249,17 @@ const copy = {
         bootstrap: 'Temporary Formation Authority',
         effectiveAuthority: 'Current Effective Authority',
         noAuthority: 'No authority source',
+        proposalFlow: 'Frozen Proposal Version History',
+        proposalVersion: 'Proposal Version',
+        proposalReview: 'Proposal Review',
+        startReview: 'Start my review',
+        approveReview: 'Approve review',
+        requestChanges: 'Request changes',
+        rejectReview: 'Reject review',
+        openDecision: 'Open decision',
+        decisionType: 'Decision type',
+        decisionAmount: 'Decision amount (optional)',
+        createRecordReview: 'Create post-effect review',
         noRows: 'No authorized records are visible.',
     },
     my: {
@@ -273,6 +316,17 @@ const copy = {
         bootstrap: 'ယာယီ Formation Authority',
         effectiveAuthority: 'လက်ရှိ Effective Authority',
         noAuthority: 'ဆုံးဖြတ်ပိုင်ခွင့် Source မရှိသေးပါ',
+        proposalFlow: 'Frozen Proposal Version မှတ်တမ်း',
+        proposalVersion: 'Proposal Version',
+        proposalReview: 'Proposal ပြန်လည်သုံးသပ်မှု',
+        startReview: 'ကျွန်ုပ် ပြန်လည်သုံးသပ်မည်',
+        approveReview: 'Review အတည်ပြုမည်',
+        requestChanges: 'ပြင်ဆင်ရန် ပြန်ပို့မည်',
+        rejectReview: 'Review ပယ်ချမည်',
+        openDecision: 'ဆုံးဖြတ်ချက် စတင်မည်',
+        decisionType: 'ဆုံးဖြတ်ချက် အမျိုးအစား',
+        decisionAmount: 'ဆုံးဖြတ်မည့်ပမာဏ (ရှိလျှင်)',
+        createRecordReview: 'Effective record ကို ပြန်လည်သုံးသပ်မည်',
         noRows: 'သင်ကြည့်ရှုခွင့်ရှိသော မှတ်တမ်း မရှိသေးပါ။',
     },
     mixed: {
@@ -329,6 +383,17 @@ const copy = {
         bootstrap: 'Temporary Formation Authority',
         effectiveAuthority: 'Current Effective Authority',
         noAuthority: 'No authority source',
+        proposalFlow: 'Frozen Proposal Version History · Version မှတ်တမ်း',
+        proposalVersion: 'Proposal Version',
+        proposalReview: 'Proposal Review · ပြန်လည်သုံးသပ်မှု',
+        startReview: 'Start my review · Review စ',
+        approveReview: 'Approve review · အတည်ပြု',
+        requestChanges: 'Request changes · ပြင်ဆင်ရန်ပြန်ပို့',
+        rejectReview: 'Reject review · ပယ်ချ',
+        openDecision: 'Open decision · ဆုံးဖြတ်ချက်စ',
+        decisionType: 'Decision type',
+        decisionAmount: 'Decision amount · ပမာဏ',
+        createRecordReview: 'Create post-effect review',
         noRows: 'No authorized records are visible.',
     },
 } as const;
@@ -349,6 +414,8 @@ const actionAssignees = reactive<Record<string, string>>({});
 const actionDueDates = reactive<Record<string, string>>({});
 const recusalReasons = reactive<Record<string, string>>({});
 const blockedReasons = reactive<Record<string, string>>({});
+const proposalDecisionTypes = reactive<Record<string, string>>({});
+const proposalDecisionAmounts = reactive<Record<string, string>>({});
 
 const authorityLabel = computed(() => {
     const authorityMode = props.governance.authority?.authority_mode ?? 'none';
@@ -499,6 +566,238 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                             </tr>
                             <tr v-if="(governance.authority?.rules.length ?? 0) === 0">
                                 <td colspan="3" class="px-3 py-5 text-slate-600">
+                                    {{ c.noRows }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="border-b border-slate-200 py-6">
+                <div class="flex items-center justify-between gap-4">
+                    <h2 class="text-lg font-semibold text-slate-950">
+                        {{ c.proposalFlow }}
+                    </h2>
+                    <span class="text-xs font-semibold text-slate-500">
+                        {{ governance.proposalVersions.length }}
+                    </span>
+                </div>
+
+                <div class="mt-4 overflow-x-auto">
+                    <table class="min-w-full border-collapse text-left text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-300 text-slate-600">
+                                <th class="px-3 py-3 font-semibold">
+                                    {{ c.proposalVersion }}
+                                </th>
+                                <th class="px-3 py-3 font-semibold">
+                                    {{ c.proposalReview }}
+                                </th>
+                                <th class="px-3 py-3 font-semibold">
+                                    {{ c.state }}
+                                </th>
+                                <th class="px-3 py-3 font-semibold">
+                                    {{ c.controls }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="row in governance.proposalVersions"
+                                :key="row.id"
+                                class="border-b border-slate-200 align-top"
+                            >
+                                <td class="min-w-72 px-3 py-4">
+                                    <p class="font-semibold text-slate-950">
+                                        v{{ row.versionNumber }}
+                                        · revision {{ row.proposalRevision }}
+                                    </p>
+                                    <code
+                                        class="mt-1 block break-all text-[10px] text-slate-500"
+                                    >
+                                        {{ row.id }}
+                                    </code>
+                                    <p class="mt-2 break-all font-mono text-[10px] text-slate-500">
+                                        SHA-256 {{ row.proposalContentHash }}
+                                    </p>
+                                    <p class="mt-1 text-xs text-slate-500">
+                                        {{ formatDate(row.frozenAt) }}
+                                    </p>
+                                </td>
+
+                                <td class="min-w-48 px-3 py-4">
+                                    <template v-if="row.review">
+                                        <p class="font-semibold text-slate-800">
+                                            {{ row.review.status }}
+                                        </p>
+                                        <p
+                                            v-if="row.review.outcome"
+                                            class="mt-1 text-xs text-slate-600"
+                                        >
+                                            {{ row.review.outcome }}
+                                        </p>
+                                    </template>
+                                    <span v-else>—</span>
+                                </td>
+
+                                <td class="min-w-56 px-3 py-4">
+                                    <div
+                                        v-for="recordVersion in row.recordVersions"
+                                        :key="recordVersion.id"
+                                        class="mb-2"
+                                    >
+                                        <code
+                                            class="block break-all text-[10px] text-slate-500"
+                                        >
+                                            {{ recordVersion.id }}
+                                        </code>
+                                        <span class="text-xs font-semibold text-slate-700">
+                                            v{{ recordVersion.versionNumber }}
+                                            · {{ recordVersion.state ?? '—' }}
+                                        </span>
+                                    </div>
+
+                                    <p
+                                        v-if="row.decisionIds.length > 0"
+                                        class="mt-2 text-xs text-slate-600"
+                                    >
+                                        Decision {{ row.decisionIds.length }}
+                                    </p>
+                                </td>
+
+                                <td class="min-w-96 px-3 py-4">
+                                    <button
+                                        v-if="row.canCreateReview"
+                                        type="button"
+                                        class="min-h-10 border border-slate-300 bg-white px-3 text-xs font-semibold"
+                                        @click="
+                                            post(
+                                                `/governance/proposal-versions/${row.id}/reviews`,
+                                                {
+                                                    reviewer_membership_id:
+                                                        governance.membership.id,
+                                                },
+                                            )
+                                        "
+                                    >
+                                        {{ c.startReview }}
+                                    </button>
+
+                                    <div
+                                        v-if="
+                                            row.review &&
+                                            row.canCompleteReview
+                                        "
+                                        class="flex flex-wrap gap-2"
+                                    >
+                                        <button
+                                            type="button"
+                                            class="min-h-10 border border-slate-900 bg-slate-900 px-3 text-xs font-semibold text-white"
+                                            @click="
+                                                post(
+                                                    `/governance/proposal-reviews/${row.review.id}/complete`,
+                                                    { outcome: 'approved' },
+                                                )
+                                            "
+                                        >
+                                            {{ c.approveReview }}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="min-h-10 border border-slate-300 bg-white px-3 text-xs font-semibold"
+                                            @click="
+                                                post(
+                                                    `/governance/proposal-reviews/${row.review.id}/complete`,
+                                                    {
+                                                        outcome:
+                                                            'changes_requested',
+                                                    },
+                                                )
+                                            "
+                                        >
+                                            {{ c.requestChanges }}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="min-h-10 border border-slate-300 bg-white px-3 text-xs font-semibold"
+                                            @click="
+                                                post(
+                                                    `/governance/proposal-reviews/${row.review.id}/complete`,
+                                                    { outcome: 'rejected' },
+                                                )
+                                            "
+                                        >
+                                            {{ c.rejectReview }}
+                                        </button>
+                                    </div>
+
+                                    <div
+                                        v-if="row.canOpenDecision"
+                                        class="mt-3 grid max-w-xl gap-2 sm:grid-cols-2"
+                                    >
+                                        <select
+                                            v-model="proposalDecisionTypes[row.id]"
+                                            class="min-h-10 border border-slate-300 bg-white px-2 text-xs"
+                                        >
+                                            <option value="">
+                                                {{ c.decisionType }}
+                                            </option>
+                                            <option
+                                                v-for="rule in governance.authority?.rules ?? []"
+                                                :key="rule.id"
+                                                :value="rule.decision_type"
+                                            >
+                                                {{ rule.decision_type }}
+                                            </option>
+                                        </select>
+
+                                        <input
+                                            v-model="proposalDecisionAmounts[row.id]"
+                                            class="min-h-10 border border-slate-300 px-3 text-xs"
+                                            :placeholder="c.decisionAmount"
+                                        />
+
+                                        <button
+                                            type="button"
+                                            class="min-h-10 border border-slate-900 bg-slate-900 px-3 text-xs font-semibold text-white sm:col-span-2"
+                                            :disabled="
+                                                !(
+                                                    proposalDecisionTypes[row.id] ||
+                                                    governance.authority?.rules?.[0]
+                                                        ?.decision_type
+                                                )
+                                            "
+                                            @click="
+                                                post(
+                                                    `/governance/proposal-versions/${row.id}/decisions`,
+                                                    {
+                                                        decision_type:
+                                                            proposalDecisionTypes[
+                                                                row.id
+                                                            ] ||
+                                                            governance.authority
+                                                                ?.rules?.[0]
+                                                                ?.decision_type ||
+                                                            '',
+                                                        decision_amount:
+                                                            proposalDecisionAmounts[
+                                                                row.id
+                                                            ] || null,
+                                                    },
+                                                )
+                                            "
+                                        >
+                                            {{ c.openDecision }}
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr v-if="governance.proposalVersions.length === 0">
+                                <td colspan="4" class="px-3 py-5 text-slate-600">
                                     {{ c.noRows }}
                                 </td>
                             </tr>
@@ -742,6 +1041,8 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                     <div
                                         v-if="
                                             decision.actions.canAdminister &&
+                                            decision.status === 'decided' &&
+                                            decision.outcome === 'approved' &&
                                             governance.activeMemberships.length > 0
                                         "
                                         class="mt-3 grid max-w-xl gap-2 sm:grid-cols-2"
@@ -805,19 +1106,25 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                             decision.actions.canAdminister &&
                                             decision.status === 'decided' &&
                                             decision.outcome === 'approved' &&
-                                            decision.recordVersionIds.length > 0
+                                            decision.recordVersions.length > 0
                                         "
                                         class="mt-3 space-y-2"
                                     >
                                         <div
-                                            v-for="versionId in decision.recordVersionIds"
-                                            :key="versionId"
+                                            v-for="recordVersion in decision.recordVersions"
+                                            :key="recordVersion.id"
                                             class="flex flex-wrap items-center gap-2"
                                         >
                                             <code class="break-all text-[11px] text-slate-500">
-                                                {{ versionId }}
+                                                {{ recordVersion.id }}
                                             </code>
+
+                                            <span class="text-xs font-semibold text-slate-600">
+                                                {{ recordVersion.state ?? '—' }}
+                                            </span>
+
                                             <button
+                                                v-if="recordVersion.state === 'approved'"
                                                 type="button"
                                                 class="min-h-9 border border-slate-300 bg-white px-2 text-xs font-semibold"
                                                 @click="
@@ -825,24 +1132,47 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                                         `/governance/decisions/${decision.id}/prepare-effect`,
                                                         {
                                                             formal_record_version_id:
-                                                                versionId,
+                                                                recordVersion.id,
                                                         },
                                                     )
                                                 "
                                             >
                                                 {{ c.prepare }}
                                             </button>
+
                                             <button
+                                                v-if="
+                                                    recordVersion.state ===
+                                                    'ready_for_effect'
+                                                "
                                                 type="button"
                                                 class="min-h-9 border border-slate-900 bg-slate-900 px-2 text-xs font-semibold text-white"
                                                 @click="
                                                     makeEffective(
                                                         decision,
-                                                        versionId,
+                                                        recordVersion.id,
                                                     )
                                                 "
                                             >
                                                 {{ c.effective }}
+                                            </button>
+
+                                            <button
+                                                v-if="recordVersion.state === 'effective'"
+                                                type="button"
+                                                class="min-h-9 border border-slate-300 bg-white px-2 text-xs font-semibold"
+                                                @click="
+                                                    post(
+                                                        `/governance/record-versions/${recordVersion.id}/reviews`,
+                                                        {
+                                                            reviewer_membership_id:
+                                                                governance.membership
+                                                                    .id,
+                                                        },
+                                                    )
+                                                "
+                                            >
+                                                {{ c.createRecordReview }}
                                             </button>
                                         </div>
                                     </div>

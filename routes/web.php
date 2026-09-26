@@ -53,6 +53,26 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
             )->name('governance.index');
 
             Route::post(
+                '/governance/proposal-versions/{proposalVersion}/reviews',
+                [GovernanceWorkspaceController::class, 'createProposalReview'],
+            )->name('governance.proposal-reviews.store');
+
+            Route::post(
+                '/governance/proposal-reviews/{proposalReview}/complete',
+                [GovernanceWorkspaceController::class, 'completeProposalReview'],
+            )->name('governance.proposal-reviews.complete');
+
+            Route::post(
+                '/governance/proposal-versions/{proposalVersion}/decisions',
+                [GovernanceWorkspaceController::class, 'openDecision'],
+            )->name('governance.proposal-versions.decisions.store');
+
+            Route::post(
+                '/governance/record-versions/{formalRecordVersion}/reviews',
+                [GovernanceWorkspaceController::class, 'createReview'],
+            )->name('governance.record-reviews.store');
+
+            Route::post(
                 '/governance/decisions/{decision}/approvals',
                 [GovernanceWorkspaceController::class, 'approval'],
             )->name('governance.decisions.approvals.store');

@@ -23,6 +23,7 @@ use App\Infrastructure\Persistence\Eloquent\Governance\Decision;
 use App\Infrastructure\Persistence\Eloquent\Governance\FormationAuthorityEstablishment;
 use App\Infrastructure\Persistence\Eloquent\Governance\FormationAuthorityPolicyActor;
 use App\Infrastructure\Persistence\Eloquent\Governance\FormationAuthorityPolicyRule;
+use App\Infrastructure\Persistence\Eloquent\Governance\ProposalReview;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use App\Infrastructure\Persistence\Eloquent\Members\Membership;
 use App\Infrastructure\Persistence\Eloquent\Records\FormalRecordFamily;
@@ -289,6 +290,25 @@ final class F3CriticalBehaviorTest extends TestCase
             'frozen_by_user_id' => $manager->getKey(),
             'frozen_at' => now(),
         ]);
+
+        $proposalReview = ProposalReview::query()->create([
+            'business_id' => $business->getKey(),
+            'proposal_version_id' => $proposalVersion->getKey(),
+            'reviewer_membership_id' => $managerMembership->getKey(),
+            'created_by_membership_id' => $managerMembership->getKey(),
+            'status' => 'open',
+            'outcome' => null,
+            'notes' => null,
+            'due_at' => null,
+            'resolved_at' => null,
+        ]);
+
+        $proposalReview->fill([
+            'status' => 'completed',
+            'outcome' => 'approved',
+            'notes' => 'Approved test fixture review.',
+            'resolved_at' => now(),
+        ])->save();
 
         $decision = $this->app->make(OpenGovernanceDecision::class)->execute(
             $manager,

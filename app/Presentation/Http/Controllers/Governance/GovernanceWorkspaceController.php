@@ -6,14 +6,18 @@ namespace App\Presentation\Http\Controllers\Governance;
 
 use App\Application\Governance\CastGovernanceVote;
 use App\Application\Governance\CompleteGovernanceReview;
+use App\Application\Governance\CompleteProposalReview;
 use App\Application\Governance\CompleteSignatureRequest;
 use App\Application\Governance\CreateAmendmentRequest;
 use App\Application\Governance\CreateGovernanceAction;
+use App\Application\Governance\CreateGovernanceReview;
+use App\Application\Governance\CreateProposalReview;
 use App\Application\Governance\CreateSignatureRequest;
 use App\Application\Governance\DeclineSignatureRequest;
 use App\Application\Governance\GetGovernanceCommandCenter;
 use App\Application\Governance\MakeGovernedRecordEffective;
 use App\Application\Governance\MarkGovernanceNotificationRead;
+use App\Application\Governance\OpenGovernanceDecision;
 use App\Application\Governance\PrepareGovernedRecordForEffect;
 use App\Application\Governance\RecordGovernanceApproval;
 use App\Application\Governance\RecuseGovernanceDecisionParticipant;
@@ -24,8 +28,10 @@ use App\Application\Governance\SignGovernanceDocument;
 use App\Application\Governance\UpdateGovernanceActionStatus;
 use App\Domain\Governance\Enums\ActionStatus;
 use App\Domain\Governance\Enums\ApprovalOutcome;
+use App\Domain\Governance\Enums\ProposalReviewOutcome;
 use App\Domain\Governance\Enums\ReviewOutcome;
 use App\Domain\Governance\Enums\VoteChoice;
+use App\Domain\Governance\ValueObjects\DecisionType;
 use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
@@ -58,6 +64,125 @@ final class GovernanceWorkspaceController
         return Inertia::render('Governance/Index', [
             'governance' => $workspace,
         ]);
+    }
+
+    public function createProposalReview(
+        Request $request,
+        string $proposalVersion,
+        CreateProposalReview $createProposalReview,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $validated = $request->validate([
+            'reviewer_membership_id' => ['required', 'uuid'],
+            'due_at' => ['nullable', 'date_format:Y-m-d'],
+        ]);
+
+        $review = $createProposalReview->execute(
+            $user,
+            $business,
+            $proposalVersion,
+            $validated['reviewer_membership_id'],
+            isset($validated['due_at'])
+                ? CarbonImmutable::parse(
+                    $validated['due_at'],
+                )->endOfDay()
+                : null,
+        );
+
+        abort_if($review === null, 404);
+
+        return back();
+    }
+
+    public function completeProposalReview(
+        Request $request,
+        string $proposalReview,
+        CompleteProposalReview $completeProposalReview,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $validated = $request->validate([
+            'outcome' => [
+                'required',
+                Rule::enum(ProposalReviewOutcome::class),
+            ],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $review = $completeProposalReview->execute(
+            $user,
+            $business,
+            $proposalReview,
+            ProposalReviewOutcome::from($validated['outcome']),
+            $validated['notes'] ?? null,
+        );
+
+        abort_if($review === null, 404);
+
+        return back();
+    }
+
+    public function openDecision(
+        Request $request,
+        string $proposalVersion,
+        OpenGovernanceDecision $openDecision,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $validated = $request->validate([
+            'decision_type' => ['required', 'string', 'max:160'],
+            'decision_amount' => ['nullable', 'string', 'max:32'],
+        ]);
+
+        try {
+            $decision = $openDecision->execute(
+                $user,
+                $business,
+                $proposalVersion,
+                new DecisionType(
+                    trim($validated['decision_type']),
+                ),
+                $validated['decision_amount'] ?? null,
+            );
+        } catch (InvalidArgumentException|RuntimeException $exception) {
+            throw ValidationException::withMessages([
+                'decision_type' => $exception->getMessage(),
+            ]);
+        }
+
+        abort_if($decision === null, 404);
+
+        return back();
+    }
+
+    public function createReview(
+        Request $request,
+        string $formalRecordVersion,
+        CreateGovernanceReview $createReview,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $validated = $request->validate([
+            'reviewer_membership_id' => ['required', 'uuid'],
+            'due_at' => ['nullable', 'date_format:Y-m-d'],
+        ]);
+
+        $review = $createReview->execute(
+            $user,
+            $business,
+            $formalRecordVersion,
+            $validated['reviewer_membership_id'],
+            isset($validated['due_at'])
+                ? CarbonImmutable::parse(
+                    $validated['due_at'],
+                )->endOfDay()
+                : null,
+        );
+
+        abort_if($review === null, 404);
+
+        return back();
     }
 
     public function approval(

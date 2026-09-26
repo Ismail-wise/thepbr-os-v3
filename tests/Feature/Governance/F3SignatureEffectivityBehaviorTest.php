@@ -30,6 +30,7 @@ use App\Infrastructure\Persistence\Eloquent\Governance\Decision;
 use App\Infrastructure\Persistence\Eloquent\Governance\FormationAuthorityEstablishment;
 use App\Infrastructure\Persistence\Eloquent\Governance\FormationAuthorityPolicyActor;
 use App\Infrastructure\Persistence\Eloquent\Governance\FormationAuthorityPolicyRule;
+use App\Infrastructure\Persistence\Eloquent\Governance\ProposalReview;
 use App\Infrastructure\Persistence\Eloquent\Governance\Signature;
 use App\Infrastructure\Persistence\Eloquent\Governance\SignatureParticipant;
 use App\Infrastructure\Persistence\Eloquent\Governance\SignatureRequest;
@@ -445,6 +446,25 @@ final class F3SignatureEffectivityBehaviorTest extends TestCase
             'formal_record_version_id' => $governedRecord->getKey(),
             'captured_content_hash' => $governedRecord->content_hash,
         ]);
+
+        $proposalReview = ProposalReview::query()->create([
+            'business_id' => $business->getKey(),
+            'proposal_version_id' => $proposalVersion->getKey(),
+            'reviewer_membership_id' => $managerMembership->getKey(),
+            'created_by_membership_id' => $managerMembership->getKey(),
+            'status' => 'open',
+            'outcome' => null,
+            'notes' => null,
+            'due_at' => null,
+            'resolved_at' => null,
+        ]);
+
+        $proposalReview->fill([
+            'status' => 'completed',
+            'outcome' => 'approved',
+            'notes' => 'Approved signature test fixture review.',
+            'resolved_at' => now(),
+        ])->save();
 
         $decision = $this->app->make(OpenGovernanceDecision::class)->execute(
             $manager,

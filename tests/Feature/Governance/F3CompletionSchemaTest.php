@@ -21,6 +21,7 @@ final class F3CompletionSchemaTest extends TestCase
             'governance_delegations',
             'emergency_authority_grants',
             'governance_notifications',
+            'proposal_reviews',
         ] as $table) {
             $this->assertTrue(Schema::hasTable($table));
         }
@@ -71,6 +72,8 @@ final class F3CompletionSchemaTest extends TestCase
                    'signature_participants',
                    'signatures',
                    'actions',
+                   'decisions',
+                   'proposal_reviews',
                    'governance_delegations',
                    'emergency_authority_grants',
                    'governance_notifications'
@@ -84,6 +87,9 @@ final class F3CompletionSchemaTest extends TestCase
             'signature_participants_validate',
             'signatures_validate',
             'actions_protect_history',
+            'proposal_reviews_validate_insert',
+            'proposal_reviews_protect_history',
+            'decisions_require_approved_proposal_review',
             'governance_delegations_protect_history',
             'emergency_authority_grants_protect_history',
             'governance_notifications_protect_history',

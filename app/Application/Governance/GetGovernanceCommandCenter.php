@@ -15,6 +15,7 @@ use App\Infrastructure\Persistence\Eloquent\Governance\Approval;
 use App\Infrastructure\Persistence\Eloquent\Governance\AuthoritySnapshot;
 use App\Infrastructure\Persistence\Eloquent\Governance\Decision;
 use App\Infrastructure\Persistence\Eloquent\Governance\DecisionParticipant;
+use App\Infrastructure\Persistence\Eloquent\Governance\ProposalReview;
 use App\Infrastructure\Persistence\Eloquent\Governance\Review;
 use App\Infrastructure\Persistence\Eloquent\Governance\Signature;
 use App\Infrastructure\Persistence\Eloquent\Governance\SignatureParticipant;
@@ -22,7 +23,10 @@ use App\Infrastructure\Persistence\Eloquent\Governance\SignatureRequest;
 use App\Infrastructure\Persistence\Eloquent\Governance\Vote;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use App\Infrastructure\Persistence\Eloquent\Members\Membership;
+use App\Infrastructure\Persistence\Eloquent\Records\FormalRecordVersion;
+use App\Infrastructure\Persistence\Eloquent\Records\ProposalVersion;
 use App\Infrastructure\Persistence\Eloquent\Records\ProposalVersionRecord;
+use App\Infrastructure\Persistence\Eloquent\Records\RecordVersionStateTransition;
 use DateTimeInterface;
 
 final class GetGovernanceCommandCenter
@@ -75,6 +79,199 @@ final class GetGovernanceCommandCenter
         $businessId = (string) $business->getKey();
         $membershipId = (string) $membership->getKey();
 
+        $recordRowsForProposalVersion = function (
+            string $proposalVersionId,
+        ) use (
+            $user,
+            $business,
+            $businessId,
+        ): array {
+            return ProposalVersionRecord::query()
+                ->where('business_id', $businessId)
+                ->where(
+                    'proposal_version_id',
+                    $proposalVersionId,
+                )
+                ->orderBy('formal_record_version_id')
+                ->get()
+                ->map(function (
+                    ProposalVersionRecord $binding,
+                ) use (
+                    $user,
+                    $business,
+                    $businessId,
+                ): ?array {
+                    $versionId =
+                        (string) $binding->formal_record_version_id;
+
+                    if (! $this->actorContext->canAccessResource(
+                        $user,
+                        $business,
+                        CapabilityCatalog::GOVERNANCE_RECORDS_VIEW,
+                        FormalRecordVersion::class,
+                        $versionId,
+                    )) {
+                        return null;
+                    }
+
+                    $version = FormalRecordVersion::query()
+                        ->where('business_id', $businessId)
+                        ->whereKey($versionId)
+                        ->first();
+
+                    if ($version === null) {
+                        return null;
+                    }
+
+                    $latest = RecordVersionStateTransition::query()
+                        ->where('business_id', $businessId)
+                        ->where(
+                            'formal_record_version_id',
+                            $versionId,
+                        )
+                        ->orderByDesc('sequence')
+                        ->first();
+
+                    return [
+                        'id' => $versionId,
+                        'versionNumber' => (int) $version->version_number,
+                        'state' => $latest === null
+                            ? null
+                            : $latest->to_state->value,
+                    ];
+                })
+                ->filter()
+                ->values()
+                ->all();
+        };
+
+        $proposalVersions = ProposalVersion::query()
+            ->where('business_id', $businessId)
+            ->orderBy('proposal_id')
+            ->orderBy('version_number')
+            ->limit(100)
+            ->get()
+            ->filter(
+                fn (ProposalVersion $version): bool => $this->actorContext->canAccessResource(
+                    $user,
+                    $business,
+                    CapabilityCatalog::GOVERNANCE_RECORDS_VIEW,
+                    ProposalVersion::class,
+                    (string) $version->getKey(),
+                ),
+            )
+            ->map(function (ProposalVersion $version) use (
+                $user,
+                $business,
+                $businessId,
+                $membershipId,
+                $canManageGovernance,
+                $recordRowsForProposalVersion,
+            ): array {
+                $versionId = (string) $version->getKey();
+
+                $review = ProposalReview::query()
+                    ->where('business_id', $businessId)
+                    ->where('proposal_version_id', $versionId)
+                    ->first();
+
+                $reviewVisible = $review !== null
+                    && $this->actorContext->canAccessResource(
+                        $user,
+                        $business,
+                        CapabilityCatalog::GOVERNANCE_RECORDS_VIEW,
+                        ProposalReview::class,
+                        (string) $review->getKey(),
+                    );
+
+                $visibleReview = $reviewVisible
+                    ? $review
+                    : null;
+
+                $visibleDecisions = Decision::query()
+                    ->where('business_id', $businessId)
+                    ->where('proposal_version_id', $versionId)
+                    ->orderBy('opened_at')
+                    ->get()
+                    ->filter(
+                        fn (Decision $decision): bool => $this->actorContext->canAccessResource(
+                            $user,
+                            $business,
+                            CapabilityCatalog::GOVERNANCE_RECORDS_VIEW,
+                            Decision::class,
+                            (string) $decision->getKey(),
+                        ),
+                    )
+                    ->values();
+
+                $decisionExists =
+                    $visibleDecisions->isNotEmpty();
+
+                $canManageProposal = $canManageGovernance
+                    && $this->actorContext->canAccessResource(
+                        $user,
+                        $business,
+                        CapabilityCatalog::GOVERNANCE_RECORDS_MANAGE,
+                        ProposalVersion::class,
+                        $versionId,
+                    );
+
+                $canCompleteReview = $visibleReview !== null
+                    && $visibleReview->status === 'open'
+                    && (string) $visibleReview->reviewer_membership_id
+                        === $membershipId
+                    && $canManageGovernance
+                    && $this->actorContext->canAccessResource(
+                        $user,
+                        $business,
+                        CapabilityCatalog::GOVERNANCE_RECORDS_MANAGE,
+                        ProposalReview::class,
+                        (string) $visibleReview->getKey(),
+                    );
+
+                $canOpenDecision = $visibleReview !== null
+                    && $visibleReview->status === 'completed'
+                    && $visibleReview->outcome?->value === 'approved'
+                    && ! $decisionExists
+                    && $canManageProposal;
+
+                return [
+                    'id' => $versionId,
+                    'proposalId' => (string) $version->proposal_id,
+                    'versionNumber' => (int) $version->version_number,
+                    'proposalRevision' => (int) $version->proposal_revision,
+                    'proposalContentHash' => (string) $version->proposal_content_hash,
+                    'snapshotHash' => (string) $version->snapshot_hash,
+                    'frozenAt' => $this->timestamp($version->frozen_at),
+                    'recordVersions' => $recordRowsForProposalVersion($versionId),
+                    'review' => $visibleReview === null
+                        ? null
+                        : [
+                            'id' => (string) $visibleReview->getKey(),
+                            'reviewerMembershipId' => (string) $visibleReview
+                                ->reviewer_membership_id,
+                            'status' => (string) $visibleReview->status,
+                            'outcome' => $visibleReview->outcome?->value,
+                            'notes' => $visibleReview->notes,
+                            'dueAt' => $this->timestamp(
+                                $visibleReview->due_at,
+                            ),
+                            'resolvedAt' => $this->timestamp(
+                                $visibleReview->resolved_at,
+                            ),
+                        ],
+                    'decisionIds' => $visibleDecisions
+                        ->map(
+                            static fn (Decision $decision): string => (string) $decision->getKey(),
+                        )
+                        ->all(),
+                    'canCreateReview' => $visibleReview === null && $canManageProposal,
+                    'canCompleteReview' => $canCompleteReview,
+                    'canOpenDecision' => $canOpenDecision,
+                ];
+            })
+            ->values();
+
         $decisions = Decision::query()
             ->where('business_id', $businessId)
             ->orderByDesc('opened_at')
@@ -95,6 +292,7 @@ final class GetGovernanceCommandCenter
                 $businessId,
                 $membershipId,
                 $canManageGovernance,
+                $recordRowsForProposalVersion,
             ): array {
                 $decisionId = (string) $decision->getKey();
 
@@ -193,22 +391,20 @@ final class GetGovernanceCommandCenter
                 $isEligible = $participant?->status
                     === ParticipantStatus::Eligible;
 
-                $recordVersionIds = ProposalVersionRecord::query()
-                    ->where('business_id', $businessId)
-                    ->where(
-                        'proposal_version_id',
-                        $decision->proposal_version_id,
-                    )
-                    ->orderBy('formal_record_version_id')
-                    ->pluck('formal_record_version_id')
-                    ->map(static fn (mixed $id): string => (string) $id)
-                    ->values()
-                    ->all();
+                $recordVersions = $recordRowsForProposalVersion(
+                    (string) $decision->proposal_version_id,
+                );
+
+                $recordVersionIds = array_map(
+                    static fn (array $row): string => $row['id'],
+                    $recordVersions,
+                );
 
                 return [
                     'id' => $decisionId,
                     'proposalVersionId' => (string) $decision->proposal_version_id,
                     'recordVersionIds' => $recordVersionIds,
+                    'recordVersions' => $recordVersions,
                     'type' => (string) $decision->decision_type,
                     'amount' => $decision->decision_amount,
                     'status' => $decision->status->value,
@@ -540,13 +736,19 @@ final class GetGovernanceCommandCenter
                 ->all();
         }
 
-        $needsAttention = $decisions
+        $needsAttention = $proposalVersions
             ->filter(
-                static fn (array $decision): bool => $decision['actions']['canApprove']
-                    || $decision['actions']['canVote']
-                    || $decision['actions']['canResolve'],
+                static fn (array $proposal): bool => $proposal['canCompleteReview']
+                    || $proposal['canOpenDecision'],
             )
             ->count()
+            + $decisions
+                ->filter(
+                    static fn (array $decision): bool => $decision['actions']['canApprove']
+                        || $decision['actions']['canVote']
+                        || $decision['actions']['canResolve'],
+                )
+                ->count()
             + $signatureRequests
                 ->filter(
                     static fn (array $request): bool => $request['canSign']
@@ -596,6 +798,7 @@ final class GetGovernanceCommandCenter
                     ->whereNotIn('status', ['completed', 'cancelled'])
                     ->count(),
             ],
+            'proposalVersions' => $proposalVersions->all(),
             'decisions' => $decisions->all(),
             'signatureRequests' => $signatureRequests->all(),
             'actions' => $actions->all(),

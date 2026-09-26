@@ -73,6 +73,7 @@ final class GovernanceWorkspacePageTest extends TestCase
                         'governance.authority.authority_mode',
                         'none',
                     )
+                    ->has('governance.proposalVersions', 0)
                     ->has('governance.decisions', 0)
                     ->has('governance.signatureRequests', 0)
                     ->has('governance.actions', 0)

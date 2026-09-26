@@ -16,6 +16,7 @@ use App\Domain\Events\ValueObjects\SafeBusinessEventPayload;
 use App\Domain\Governance\Enums\DecisionMethod;
 use App\Domain\Governance\Enums\DecisionStatus;
 use App\Domain\Governance\Enums\ParticipantStatus;
+use App\Domain\Governance\Enums\ProposalReviewOutcome;
 use App\Domain\Governance\ValueObjects\DecisionType;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Governance\ApprovalRequirement;
@@ -23,11 +24,13 @@ use App\Infrastructure\Persistence\Eloquent\Governance\AuthoritySnapshot;
 use App\Infrastructure\Persistence\Eloquent\Governance\Decision;
 use App\Infrastructure\Persistence\Eloquent\Governance\DecisionParticipant;
 use App\Infrastructure\Persistence\Eloquent\Governance\FormationAuthorityPolicyActor;
+use App\Infrastructure\Persistence\Eloquent\Governance\ProposalReview;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use App\Infrastructure\Persistence\Eloquent\Records\ProposalVersion;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use JsonException;
+use RuntimeException;
 
 final class OpenGovernanceDecision
 {
@@ -111,6 +114,28 @@ final class OpenGovernanceDecision
 
             if (! $resourceAuthorization->allowed) {
                 return null;
+            }
+
+            $reviewApproved = ProposalReview::query()
+                ->where(
+                    'business_id',
+                    $currentBusiness->getKey(),
+                )
+                ->where(
+                    'proposal_version_id',
+                    $proposalVersion->getKey(),
+                )
+                ->where('status', 'completed')
+                ->where(
+                    'outcome',
+                    ProposalReviewOutcome::Approved->value,
+                )
+                ->exists();
+
+            if (! $reviewApproved) {
+                throw new RuntimeException(
+                    'Decision requires an Approved Review of the exact Frozen Proposal Version.',
+                );
             }
 
             $authority = $this->resolveFormationAuthority->resolve(

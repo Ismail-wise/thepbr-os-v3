@@ -16,6 +16,7 @@ use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Governance\Action;
 use App\Infrastructure\Persistence\Eloquent\Governance\AmendmentRequest;
 use App\Infrastructure\Persistence\Eloquent\Governance\Decision;
+use App\Infrastructure\Persistence\Eloquent\Governance\ProposalReview;
 use App\Infrastructure\Persistence\Eloquent\Governance\Review;
 use App\Infrastructure\Persistence\Eloquent\Governance\SignatureRequest;
 use App\Infrastructure\Persistence\Eloquent\Members\Membership;
@@ -153,6 +154,7 @@ final class ProvisionStandardAccessProfiles
             CapabilityCatalog::GOVERNANCE_RECORDS_VIEW,
             CapabilityCatalog::GOVERNANCE_RECORDS_MANAGE => [
                 Decision::class,
+                ProposalReview::class,
                 SignatureRequest::class,
                 Action::class,
                 Review::class,

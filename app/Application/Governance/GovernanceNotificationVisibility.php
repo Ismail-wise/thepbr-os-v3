@@ -8,6 +8,7 @@ use App\Domain\Access\CapabilityCatalog;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Governance\Action;
 use App\Infrastructure\Persistence\Eloquent\Governance\GovernanceNotification;
+use App\Infrastructure\Persistence\Eloquent\Governance\ProposalReview;
 use App\Infrastructure\Persistence\Eloquent\Governance\Review;
 use App\Infrastructure\Persistence\Eloquent\Governance\SignatureRequest;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
@@ -33,6 +34,7 @@ final class GovernanceNotificationVisibility
         $resourceType = match ($notification->subject_type) {
             'governance_action' => Action::class,
             'governance_review' => Review::class,
+            'proposal_review' => ProposalReview::class,
             'signature_request' => SignatureRequest::class,
             default => null,
         };
