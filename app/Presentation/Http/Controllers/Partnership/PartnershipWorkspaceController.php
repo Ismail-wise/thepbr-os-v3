@@ -37,8 +37,15 @@ final class PartnershipWorkspaceController
 
         abort_if($payload === null, 404);
 
+        $partnerInvitationToken = $request->session()->get(
+            'partner_invitation_token',
+        );
+
         return Inertia::render('Partnership/Index', [
             'partnership' => $payload,
+            'partnerInvitationToken' => is_string($partnerInvitationToken)
+                ? $partnerInvitationToken
+                : null,
         ]);
     }
 

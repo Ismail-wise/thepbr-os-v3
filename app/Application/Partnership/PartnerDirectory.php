@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Application\Partnership;
 
+use App\Application\Access\CreateBusinessAccessInvitation;
 use App\Domain\Access\CapabilityCatalog;
 use App\Domain\Access\Enums\StandardAccessProfile;
-use App\Infrastructure\Persistence\Eloquent\Access\BusinessAccessInvitation;
 use App\Infrastructure\Persistence\Eloquent\Access\PermissionProfile;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
@@ -19,6 +19,7 @@ final class PartnerDirectory
     public function __construct(
         private readonly PartnershipActorContext $actor,
         private readonly PartnershipOccurrence $occurrence,
+        private readonly CreateBusinessAccessInvitation $accessInvitations,
     ) {}
 
     /**
@@ -162,8 +163,6 @@ final class PartnerDirectory
             );
         }
 
-        $token = Str::upper(Str::random(48));
-
         return DB::transaction(function () use (
             $user,
             $business,
@@ -172,24 +171,24 @@ final class PartnerDirectory
             $expiresInHours,
             $membership,
             $partnerProfile,
-            $token,
-        ): array {
-            $invitation = BusinessAccessInvitation::query()->create([
-                'business_id' => $business->getKey(),
-                'invited_email' => $email,
-                'token_fingerprint' => hash('sha256', $token),
-                'token_last4' => substr($token, -4),
-                'permission_profile_id' => $partnerProfile->getKey(),
-                'invited_by_membership_id' => $membership->getKey(),
-                'status' => 'pending',
-                'expires_at' => now()->addHours($expiresInHours),
-            ]);
+        ): ?array {
+            $invitation = $this->accessInvitations->execute(
+                $user,
+                $business,
+                $email,
+                (string) $partnerProfile->getKey(),
+                $expiresInHours,
+            );
+
+            if ($invitation === null) {
+                return null;
+            }
 
             DB::table('partner_access_invitation_links')->insert([
                 'id' => (string) Str::uuid7(),
                 'business_id' => $business->getKey(),
                 'partner_id' => $partnerId,
-                'business_access_invitation_id' => $invitation->getKey(),
+                'business_access_invitation_id' => $invitation['id'],
                 'linked_by_membership_id' => $membership->getKey(),
                 'created_at' => now(),
             ]);
@@ -201,13 +200,13 @@ final class PartnerDirectory
                 'partner',
                 $partnerId,
                 [
-                    'invitation_id' => (string) $invitation->getKey(),
+                    'invitation_id' => $invitation['id'],
                 ],
             );
 
             return [
-                'invitation_id' => (string) $invitation->getKey(),
-                'token' => $token,
+                'invitation_id' => $invitation['id'],
+                'token' => $invitation['token'],
             ];
         });
     }

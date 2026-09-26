@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Access;
 
+use App\Domain\Access\CapabilityCatalog;
 use App\Domain\Access\ValueObjects\Capability;
 use App\Infrastructure\Persistence\Eloquent\Access\PermissionProfile;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
@@ -28,7 +29,17 @@ final class ListWorkspaceAccess
      *         capabilities: list<string>,
      *         assigned: bool
      *     }>,
-     *     directGrants: list<array{capability: string, effect: string}>
+     *     directGrants: list<array{capability: string, effect: string}>,
+     *     canManageInvitations: bool,
+     *     invitations: list<array{
+     *         id: string,
+     *         invitedEmail: string,
+     *         profileName: string,
+     *         status: string,
+     *         tokenLast4: string,
+     *         expiresAt: string,
+     *         createdAt: string
+     *     }>
      * }|null
      */
     public function execute(
@@ -59,6 +70,13 @@ final class ListWorkspaceAccess
 
         $businessId = (string) $currentBusiness->getKey();
         $membershipId = (string) $membership->getKey();
+
+        $canManageInvitations = $this->authorizeBusinessCapability->decide(
+            $user,
+            $currentBusiness,
+            $currentBusiness,
+            new Capability(CapabilityCatalog::ACCESS_ADMIN_MANAGE),
+        )->allowed;
 
         $profiles = PermissionProfile::query()
             ->where('business_id', $businessId)
@@ -155,6 +173,51 @@ final class ListWorkspaceAccess
             ->values()
             ->all();
 
+        $invitations = $canManageInvitations
+            ? DB::table('business_access_invitations as invitations')
+                ->join(
+                    'permission_profiles as profiles',
+                    function ($join): void {
+                        $join
+                            ->on(
+                                'profiles.id',
+                                '=',
+                                'invitations.permission_profile_id',
+                            )
+                            ->on(
+                                'profiles.business_id',
+                                '=',
+                                'invitations.business_id',
+                            );
+                    },
+                )
+                ->where('invitations.business_id', $businessId)
+                ->orderByDesc('invitations.created_at')
+                ->limit(100)
+                ->get([
+                    'invitations.id',
+                    'invitations.invited_email',
+                    'invitations.status',
+                    'invitations.token_last4',
+                    'invitations.expires_at',
+                    'invitations.created_at',
+                    'profiles.name as profile_name',
+                ])
+                ->map(
+                    static fn (object $invitation): array => [
+                        'id' => (string) $invitation->id,
+                        'invitedEmail' => (string) $invitation->invited_email,
+                        'profileName' => (string) $invitation->profile_name,
+                        'status' => (string) $invitation->status,
+                        'tokenLast4' => (string) $invitation->token_last4,
+                        'expiresAt' => (string) $invitation->expires_at,
+                        'createdAt' => (string) $invitation->created_at,
+                    ],
+                )
+                ->values()
+                ->all()
+            : [];
+
         return [
             'business' => [
                 'id' => $businessId,
@@ -166,6 +229,8 @@ final class ListWorkspaceAccess
             ],
             'profiles' => $profiles,
             'directGrants' => $directGrants,
+            'canManageInvitations' => $canManageInvitations,
+            'invitations' => $invitations,
         ];
     }
 }

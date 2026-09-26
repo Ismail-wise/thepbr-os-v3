@@ -71,6 +71,38 @@ const englishCatalog = {
     'access.deny': 'Deny',
     'access.noProfiles': 'No authorized permission profiles are visible.',
     'access.noDirectGrants': 'No direct permission grants are assigned.',
+    'access.invitationAdmin': 'Invite-only access',
+    'access.invitationAdminHelp':
+        'Create a single-use, expiring invitation for an authorized Permission Profile. Pending invitations can be revoked.',
+    'access.invitedEmail': 'Invited email',
+    'access.expiresHours': 'Expires in hours',
+    'access.createInvitation': 'Create invitation',
+    'access.invitationCodeOnce': 'Invitation code — shown once',
+    'access.invitationCodeHelp':
+        'Share this code securely with the invited person. The plaintext code is not stored and cannot be shown again.',
+    'access.invitationHistory': 'Invitation history',
+    'access.expiresAt': 'Expires',
+    'access.codeEnding': 'Code ending',
+    'access.revoke': 'Revoke',
+    'access.noInvitations': 'No access invitations have been created.',
+    'access.openRedeem': 'Open invitation redemption',
+    'invitation.title': 'Redeem Business Invitation',
+    'invitation.description':
+        'Private OS access is invite-only. Use the single-use invitation code issued by an authorized Business admin.',
+    'invitation.rightsNotice':
+        'Redemption establishes only the authorized Membership and system Permission Profile. It does not automatically grant Partner status, ownership, voting rights, governance authority or unrestricted document access.',
+    'invitation.code': 'Invitation code',
+    'invitation.displayName': 'Display name',
+    'invitation.newAccountOnly':
+        'Required only when this invitation creates a new account.',
+    'invitation.confirmPassword': 'Confirm password',
+    'invitation.passwordHelp':
+        'A password is required for a new or provisioned account. Existing active users must sign in as the invited account before redeeming.',
+    'invitation.language': 'Language',
+    'invitation.timezone': 'Timezone',
+    'invitation.redeem': 'Redeem invitation',
+    'invitation.redeeming': 'Redeeming…',
+    'invitation.backToLogin': 'Back to sign in',
     'documents.title': 'Document Vault',
     'documents.description':
         'Authorized business documents, immutable file versions, and supporting evidence in one controlled record repository.',
@@ -277,6 +309,38 @@ const myanmarCatalog = {
     'access.deny': 'ပိတ်ပင်',
     'access.noProfiles': 'ကြည့်ရှုခွင့်ရှိသော permission profile မရှိသေးပါ။',
     'access.noDirectGrants': 'တိုက်ရိုက် permission grant မရှိပါ။',
+    'access.invitationAdmin': 'ဖိတ်စာဖြင့်သာ အသုံးပြုခွင့်ပေးရန်',
+    'access.invitationAdminHelp':
+        'သတ်မှတ်ထားသော Permission Profile အတွက် တစ်ကြိမ်သုံး၊ သက်တမ်းရှိသော ဖိတ်စာကို ထုတ်ပေးနိုင်ပါတယ်။ Pending ဖိတ်စာကို အသုံးမပြုမီ ပြန်ပိတ်နိုင်ပါတယ်။',
+    'access.invitedEmail': 'ဖိတ်ထားသော အီးမေးလ်',
+    'access.expiresHours': 'သက်တမ်း နာရီ',
+    'access.createInvitation': 'ဖိတ်စာထုတ်ရန်',
+    'access.invitationCodeOnce': 'ဖိတ်စာကုဒ် — ဒီတစ်ကြိမ်ပဲ ပြမယ်',
+    'access.invitationCodeHelp':
+        'ဒီကုဒ်ကို ဖိတ်ထားသူထံ လုံခြုံစွာပေးပါ။ ကုဒ်အပြည့်အစုံကို စနစ်ထဲမှာ မသိမ်းထားတာကြောင့် နောက်တစ်ခါ ပြန်မပြနိုင်ပါ။',
+    'access.invitationHistory': 'ဖိတ်စာမှတ်တမ်း',
+    'access.expiresAt': 'သက်တမ်းကုန်ချိန်',
+    'access.codeEnding': 'ကုဒ်နောက်ဆုံး',
+    'access.revoke': 'ပြန်ပိတ်ရန်',
+    'access.noInvitations': 'အသုံးပြုခွင့် ဖိတ်စာ မထုတ်ရသေးပါ။',
+    'access.openRedeem': 'ဖိတ်စာအသက်သွင်းရန် စာမျက်နှာ',
+    'invitation.title': 'လုပ်ငန်းအသုံးပြုခွင့် ဖိတ်စာကို အသက်သွင်းရန်',
+    'invitation.description':
+        'Private OS ကို ဖိတ်စာရှိသူသာ ဝင်နိုင်ပါတယ်။ လုပ်ငန်း Admin က ထုတ်ပေးထားသော တစ်ကြိမ်သုံး ဖိတ်စာကုဒ်ကို အသုံးပြုပါ။',
+    'invitation.rightsNotice':
+        'ဖိတ်စာအသက်သွင်းခြင်းက သတ်မှတ်ထားသော Membership နှင့် System Permission Profile ကိုပဲ ချိတ်ဆက်ပေးပါတယ်။ Partner status၊ ပိုင်ဆိုင်မှု၊ မဲပေးခွင့်၊ Governance ဆုံးဖြတ်ပိုင်ခွင့် သို့မဟုတ် စာရွက်စာတမ်းအားလုံးကြည့်ခွင့်ကို အလိုအလျောက် မပေးပါ။',
+    'invitation.code': 'ဖိတ်စာကုဒ်',
+    'invitation.displayName': 'အသုံးပြုသူအမည်',
+    'invitation.newAccountOnly':
+        'Account အသစ်ဖန်တီးရမည့်အခါမှသာ ဖြည့်ရန်လိုပါတယ်။',
+    'invitation.confirmPassword': 'စကားဝှက် ထပ်မံအတည်ပြုရန်',
+    'invitation.passwordHelp':
+        'Account အသစ် သို့မဟုတ် provisioned account အတွက် စကားဝှက်လိုပါတယ်။ Active account ရှိပြီးသားဆိုရင် ဖိတ်ထားသော account နဲ့ အရင်ဝင်ထားရပါမယ်။',
+    'invitation.language': 'ဘာသာစကား',
+    'invitation.timezone': 'အချိန်ဇုန်',
+    'invitation.redeem': 'ဖိတ်စာကို အသက်သွင်းရန်',
+    'invitation.redeeming': 'အသက်သွင်းနေသည်…',
+    'invitation.backToLogin': 'ဝင်ရောက်ရန် စာမျက်နှာသို့ ပြန်သွားရန်',
     'documents.title': 'စာရွက်စာတမ်း မှတ်တမ်းတိုက်',
     'documents.description':
         'ကြည့်ရှုခွင့်ရှိသော လုပ်ငန်းစာရွက်စာတမ်းများ၊ မပြောင်းလဲနိုင်သော ဖိုင်ဗားရှင်းများနှင့် အထောက်အထားများကို တစ်နေရာတည်းတွင် ထိန်းသိမ်းထားသည်။',
@@ -484,6 +548,38 @@ const mixedCatalog = {
     'access.deny': 'Deny · ပိတ်ပင်',
     'access.noProfiles': 'ကြည့်ရှုခွင့်ရှိတဲ့ Permission Profile မရှိသေးပါ။',
     'access.noDirectGrants': 'Direct Permission Grant မရှိပါ။',
+    'access.invitationAdmin': 'Invite-only Access · ဖိတ်စာဖြင့်သာ အသုံးပြုခွင့်',
+    'access.invitationAdminHelp':
+        'Authorized Permission Profile အတွက် single-use၊ expiring invitation ထုတ်နိုင်ပါတယ်။ Pending ဖြစ်နေချိန် revoke လုပ်နိုင်ပါတယ်။',
+    'access.invitedEmail': 'Invited email · ဖိတ်ထားသော အီးမေးလ်',
+    'access.expiresHours': 'Expires in hours · သက်တမ်းနာရီ',
+    'access.createInvitation': 'Create invitation · ဖိတ်စာထုတ်ရန်',
+    'access.invitationCodeOnce': 'Invitation code · ဒီတစ်ကြိမ်ပဲ ပြမယ်',
+    'access.invitationCodeHelp':
+        'ဒီ code ကို ဖိတ်ထားသူထံ လုံခြုံစွာပေးပါ။ Plaintext code ကို စနစ်ထဲမသိမ်းထားလို့ နောက်တစ်ခါ ပြန်မပြနိုင်ပါ။',
+    'access.invitationHistory': 'Invitation history · ဖိတ်စာမှတ်တမ်း',
+    'access.expiresAt': 'Expires · သက်တမ်းကုန်ချိန်',
+    'access.codeEnding': 'Code ending · ကုဒ်နောက်ဆုံး',
+    'access.revoke': 'Revoke · ပြန်ပိတ်ရန်',
+    'access.noInvitations': 'Access invitation မထုတ်ရသေးပါ။',
+    'access.openRedeem': 'Open invitation redemption · ဖိတ်စာအသက်သွင်းရန်',
+    'invitation.title': 'Redeem Business Invitation · ဖိတ်စာအသက်သွင်းရန်',
+    'invitation.description':
+        'Private OS က invite-only ဖြစ်ပါတယ်။ Authorized Business Admin ထုတ်ပေးထားတဲ့ single-use invitation code ကို အသုံးပြုပါ။',
+    'invitation.rightsNotice':
+        'Redemption က authorized Membership နဲ့ System Permission Profile ကိုပဲ ချိတ်ဆက်ပေးပါတယ်။ Partner status၊ Ownership၊ Voting Rights၊ Governance Authority သို့မဟုတ် unrestricted Document Access ကို auto-grant မလုပ်ပါ။',
+    'invitation.code': 'Invitation code · ဖိတ်စာကုဒ်',
+    'invitation.displayName': 'Display name · အသုံးပြုသူအမည်',
+    'invitation.newAccountOnly':
+        'Account အသစ် create လုပ်ရမယ့်အခါမှ ဖြည့်ရန်လိုပါတယ်။',
+    'invitation.confirmPassword': 'Confirm password · စကားဝှက်အတည်ပြုရန်',
+    'invitation.passwordHelp':
+        'New/Provisioned account အတွက် password လိုပါတယ်။ Existing Active account ဆိုရင် invited account နဲ့ အရင် sign in လုပ်ထားရပါမယ်။',
+    'invitation.language': 'Language · ဘာသာစကား',
+    'invitation.timezone': 'Timezone · အချိန်ဇုန်',
+    'invitation.redeem': 'Redeem invitation · ဖိတ်စာအသက်သွင်းရန်',
+    'invitation.redeeming': 'Redeeming… · အသက်သွင်းနေသည်…',
+    'invitation.backToLogin': 'Back to sign in · Login သို့ ပြန်သွားရန်',
     'documents.title': 'Document Vault · စာရွက်စာတမ်း မှတ်တမ်းတိုက်',
     'documents.description':
         'Authorized business documents၊ immutable file versions နဲ့ supporting evidence တွေကို controlled record repository တစ်ခုထဲမှာ ထိန်းသိမ်းထားပါတယ်။',

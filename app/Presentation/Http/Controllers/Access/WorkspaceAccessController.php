@@ -44,8 +44,15 @@ final class WorkspaceAccessController
 
         abort_if($access === null, 404);
 
+        $newInvitationToken = $request->session()->get(
+            'access_invitation_token',
+        );
+
         return Inertia::render('Access/Index', [
             'access' => $access,
+            'newInvitationToken' => is_string($newInvitationToken)
+                ? $newInvitationToken
+                : null,
         ]);
     }
 }

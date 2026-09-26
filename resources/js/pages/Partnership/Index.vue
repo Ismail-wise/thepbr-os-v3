@@ -116,6 +116,7 @@ const props = defineProps<{
         ownership_submissions: GovernanceSubmission[];
         current_ownership_register: CurrentRegister | null;
     };
+    partnerInvitationToken: string | null;
 }>();
 
 const { t } = useI18n();
@@ -217,6 +218,25 @@ const createPartner = () => {
                 class="mt-5 border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950"
             >
                 {{ t('partnership.partnerDynamicsNotice') }}
+            </div>
+
+            <div
+                v-if="partnerInvitationToken"
+                class="mt-4 border border-slate-300 bg-slate-50 p-4"
+                role="status"
+                aria-live="polite"
+            >
+                <p class="text-sm font-semibold text-slate-950">
+                    {{ t('access.invitationCodeOnce') }}
+                </p>
+                <code
+                    class="mt-2 block break-all bg-white px-3 py-3 font-mono text-sm text-slate-900"
+                >
+                    {{ partnerInvitationToken }}
+                </code>
+                <p class="mt-2 text-xs leading-5 text-slate-600">
+                    {{ t('access.invitationCodeHelp') }}
+                </p>
             </div>
 
             <PartnershipWorkflowPanel

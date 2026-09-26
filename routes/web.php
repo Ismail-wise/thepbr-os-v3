@@ -3,7 +3,9 @@
 use App\Http\Controllers\CreateBusinessController;
 use App\Http\Controllers\SelectCurrentBusinessController;
 use App\Http\Middleware\EnsureCurrentBusinessContext;
+use App\Presentation\Http\Controllers\Access\BusinessAccessInvitationRedemptionController;
 use App\Presentation\Http\Controllers\Access\WorkspaceAccessController;
+use App\Presentation\Http\Controllers\Access\WorkspaceAccessInvitationController;
 use App\Presentation\Http\Controllers\Account\AccountSettingsController;
 use App\Presentation\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Presentation\Http\Controllers\Formation\FormationController;
@@ -25,6 +27,19 @@ Route::middleware('guest')->group(function (): void {
         ->middleware('throttle:login')
         ->name('login.store');
 });
+
+Route::get(
+    '/access/invitation',
+    [BusinessAccessInvitationRedemptionController::class, 'show'],
+)->name('access.invitations.redeem.show');
+
+Route::post(
+    '/access/invitation/redeem',
+    [BusinessAccessInvitationRedemptionController::class, 'store'],
+)
+    ->middleware('throttle:login')
+    ->name('access.invitations.redeem.store');
+
 Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void {
     Route::get('/businesses/create', [CreateBusinessController::class, 'create'])
         ->name('businesses.create');
@@ -49,6 +64,16 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 '/workspace/access',
                 WorkspaceAccessController::class,
             )->name('workspace.access.index');
+
+            Route::post(
+                '/workspace/access/invitations',
+                [WorkspaceAccessInvitationController::class, 'store'],
+            )->name('workspace.access.invitations.store');
+
+            Route::post(
+                '/workspace/access/invitations/{invitation}/revoke',
+                [WorkspaceAccessInvitationController::class, 'revoke'],
+            )->name('workspace.access.invitations.revoke');
 
             Route::get(
                 '/formation',

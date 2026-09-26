@@ -177,47 +177,49 @@ test(
             name: 'Workflow Actions',
         });
 
-        await workflow
+        const contributionSummary = workflow
             .locator('summary')
             .filter({
                 hasText: /^Add Contribution$/,
-            })
-            .click();
+            });
 
-        await workflow
+        const contributionWorkflow = contributionSummary.locator('..');
+
+        await expect(contributionWorkflow).toHaveAttribute('open', '');
+
+        await contributionWorkflow
             .getByLabel('Partner', {
                 exact: true,
             })
-            .last()
             .selectOption({
                 label: PARTNER,
             });
 
-        await workflow
+        await contributionWorkflow
             .getByLabel('Type', {
                 exact: true,
             })
             .selectOption('cash');
 
-        await workflow
+        await contributionWorkflow
             .getByLabel('Proposed value', {
                 exact: true,
             })
             .fill('2500.00');
 
-        await workflow
+        await contributionWorkflow
             .getByLabel('Description', {
                 exact: true,
             })
             .fill('Browser cash contribution');
 
-        await workflow
+        await contributionWorkflow
             .getByLabel('Amount committed', {
                 exact: true,
             })
             .fill('2500.00');
 
-        await workflow
+        await contributionWorkflow
             .getByRole('button', {
                 name: 'Add Contribution',
                 exact: true,
