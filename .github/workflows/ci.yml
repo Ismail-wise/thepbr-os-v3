@@ -1321,7 +1321,14 @@ jobs:
 
           php artisan migrate:fresh --force
 
-          php tests/E2E/support/prepare-f2-e2e.php
+          fixture_output="$(
+            php tests/E2E/support/prepare-f2-e2e.php
+          )"
+
+          printf '%s\n' "$fixture_output"
+
+          printf '%s\n' "$fixture_output" |
+            grep -qx 'F2_E2E_FIXTURE=PASS'
 
           unset F2_E2E_PASSWORD
 

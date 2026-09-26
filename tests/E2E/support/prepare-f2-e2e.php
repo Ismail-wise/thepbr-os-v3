@@ -65,7 +65,6 @@ $zeroTables = [
     'businesses',
     'memberships',
     'security_events',
-    'permissions',
     'permission_profiles',
     'permission_profile_permissions',
     'membership_permission_profiles',
@@ -95,6 +94,33 @@ foreach ($zeroTables as $table) {
             $count,
         ));
     }
+}
+
+/*
+ * Later milestones may install system-capability reference rows during
+ * migration. Those rows are schema baseline, not stale fixture data.
+ *
+ * The F2 browser fixture owns only these three permission keys, so freshness
+ * means these keys must not already exist before the fixture creates them.
+ */
+$fixturePermissionKeys = [
+    'permission_profiles.view',
+    'records.activity.view',
+    'records.view',
+];
+
+$existingFixturePermissionKeys = Permission::query()
+    ->whereIn('key', $fixturePermissionKeys)
+    ->pluck('key')
+    ->sort()
+    ->values()
+    ->all();
+
+if ($existingFixturePermissionKeys !== []) {
+    throw new RuntimeException(
+        'F2 Round5 fixture-owned permissions already exist: '
+        .implode(', ', $existingFixturePermissionKeys),
+    );
 }
 
 $email = 'f2-round5-browser@example.com';
