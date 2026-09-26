@@ -1163,12 +1163,19 @@ jobs:
 
           cleanup() {
             status=$?
+            trap - EXIT
 
             unset F1_E2E_PASSWORD || true
 
             if [[ -n "$server_pid" ]]; then
               kill "$server_pid" >/dev/null 2>&1 || true
               wait "$server_pid" >/dev/null 2>&1 || true
+            fi
+
+            if ss -H -ltn 'sport = :8000' | grep -q .; then
+              echo "F1 E2E server cleanup left port 8000 occupied." >&2
+              ss -H -ltnp 'sport = :8000' || true
+              status=1
             fi
 
             if [[ "$status" -ne 0 && -f /tmp/f1-a13-e2e-server.log ]]; then
@@ -1198,9 +1205,15 @@ jobs:
 
           unset F1_E2E_PASSWORD
 
-          php artisan serve \
-            --host=127.0.0.1 \
-            --port=8000 \
+          if ss -H -ltn 'sport = :8000' | grep -q .; then
+            echo "F1 E2E refused occupied port 8000." >&2
+            ss -H -ltnp 'sport = :8000' || true
+            exit 1
+          fi
+
+          php -S 127.0.0.1:8000 \
+            -t public \
+            vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php \
             >/tmp/f1-a13-e2e-server.log 2>&1 &
 
           server_pid=$!
@@ -1251,12 +1264,19 @@ jobs:
 
           cleanup() {
             status=$?
+            trap - EXIT
 
             unset F2_E2E_PASSWORD || true
 
             if [[ -n "$server_pid" ]]; then
               kill "$server_pid" >/dev/null 2>&1 || true
               wait "$server_pid" >/dev/null 2>&1 || true
+            fi
+
+            if ss -H -ltn 'sport = :8000' | grep -q .; then
+              echo "F2 E2E server cleanup left port 8000 occupied." >&2
+              ss -H -ltnp 'sport = :8000' || true
+              status=1
             fi
 
             if [[ "$status" -ne 0 && -f /tmp/f2-integrated-e2e-server.log ]]; then
@@ -1289,9 +1309,15 @@ jobs:
 
           unset F2_E2E_PASSWORD
 
-          php artisan serve \
-            --host=127.0.0.1 \
-            --port=8000 \
+          if ss -H -ltn 'sport = :8000' | grep -q .; then
+            echo "F2 E2E refused occupied port 8000." >&2
+            ss -H -ltnp 'sport = :8000' || true
+            exit 1
+          fi
+
+          php -S 127.0.0.1:8000 \
+            -t public \
+            vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php \
             >/tmp/f2-integrated-e2e-server.log 2>&1 &
 
           server_pid=$!
@@ -1338,12 +1364,19 @@ jobs:
 
           cleanup() {
             status=$?
+            trap - EXIT
 
             unset F4_E2E_PASSWORD || true
 
             if [[ -n "$server_pid" ]]; then
               kill "$server_pid" >/dev/null 2>&1 || true
               wait "$server_pid" >/dev/null 2>&1 || true
+            fi
+
+            if ss -H -ltn 'sport = :8000' | grep -q .; then
+              echo "F4 E2E server cleanup left port 8000 occupied." >&2
+              ss -H -ltnp 'sport = :8000' || true
+              status=1
             fi
 
             if [[ "$status" -ne 0 && -f /tmp/f4-e2e-server.log ]]; then
@@ -1376,14 +1409,29 @@ jobs:
 
           unset F4_E2E_PASSWORD
 
-          php artisan serve             --host=127.0.0.1             --port=8000             >/tmp/f4-e2e-server.log 2>&1 &
+          if ss -H -ltn 'sport = :8000' | grep -q .; then
+            echo "F4 E2E refused occupied port 8000." >&2
+            ss -H -ltnp 'sport = :8000' || true
+            exit 1
+          fi
+
+          php -S 127.0.0.1:8000 \
+            -t public \
+            vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php \
+            >/tmp/f4-e2e-server.log 2>&1 &
 
           server_pid=$!
 
           ready=0
 
           for attempt in $(seq 1 30); do
-            if curl               --fail               --silent               --show-error               --max-time 2               http://127.0.0.1:8000/login               >/dev/null
+            if curl \
+              --fail \
+              --silent \
+              --show-error \
+              --max-time 2 \
+              http://127.0.0.1:8000/login \
+              >/dev/null
             then
               ready=1
               break
@@ -1399,7 +1447,9 @@ jobs:
 
           export F4_E2E_PASSWORD="$f4_e2e_password"
 
-          npm run test:e2e --             --project=chromium-desktop             tests/E2E/f4-formation-capital.spec.ts
+          npm run test:e2e -- \
+            --project=chromium-desktop \
+            tests/E2E/f4-formation-capital.spec.ts
 
           unset F4_E2E_PASSWORD
           unset f4_e2e_password
