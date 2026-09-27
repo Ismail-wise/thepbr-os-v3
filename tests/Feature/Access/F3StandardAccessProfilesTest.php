@@ -8,6 +8,7 @@ use App\Application\Access\ResolveMembershipCapabilities;
 use App\Application\Businesses\CreateBusiness;
 use App\Domain\Access\CapabilityCatalog;
 use App\Domain\Access\Enums\StandardAccessProfile;
+use App\Domain\Access\StandardAccessProfileMatrix;
 use App\Domain\Access\ValueObjects\Capability;
 use App\Domain\Businesses\Enums\BusinessOriginType;
 use App\Domain\Businesses\Enums\BusinessStage;
@@ -89,6 +90,11 @@ final class F3StandardAccessProfilesTest extends TestCase
             CapabilityCatalog::GOVERNANCE_SIGNATURE_ACT,
             CapabilityCatalog::GOVERNANCE_ACTION_MANAGE,
             CapabilityCatalog::RECORDS_MANAGE,
+            CapabilityCatalog::FINANCE_VIEW,
+            CapabilityCatalog::FINANCE_MANAGE,
+            CapabilityCatalog::FINANCE_PAY,
+            CapabilityCatalog::REWARDS_VIEW,
+            CapabilityCatalog::REWARDS_MANAGE,
         ] as $capability) {
             $this->assertTrue(
                 $capabilities->decide(
@@ -104,6 +110,37 @@ final class F3StandardAccessProfilesTest extends TestCase
         $this->assertDatabaseCount('decisions', 0);
         $this->assertDatabaseCount('decision_participants', 0);
         $this->assertDatabaseCount('authority_snapshots', 0);
+
+        $financeOwnerCapabilities = StandardAccessProfileMatrix::capabilities(
+            StandardAccessProfile::FinanceOwner,
+        );
+
+        self::assertContains(
+            CapabilityCatalog::FINANCE_PAY,
+            $financeOwnerCapabilities,
+        );
+        self::assertContains(
+            CapabilityCatalog::REWARDS_VIEW,
+            $financeOwnerCapabilities,
+        );
+        self::assertNotContains(
+            CapabilityCatalog::GOVERNANCE_RECORDS_MANAGE,
+            $financeOwnerCapabilities,
+            'Finance system access must not manufacture Governance authority.',
+        );
+
+        $partnerCapabilities = StandardAccessProfileMatrix::capabilities(
+            StandardAccessProfile::Partner,
+        );
+
+        self::assertContains(
+            CapabilityCatalog::REWARDS_VIEW,
+            $partnerCapabilities,
+        );
+        self::assertNotContains(
+            CapabilityCatalog::FINANCE_PAY,
+            $partnerCapabilities,
+        );
     }
 
     public function test_profile_templates_do_not_assign_workspace_owner_to_unselected_memberships(): void

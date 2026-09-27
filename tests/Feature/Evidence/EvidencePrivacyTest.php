@@ -216,6 +216,10 @@ final class EvidencePrivacyTest extends TestCase
                 'formal_record_version',
                 'proposal_version',
                 'contribution',
+                'finance_payment',
+                'finance_reconciliation',
+                'finance_exception',
+                'distribution_run',
             ],
             $registry->supportedTypes(),
         );

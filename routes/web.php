@@ -8,6 +8,7 @@ use App\Presentation\Http\Controllers\Access\WorkspaceAccessController;
 use App\Presentation\Http\Controllers\Access\WorkspaceAccessInvitationController;
 use App\Presentation\Http\Controllers\Account\AccountSettingsController;
 use App\Presentation\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Presentation\Http\Controllers\Finance\FinanceWorkspaceController;
 use App\Presentation\Http\Controllers\Formation\FormationController;
 use App\Presentation\Http\Controllers\Governance\GovernanceMeetingController;
 use App\Presentation\Http\Controllers\Governance\GovernanceRulesController;
@@ -18,6 +19,7 @@ use App\Presentation\Http\Controllers\Partnership\PartnershipWorkspaceController
 use App\Presentation\Http\Controllers\Records\ActivityController;
 use App\Presentation\Http\Controllers\Records\DocumentVaultController;
 use App\Presentation\Http\Controllers\Records\EvidenceController;
+use App\Presentation\Http\Controllers\Rewards\RewardsWorkspaceController;
 use App\Presentation\Http\Middleware\EnsureActiveAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -487,6 +489,141 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 '/operations/actions/{action}/status',
                 [OperationsWorkspaceController::class, 'updateAction'],
             )->name('operations.actions.status.update');
+
+            Route::get(
+                '/finance',
+                [FinanceWorkspaceController::class, 'index'],
+            )->name('finance.index');
+
+            Route::post(
+                '/finance/policy',
+                [FinanceWorkspaceController::class, 'createPolicy'],
+            )->name('finance.policy.store');
+
+            Route::post(
+                '/finance/policy/{formalRecordVersion}/submit',
+                [FinanceWorkspaceController::class, 'submitPolicy'],
+            )->name('finance.policy.submit');
+
+            Route::post(
+                '/finance/policy/{formalRecordVersion}/content-review',
+                [FinanceWorkspaceController::class, 'reviewPolicy'],
+            )->name('finance.policy.content-review');
+
+            Route::post(
+                '/finance/reconciliations',
+                [FinanceWorkspaceController::class, 'createReconciliation'],
+            )->name('finance.reconciliations.store');
+
+            Route::post(
+                '/finance/reconciliations/{reconciliation}/complete',
+                [FinanceWorkspaceController::class, 'completeReconciliation'],
+            )->name('finance.reconciliations.complete');
+
+            Route::post(
+                '/finance/payments',
+                [FinanceWorkspaceController::class, 'createPayment'],
+            )->name('finance.payments.store');
+
+            Route::post(
+                '/finance/payments/{payment}/evidence',
+                [FinanceWorkspaceController::class, 'attachPaymentEvidence'],
+            )->name('finance.payments.evidence.store');
+
+            Route::post(
+                '/finance/payments/{payment}/verify',
+                [FinanceWorkspaceController::class, 'verifyPayment'],
+            )->name('finance.payments.verify');
+
+            Route::post(
+                '/finance/payments/{payment}/sync-decision',
+                [FinanceWorkspaceController::class, 'syncPaymentDecision'],
+            )->name('finance.payments.sync-decision');
+
+            Route::post(
+                '/finance/payments/{payment}/pay',
+                [FinanceWorkspaceController::class, 'recordPayment'],
+            )->name('finance.payments.pay');
+
+            Route::post(
+                '/finance/payments/{payment}/complete',
+                [FinanceWorkspaceController::class, 'completePayment'],
+            )->name('finance.payments.complete');
+
+            Route::post(
+                '/finance/exceptions',
+                [FinanceWorkspaceController::class, 'openException'],
+            )->name('finance.exceptions.store');
+
+            Route::post(
+                '/finance/exceptions/{exception}/review',
+                [FinanceWorkspaceController::class, 'reviewException'],
+            )->name('finance.exceptions.review');
+
+            Route::get(
+                '/rewards',
+                [RewardsWorkspaceController::class, 'index'],
+            )->name('rewards.index');
+
+            Route::post(
+                '/rewards/policy',
+                [RewardsWorkspaceController::class, 'createPolicy'],
+            )->name('rewards.policy.store');
+
+            Route::post(
+                '/rewards/policy/{formalRecordVersion}/submit',
+                [RewardsWorkspaceController::class, 'submitPolicy'],
+            )->name('rewards.policy.submit');
+
+            Route::post(
+                '/rewards/policy/{formalRecordVersion}/content-review',
+                [RewardsWorkspaceController::class, 'reviewPolicy'],
+            )->name('rewards.policy.content-review');
+
+            Route::post(
+                '/rewards/payments',
+                [RewardsWorkspaceController::class, 'createRewardPayment'],
+            )->name('rewards.payments.store');
+
+            Route::post(
+                '/rewards/distribution/simulate',
+                [RewardsWorkspaceController::class, 'simulateDistribution'],
+            )->name('rewards.distribution.simulate');
+
+            Route::post(
+                '/rewards/distributions',
+                [RewardsWorkspaceController::class, 'createDistribution'],
+            )->name('rewards.distributions.store');
+
+            Route::post(
+                '/rewards/distributions/{distribution}/evidence',
+                [RewardsWorkspaceController::class, 'attachDistributionEvidence'],
+            )->name('rewards.distributions.evidence.store');
+
+            Route::post(
+                '/rewards/distributions/{distribution}/lines/{line}/adjust',
+                [RewardsWorkspaceController::class, 'adjustDistributionLine'],
+            )->name('rewards.distributions.lines.adjust');
+
+            Route::post(
+                '/rewards/distributions/{distribution}/verify',
+                [RewardsWorkspaceController::class, 'verifyDistribution'],
+            )->name('rewards.distributions.verify');
+
+            Route::post(
+                '/rewards/distributions/{distribution}/sync-decision',
+                [RewardsWorkspaceController::class, 'syncDistributionDecision'],
+            )->name('rewards.distributions.sync-decision');
+
+            Route::post(
+                '/rewards/distributions/{distribution}/schedule-payments',
+                [RewardsWorkspaceController::class, 'scheduleDistributionPayments'],
+            )->name('rewards.distributions.schedule-payments');
+
+            Route::post(
+                '/rewards/distributions/{distribution}/complete',
+                [RewardsWorkspaceController::class, 'completeDistribution'],
+            )->name('rewards.distributions.complete');
 
             Route::get(
                 '/records/documents',

@@ -73,9 +73,24 @@ final class CapabilityCatalog
 
     public const OPERATIONS_MANAGE = 'operations.manage';
 
+    public const FINANCE_VIEW = 'finance.view';
+
+    public const FINANCE_MANAGE = 'finance.manage';
+
+    public const FINANCE_PAY = 'finance.pay';
+
+    public const REWARDS_VIEW = 'rewards.view';
+
+    public const REWARDS_MANAGE = 'rewards.manage';
+
     public static function all(): array
     {
         return [
+            self::FINANCE_VIEW,
+            self::FINANCE_MANAGE,
+            self::FINANCE_PAY,
+            self::REWARDS_VIEW,
+            self::REWARDS_MANAGE,
             self::OPERATIONS_VIEW,
             self::OPERATIONS_MANAGE,
             self::OWNERSHIP_VIEW,

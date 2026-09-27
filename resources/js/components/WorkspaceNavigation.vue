@@ -48,6 +48,18 @@ const isOperationsCurrent = computed(
         currentPath.value === '/operations' ||
         currentPath.value.startsWith('/operations/'),
 );
+
+const isFinanceCurrent = computed(
+    () =>
+        currentPath.value === '/finance' ||
+        currentPath.value.startsWith('/finance/'),
+);
+
+const isRewardsCurrent = computed(
+    () =>
+        currentPath.value === '/rewards' ||
+        currentPath.value.startsWith('/rewards/'),
+);
 </script>
 
 <template>
@@ -148,6 +160,34 @@ const isOperationsCurrent = computed(
             @click="emit('navigate')"
         >
             {{ t('nav.operations') }}
+        </Link>
+
+        <Link
+            href="/finance"
+            :aria-current="isFinanceCurrent ? 'page' : undefined"
+            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
+            :class="
+                isFinanceCurrent
+                    ? 'border-slate-950 bg-slate-100 text-slate-950'
+                    : 'border-transparent text-slate-700'
+            "
+            @click="emit('navigate')"
+        >
+            {{ t('nav.finance') }}
+        </Link>
+
+        <Link
+            href="/rewards"
+            :aria-current="isRewardsCurrent ? 'page' : undefined"
+            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
+            :class="
+                isRewardsCurrent
+                    ? 'border-slate-950 bg-slate-100 text-slate-950'
+                    : 'border-transparent text-slate-700'
+            "
+            @click="emit('navigate')"
+        >
+            {{ t('nav.rewards') }}
         </Link>
 
         <Link

@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace App\Application\Evidence;
 
 use App\Domain\Access\CapabilityCatalog;
+use App\Infrastructure\Persistence\Eloquent\Finance\FinanceException;
+use App\Infrastructure\Persistence\Eloquent\Finance\FinancePayment;
+use App\Infrastructure\Persistence\Eloquent\Finance\FinanceReconciliationReview;
 use App\Infrastructure\Persistence\Eloquent\Partnership\Contribution;
 use App\Infrastructure\Persistence\Eloquent\Records\FormalRecordVersion;
 use App\Infrastructure\Persistence\Eloquent\Records\ProposalVersion;
+use App\Infrastructure\Persistence\Eloquent\Rewards\DistributionRun;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 
@@ -20,6 +24,10 @@ final class EvidenceTargetRegistry
         'formal_record_version' => FormalRecordVersion::class,
         'proposal_version' => ProposalVersion::class,
         'contribution' => Contribution::class,
+        'finance_payment' => FinancePayment::class,
+        'finance_reconciliation' => FinanceReconciliationReview::class,
+        'finance_exception' => FinanceException::class,
+        'distribution_run' => DistributionRun::class,
     ];
 
     /**
@@ -39,9 +47,14 @@ final class EvidenceTargetRegistry
             );
         }
 
-        return $targetType === 'contribution'
-            ? CapabilityCatalog::CONTRIBUTIONS_MANAGE
-            : CapabilityCatalog::RECORDS_MANAGE;
+        return match ($targetType) {
+            'contribution' => CapabilityCatalog::CONTRIBUTIONS_MANAGE,
+            'finance_payment',
+            'finance_reconciliation',
+            'finance_exception' => CapabilityCatalog::FINANCE_MANAGE,
+            'distribution_run' => CapabilityCatalog::REWARDS_MANAGE,
+            default => CapabilityCatalog::RECORDS_MANAGE,
+        };
     }
 
     public function resolve(

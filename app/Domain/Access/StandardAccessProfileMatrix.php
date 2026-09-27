@@ -64,10 +64,16 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::OWNERSHIP_MANAGE,
                 CapabilityCatalog::OPERATIONS_VIEW,
                 CapabilityCatalog::OPERATIONS_MANAGE,
+                CapabilityCatalog::FINANCE_VIEW,
+                CapabilityCatalog::FINANCE_MANAGE,
+                CapabilityCatalog::FINANCE_PAY,
+                CapabilityCatalog::REWARDS_VIEW,
+                CapabilityCatalog::REWARDS_MANAGE,
             ],
 
             StandardAccessProfile::Partner => [
                 ...$view,
+                CapabilityCatalog::REWARDS_VIEW,
                 CapabilityCatalog::GOVERNANCE_RECORDS_MANAGE,
                 CapabilityCatalog::GOVERNANCE_SIGNATURE_ACT,
             ],
@@ -99,6 +105,10 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::OWNERSHIP_MANAGE,
                 CapabilityCatalog::OPERATIONS_VIEW,
                 CapabilityCatalog::OPERATIONS_MANAGE,
+                CapabilityCatalog::FINANCE_VIEW,
+                CapabilityCatalog::FINANCE_MANAGE,
+                CapabilityCatalog::REWARDS_VIEW,
+                CapabilityCatalog::REWARDS_MANAGE,
             ],
 
             StandardAccessProfile::FinanceOwner => [
@@ -114,6 +124,10 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::OWNERSHIP_VIEW,
                 CapabilityCatalog::CONTRIBUTIONS_MANAGE,
                 CapabilityCatalog::OPERATIONS_VIEW,
+                CapabilityCatalog::FINANCE_VIEW,
+                CapabilityCatalog::FINANCE_MANAGE,
+                CapabilityCatalog::FINANCE_PAY,
+                CapabilityCatalog::REWARDS_VIEW,
             ],
 
             StandardAccessProfile::GovernanceSecretary => [
@@ -138,6 +152,8 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::OWNERSHIP_MANAGE,
                 CapabilityCatalog::OPERATIONS_VIEW,
                 CapabilityCatalog::OPERATIONS_MANAGE,
+                CapabilityCatalog::FINANCE_VIEW,
+                CapabilityCatalog::REWARDS_VIEW,
             ],
 
             StandardAccessProfile::AdvisorConsultant => [
@@ -145,11 +161,16 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::DUE_DILIGENCE_VIEW,
             ],
 
-            StandardAccessProfile::AuditorViewer => $view,
+            StandardAccessProfile::AuditorViewer => [
+                ...$view,
+                CapabilityCatalog::FINANCE_VIEW,
+                CapabilityCatalog::REWARDS_VIEW,
+            ],
 
             StandardAccessProfile::ExternalAccountantLegalAdvisor => [
                 ...$view,
                 CapabilityCatalog::DUE_DILIGENCE_VIEW,
+                CapabilityCatalog::FINANCE_VIEW,
             ],
         };
     }
