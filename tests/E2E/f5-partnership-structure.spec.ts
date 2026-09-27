@@ -237,20 +237,27 @@ test(
             ),
         ).toBeVisible();
 
-        await workflow
+        const scenarioSummary = workflow
             .locator('summary')
             .filter({
                 hasText: /^Create Ownership Scenario$/,
-            })
-            .click();
+            });
 
-        await workflow
+        const scenarioWorkflow = scenarioSummary.locator('..');
+
+        if ((await scenarioWorkflow.getAttribute('open')) === null) {
+            await scenarioSummary.click();
+        }
+
+        await expect(scenarioWorkflow).toHaveAttribute('open', '');
+
+        await scenarioWorkflow
             .getByLabel('Scenario name', {
                 exact: true,
             })
             .fill('Must Not Apply Scenario');
 
-        await workflow
+        await scenarioWorkflow
             .getByRole('button', {
                 name: 'Create Ownership Scenario',
                 exact: true,
