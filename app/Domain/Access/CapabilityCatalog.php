@@ -83,9 +83,21 @@ final class CapabilityCatalog
 
     public const REWARDS_MANAGE = 'rewards.manage';
 
+    public const RISK_VIEW = 'risk.view';
+
+    public const RISK_MANAGE = 'risk.manage';
+
+    public const CONTINUITY_VIEW = 'continuity.view';
+
+    public const CONTINUITY_MANAGE = 'continuity.manage';
+
     public static function all(): array
     {
         return [
+            self::RISK_VIEW,
+            self::RISK_MANAGE,
+            self::CONTINUITY_VIEW,
+            self::CONTINUITY_MANAGE,
             self::FINANCE_VIEW,
             self::FINANCE_MANAGE,
             self::FINANCE_PAY,

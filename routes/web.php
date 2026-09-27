@@ -8,6 +8,7 @@ use App\Presentation\Http\Controllers\Access\WorkspaceAccessController;
 use App\Presentation\Http\Controllers\Access\WorkspaceAccessInvitationController;
 use App\Presentation\Http\Controllers\Account\AccountSettingsController;
 use App\Presentation\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Presentation\Http\Controllers\Continuity\ContinuityWorkspaceController;
 use App\Presentation\Http\Controllers\Finance\FinanceWorkspaceController;
 use App\Presentation\Http\Controllers\Formation\FormationController;
 use App\Presentation\Http\Controllers\Governance\GovernanceMeetingController;
@@ -20,6 +21,7 @@ use App\Presentation\Http\Controllers\Records\ActivityController;
 use App\Presentation\Http\Controllers\Records\DocumentVaultController;
 use App\Presentation\Http\Controllers\Records\EvidenceController;
 use App\Presentation\Http\Controllers\Rewards\RewardsWorkspaceController;
+use App\Presentation\Http\Controllers\Risk\RiskWorkspaceController;
 use App\Presentation\Http\Middleware\EnsureActiveAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -624,6 +626,50 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 '/rewards/distributions/{distribution}/complete',
                 [RewardsWorkspaceController::class, 'completeDistribution'],
             )->name('rewards.distributions.complete');
+
+            Route::get('/risk', [RiskWorkspaceController::class, 'index'])
+                ->name('risk.index');
+            Route::post('/risk/register', [RiskWorkspaceController::class, 'createRegister'])
+                ->name('risk.register.store');
+            Route::post('/risk/register/{formalRecordVersion}/submit', [RiskWorkspaceController::class, 'submitRegister'])
+                ->name('risk.register.submit');
+            Route::post('/risk/register/{formalRecordVersion}/content-review', [RiskWorkspaceController::class, 'reviewRegister'])
+                ->name('risk.register.content-review');
+            Route::post('/risk/register/{formalRecordVersion}/sync-decision', [RiskWorkspaceController::class, 'syncRegisterDecision'])
+                ->name('risk.register.sync-decision');
+            Route::post('/risk/incidents', [RiskWorkspaceController::class, 'openIncident'])
+                ->name('risk.incidents.store');
+            Route::post('/risk/incidents/{incident}/transition', [RiskWorkspaceController::class, 'transitionIncident'])
+                ->name('risk.incidents.transition');
+            Route::post('/risk/control-tests', [RiskWorkspaceController::class, 'createControlTest'])
+                ->name('risk.control-tests.store');
+            Route::post('/risk/control-tests/{test}/result', [RiskWorkspaceController::class, 'recordControlTest'])
+                ->name('risk.control-tests.result');
+            Route::post('/risk/actions', [RiskWorkspaceController::class, 'createAction'])
+                ->name('risk.actions.store');
+
+            Route::get('/continuity', [ContinuityWorkspaceController::class, 'index'])
+                ->name('continuity.index');
+            Route::post('/continuity/plan', [ContinuityWorkspaceController::class, 'createPlan'])
+                ->name('continuity.plan.store');
+            Route::post('/continuity/plan/{formalRecordVersion}/submit', [ContinuityWorkspaceController::class, 'submitPlan'])
+                ->name('continuity.plan.submit');
+            Route::post('/continuity/plan/{formalRecordVersion}/content-review', [ContinuityWorkspaceController::class, 'reviewPlan'])
+                ->name('continuity.plan.content-review');
+            Route::post('/continuity/plan/{formalRecordVersion}/sync-decision', [ContinuityWorkspaceController::class, 'syncPlanDecision'])
+                ->name('continuity.plan.sync-decision');
+            Route::post('/continuity/tests', [ContinuityWorkspaceController::class, 'createTest'])
+                ->name('continuity.tests.store');
+            Route::post('/continuity/tests/{test}/result', [ContinuityWorkspaceController::class, 'recordTest'])
+                ->name('continuity.tests.result');
+            Route::post('/continuity/emergency-access', [ContinuityWorkspaceController::class, 'requestEmergencyAccess'])
+                ->name('continuity.emergency-access.store');
+            Route::post('/continuity/emergency-access/{activation}/activate', [ContinuityWorkspaceController::class, 'activateEmergencyAccess'])
+                ->name('continuity.emergency-access.activate');
+            Route::post('/continuity/emergency-access/{activation}/end', [ContinuityWorkspaceController::class, 'endEmergencyAccess'])
+                ->name('continuity.emergency-access.end');
+            Route::post('/continuity/actions', [ContinuityWorkspaceController::class, 'createAction'])
+                ->name('continuity.actions.store');
 
             Route::get(
                 '/records/documents',

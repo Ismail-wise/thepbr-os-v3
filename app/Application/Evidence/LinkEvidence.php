@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Application\Evidence;
 
+use App\Application\Access\AuthorizeBusinessCapability;
 use App\Application\Documents\AuthorizeDocumentAccess;
 use App\Application\Events\RecordBusinessOccurrence;
 use App\Domain\Access\CapabilityCatalog;
+use App\Domain\Access\ValueObjects\Capability;
 use App\Domain\Audit\ValueObjects\AuditActor;
 use App\Domain\Audit\ValueObjects\SafeAuditMetadata;
 use App\Domain\Documents\Enums\DocumentAccessRight;
@@ -17,12 +19,14 @@ use App\Infrastructure\Persistence\Eloquent\Documents\DocumentVersion;
 use App\Infrastructure\Persistence\Eloquent\Evidence\Evidence;
 use App\Infrastructure\Persistence\Eloquent\Evidence\EvidenceLink;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 final class LinkEvidence
 {
     public function __construct(
         private readonly AuthorizeDocumentAccess $authorization,
+        private readonly AuthorizeBusinessCapability $businessAuthorization,
         private readonly EvidenceTargetRegistry $targets,
         private readonly RecordBusinessOccurrence $recordBusinessOccurrence,
     ) {}
@@ -99,12 +103,26 @@ final class LinkEvidence
             return null;
         }
 
+        $target = $this->targets->resolve(
+            $targetType,
+            $targetId,
+            $businessId,
+        );
+
+        if ($target === null) {
+            return null;
+        }
+
         if (
-            $this->targets->resolve(
-                $targetType,
+            $this->requiresF6dRecordAuthorization($targetType, $target)
+            && ! $this->businessAuthorization->decide(
+                $user,
+                $currentBusiness,
+                $currentBusiness,
+                new Capability($targetCapability),
+                $target::class,
                 $targetId,
-                $businessId,
-            ) === null
+            )->allowed
         ) {
             return null;
         }
@@ -145,6 +163,19 @@ final class LinkEvidence
                 return $link;
             },
         );
+    }
+
+    private function requiresF6dRecordAuthorization(
+        string $targetType,
+        Model $target,
+    ): bool {
+        return match ($targetType) {
+            'risk_protection',
+            'risk_incident',
+            'risk_control_test' => (string) $target->getAttribute('confidentiality') === 'restricted',
+            'continuity_emergency_access_activation' => true,
+            default => false,
+        };
     }
 
     /**

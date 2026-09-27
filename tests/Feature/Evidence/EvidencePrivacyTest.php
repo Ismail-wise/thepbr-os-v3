@@ -20,6 +20,7 @@ use App\Domain\Identity\Enums\AccountStatus;
 use App\Domain\Members\Enums\MembershipAccessStatus;
 use App\Infrastructure\Persistence\Eloquent\Access\Permission;
 use App\Infrastructure\Persistence\Eloquent\Access\PermissionGrant;
+use App\Infrastructure\Persistence\Eloquent\Access\RecordAccessRule;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Documents\Document;
 use App\Infrastructure\Persistence\Eloquent\Documents\DocumentAccessGrant;
@@ -27,8 +28,11 @@ use App\Infrastructure\Persistence\Eloquent\Documents\DocumentVersion;
 use App\Infrastructure\Persistence\Eloquent\Evidence\Evidence;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use App\Infrastructure\Persistence\Eloquent\Members\Membership;
+use App\Infrastructure\Persistence\Eloquent\Records\FormalRecordFamily;
+use App\Infrastructure\Persistence\Eloquent\Records\FormalRecordVersion;
 use App\Infrastructure\Persistence\Eloquent\Records\Proposal;
 use App\Infrastructure\Persistence\Eloquent\Records\ProposalVersion;
+use App\Infrastructure\Persistence\Eloquent\Risk\RiskIncident;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -220,6 +224,11 @@ final class EvidencePrivacyTest extends TestCase
                 'finance_reconciliation',
                 'finance_exception',
                 'distribution_run',
+                'risk_protection',
+                'risk_incident',
+                'risk_control_test',
+                'continuity_test',
+                'continuity_emergency_access_activation',
             ],
             $registry->supportedTypes(),
         );
@@ -300,6 +309,181 @@ final class EvidencePrivacyTest extends TestCase
         ]);
     }
 
+    public function test_authorized_restricted_risk_target_evidence_linking_succeeds(): void
+    {
+        [$user, $business, $membership] = $this->context();
+
+        $this->allowSystem($business, $membership, 'records.manage');
+        $this->allowSystem($business, $membership, 'risk.manage');
+
+        [$document, $version] = $this->documentVersion(
+            $business,
+            $membership,
+        );
+        $this->allowDocument(
+            $business,
+            $membership,
+            $document,
+            DocumentAccessRight::Manage,
+        );
+
+        $evidence = $this->app
+            ->make(CreateDocumentVersionEvidence::class)
+            ->execute(
+                $user,
+                $business,
+                (string) $version->getKey(),
+                EvidenceConfidentiality::Restricted,
+                sourceDate: now()->toImmutable(),
+            );
+
+        self::assertNotNull($evidence);
+
+        $incident = $this->restrictedRiskIncident(
+            $business,
+            $user,
+            $membership,
+        );
+
+        $this->allowRecord(
+            $business,
+            $membership,
+            'risk.manage',
+            RiskIncident::class,
+            (string) $incident->getKey(),
+        );
+
+        $link = $this->app->make(LinkEvidence::class)->execute(
+            $user,
+            $business,
+            (string) $evidence->getKey(),
+            'risk_incident',
+            (string) $incident->getKey(),
+        );
+
+        self::assertNotNull($link);
+        $this->assertDatabaseHas('evidence_links', [
+            'business_id' => $business->getKey(),
+            'evidence_id' => $evidence->getKey(),
+            'target_type' => 'risk_incident',
+            'target_id' => $incident->getKey(),
+        ]);
+    }
+
+    public function test_unauthorized_restricted_target_link_fails_closed_without_existence_oracle(): void
+    {
+        [$user, $business, $membership] = $this->context();
+
+        $this->allowSystem($business, $membership, 'records.manage');
+        $this->allowSystem($business, $membership, 'risk.manage');
+
+        [$document, $version] = $this->documentVersion(
+            $business,
+            $membership,
+        );
+        $this->allowDocument(
+            $business,
+            $membership,
+            $document,
+            DocumentAccessRight::Manage,
+        );
+
+        $evidence = $this->app
+            ->make(CreateDocumentVersionEvidence::class)
+            ->execute(
+                $user,
+                $business,
+                (string) $version->getKey(),
+                EvidenceConfidentiality::Restricted,
+                sourceDate: now()->toImmutable(),
+            );
+
+        self::assertNotNull($evidence);
+
+        $incident = $this->restrictedRiskIncident(
+            $business,
+            $user,
+            $membership,
+        );
+
+        $hiddenResult = $this->app->make(LinkEvidence::class)->execute(
+            $user,
+            $business,
+            (string) $evidence->getKey(),
+            'risk_incident',
+            (string) $incident->getKey(),
+        );
+
+        $missingResult = $this->app->make(LinkEvidence::class)->execute(
+            $user,
+            $business,
+            (string) $evidence->getKey(),
+            'risk_incident',
+            (string) Str::uuid7(),
+        );
+
+        self::assertNull($hiddenResult);
+        self::assertSame(
+            $missingResult,
+            $hiddenResult,
+            'Hidden restricted target and missing target must fail identically.',
+        );
+        $this->assertDatabaseCount('evidence_links', 0);
+    }
+
+    public function test_cross_business_restricted_target_cannot_be_linked(): void
+    {
+        [$user, $business, $membership] = $this->context();
+
+        $this->allowSystem($business, $membership, 'records.manage');
+        $this->allowSystem($business, $membership, 'risk.manage');
+
+        [$document, $version] = $this->documentVersion(
+            $business,
+            $membership,
+        );
+        $this->allowDocument(
+            $business,
+            $membership,
+            $document,
+            DocumentAccessRight::Manage,
+        );
+
+        $evidence = $this->app
+            ->make(CreateDocumentVersionEvidence::class)
+            ->execute(
+                $user,
+                $business,
+                (string) $version->getKey(),
+                EvidenceConfidentiality::Restricted,
+                sourceDate: now()->toImmutable(),
+            );
+
+        self::assertNotNull($evidence);
+
+        [$otherUser, $otherBusiness, $otherMembership] = $this->context();
+        $otherIncident = $this->restrictedRiskIncident(
+            $otherBusiness,
+            $otherUser,
+            $otherMembership,
+        );
+
+        $result = $this->app->make(LinkEvidence::class)->execute(
+            $user,
+            $business,
+            (string) $evidence->getKey(),
+            'risk_incident',
+            (string) $otherIncident->getKey(),
+        );
+
+        self::assertNull($result);
+        $this->assertDatabaseMissing('evidence_links', [
+            'business_id' => $business->getKey(),
+            'target_type' => 'risk_incident',
+            'target_id' => $otherIncident->getKey(),
+        ]);
+    }
+
     /**
      * @return array{User, Business, Membership}
      */
@@ -335,7 +519,7 @@ final class EvidencePrivacyTest extends TestCase
         Membership $membership,
         string $key,
     ): void {
-        $permission = Permission::query()->create([
+        $permission = Permission::query()->firstOrCreate([
             'key' => $key,
         ]);
 
@@ -343,6 +527,28 @@ final class EvidencePrivacyTest extends TestCase
             'business_id' => $business->getKey(),
             'membership_id' => $membership->getKey(),
             'permission_id' => $permission->getKey(),
+            'effect' => PermissionEffect::Allow,
+        ]);
+    }
+
+    private function allowRecord(
+        Business $business,
+        Membership $membership,
+        string $capability,
+        string $resourceType,
+        string $resourceId,
+    ): void {
+        $permission = Permission::query()
+            ->where('key', $capability)
+            ->sole();
+
+        RecordAccessRule::query()->create([
+            'business_id' => $business->getKey(),
+            'membership_id' => $membership->getKey(),
+            'permission_profile_id' => null,
+            'permission_id' => $permission->getKey(),
+            'resource_type' => $resourceType,
+            'resource_id' => $resourceId,
             'effect' => PermissionEffect::Allow,
         ]);
     }
@@ -390,6 +596,52 @@ final class EvidencePrivacyTest extends TestCase
             'document_id' => $document->getKey(),
             'right' => $right,
             'effect' => 'allow',
+        ]);
+    }
+
+    private function restrictedRiskIncident(
+        Business $business,
+        User $user,
+        Membership $membership,
+    ): RiskIncident {
+        $family = FormalRecordFamily::query()->create([
+            'business_id' => $business->getKey(),
+            'record_type' => 'risk_register',
+            'subject_type' => 'business',
+            'subject_id' => (string) $business->getKey(),
+        ]);
+
+        $version = FormalRecordVersion::query()->create([
+            'business_id' => $business->getKey(),
+            'formal_record_family_id' => $family->getKey(),
+            'version_number' => 1,
+            'predecessor_version_id' => null,
+            'revision' => 1,
+            'change_summary' => 'Evidence restricted target fixture',
+            'created_by_user_id' => $user->getKey(),
+            'last_changed_by_user_id' => $user->getKey(),
+            'effective_from' => now(),
+            'effective_until' => null,
+            'review_due_at' => null,
+            'content_hash' => hash('sha256', 'risk-'.Str::uuid7()),
+            'frozen_at' => null,
+        ]);
+
+        return RiskIncident::query()->create([
+            'business_id' => $business->getKey(),
+            'formal_record_version_id' => $version->getKey(),
+            'risk_item_id' => null,
+            'incident_at' => now(),
+            'incident_type' => 'restricted_fixture',
+            'description' => 'Restricted target fixture.',
+            'business_impact' => 'Restricted impact.',
+            'immediate_action' => 'Restricted response.',
+            'loss_amount_minor_units' => null,
+            'currency' => null,
+            'status' => 'open',
+            'confidentiality' => 'restricted',
+            'opened_by_membership_id' => $membership->getKey(),
+            'revision' => 1,
         ]);
     }
 

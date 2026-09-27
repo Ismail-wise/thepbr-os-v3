@@ -31,6 +31,8 @@ final class StandardAccessProfileMatrix
             CapabilityCatalog::CONTRIBUTIONS_VIEW,
             CapabilityCatalog::OWNERSHIP_VIEW,
             CapabilityCatalog::OPERATIONS_VIEW,
+            CapabilityCatalog::RISK_VIEW,
+            CapabilityCatalog::CONTINUITY_VIEW,
         ];
 
         return match ($profile) {
@@ -69,6 +71,10 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::FINANCE_PAY,
                 CapabilityCatalog::REWARDS_VIEW,
                 CapabilityCatalog::REWARDS_MANAGE,
+                CapabilityCatalog::RISK_VIEW,
+                CapabilityCatalog::RISK_MANAGE,
+                CapabilityCatalog::CONTINUITY_VIEW,
+                CapabilityCatalog::CONTINUITY_MANAGE,
             ],
 
             StandardAccessProfile::Partner => [
@@ -109,6 +115,10 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::FINANCE_MANAGE,
                 CapabilityCatalog::REWARDS_VIEW,
                 CapabilityCatalog::REWARDS_MANAGE,
+                CapabilityCatalog::RISK_VIEW,
+                CapabilityCatalog::RISK_MANAGE,
+                CapabilityCatalog::CONTINUITY_VIEW,
+                CapabilityCatalog::CONTINUITY_MANAGE,
             ],
 
             StandardAccessProfile::FinanceOwner => [
@@ -128,6 +138,8 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::FINANCE_MANAGE,
                 CapabilityCatalog::FINANCE_PAY,
                 CapabilityCatalog::REWARDS_VIEW,
+                CapabilityCatalog::RISK_VIEW,
+                CapabilityCatalog::CONTINUITY_VIEW,
             ],
 
             StandardAccessProfile::GovernanceSecretary => [
@@ -154,6 +166,10 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::OPERATIONS_MANAGE,
                 CapabilityCatalog::FINANCE_VIEW,
                 CapabilityCatalog::REWARDS_VIEW,
+                CapabilityCatalog::RISK_VIEW,
+                CapabilityCatalog::RISK_MANAGE,
+                CapabilityCatalog::CONTINUITY_VIEW,
+                CapabilityCatalog::CONTINUITY_MANAGE,
             ],
 
             StandardAccessProfile::AdvisorConsultant => [

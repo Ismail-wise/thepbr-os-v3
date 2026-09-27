@@ -60,6 +60,18 @@ const isRewardsCurrent = computed(
         currentPath.value === '/rewards' ||
         currentPath.value.startsWith('/rewards/'),
 );
+
+const isRiskCurrent = computed(
+    () =>
+        currentPath.value === '/risk' ||
+        currentPath.value.startsWith('/risk/'),
+);
+
+const isContinuityCurrent = computed(
+    () =>
+        currentPath.value === '/continuity' ||
+        currentPath.value.startsWith('/continuity/'),
+);
 </script>
 
 <template>
@@ -188,6 +200,34 @@ const isRewardsCurrent = computed(
             @click="emit('navigate')"
         >
             {{ t('nav.rewards') }}
+        </Link>
+
+        <Link
+            href="/risk"
+            :aria-current="isRiskCurrent ? 'page' : undefined"
+            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
+            :class="
+                isRiskCurrent
+                    ? 'border-slate-950 bg-slate-100 text-slate-950'
+                    : 'border-transparent text-slate-700'
+            "
+            @click="emit('navigate')"
+        >
+            {{ t('nav.risk') }}
+        </Link>
+
+        <Link
+            href="/continuity"
+            :aria-current="isContinuityCurrent ? 'page' : undefined"
+            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
+            :class="
+                isContinuityCurrent
+                    ? 'border-slate-950 bg-slate-100 text-slate-950'
+                    : 'border-transparent text-slate-700'
+            "
+            @click="emit('navigate')"
+        >
+            {{ t('nav.continuity') }}
         </Link>
 
         <Link
