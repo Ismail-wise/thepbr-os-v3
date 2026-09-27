@@ -157,8 +157,13 @@ const roleName = (id: string) =>
 const raciFor = (itemId: string) =>
     props.operations.current?.raci_assignments.filter((row) => row.operations_raci_item_id === itemId) ?? [];
 
-const post = (url: string, data: Record<string, unknown> = {}) =>
+type PostData = NonNullable<Parameters<typeof router.post>[1]>;
+
+const post = (url: string, data: PostData = {}) =>
     router.post(url, data, { preserveScroll: true });
+
+const formError = (errors: object, key: string) =>
+    (errors as Record<string, string | undefined>)[key];
 </script>
 
 <template>
@@ -306,7 +311,7 @@ const post = (url: string, data: Record<string, unknown> = {}) =>
                         </div>
                     </div>
 
-                    <p v-if="draft.errors.operations" class="text-sm text-red-700">{{ draft.errors.operations }}</p>
+                    <p v-if="formError(draft.errors, 'operations')" class="text-sm text-red-700">{{ formError(draft.errors, 'operations') }}</p>
                     <button type="submit" class="min-h-11 bg-slate-950 px-4 text-sm font-semibold text-white">Create versioned Operations draft</button>
                 </form>
             </details>

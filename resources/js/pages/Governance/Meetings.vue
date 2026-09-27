@@ -77,8 +77,13 @@ const history = computed(() =>
     props.meetingWorkspace.meetings.filter((row) => row.status !== 'scheduled'),
 );
 
-const post = (url: string, data: Record<string, unknown> = {}) =>
+type PostData = NonNullable<Parameters<typeof router.post>[1]>;
+
+const post = (url: string, data: PostData = {}) =>
     router.post(url, data, { preserveScroll: true });
+
+const formError = (errors: object, key: string) =>
+    (errors as Record<string, string | undefined>)[key];
 </script>
 
 <template>
@@ -142,7 +147,7 @@ const post = (url: string, data: Record<string, unknown> = {}) =>
                             </label>
                         </div>
                     </fieldset>
-                    <p v-if="schedule.errors.meeting" class="text-sm text-red-700 md:col-span-2">{{ schedule.errors.meeting }}</p>
+                    <p v-if="formError(schedule.errors, 'meeting')" class="text-sm text-red-700 md:col-span-2">{{ formError(schedule.errors, 'meeting') }}</p>
                     <button type="submit" class="min-h-11 bg-slate-950 px-4 text-sm font-semibold text-white md:col-span-2 md:w-fit">Schedule governed meeting</button>
                 </form>
             </details>

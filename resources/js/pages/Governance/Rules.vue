@@ -143,8 +143,13 @@ const emergency = useForm({
     expires_at: '',
 });
 
-const post = (url: string, data: Record<string, unknown> = {}) =>
+type PostData = NonNullable<Parameters<typeof router.post>[1]>;
+
+const post = (url: string, data: PostData = {}) =>
     router.post(url, data, { preserveScroll: true });
+
+const formError = (errors: object, key: string) =>
+    (errors as Record<string, string | undefined>)[key];
 
 const actorsFor = (ruleId: string) =>
     props.governanceRules.current_charter?.actors.filter(
@@ -372,7 +377,7 @@ const formatDate = (value: string | null | undefined) =>
                         </article>
                     </div>
 
-                    <p v-if="charter.errors.charter" class="text-sm text-red-700">{{ charter.errors.charter }}</p>
+                    <p v-if="formError(charter.errors, 'charter')" class="text-sm text-red-700">{{ formError(charter.errors, 'charter') }}</p>
                     <button type="submit" :disabled="charter.processing" class="min-h-11 bg-slate-950 px-4 text-sm font-semibold text-white disabled:opacity-50">
                         Create versioned Charter draft
                     </button>
@@ -416,7 +421,7 @@ const formatDate = (value: string | null | undefined) =>
                         <textarea v-model="delegation.scope" required class="border border-slate-300 p-3" placeholder="Scope" />
                         <div class="grid gap-3 sm:grid-cols-2"><input v-model="delegation.effective_from" type="datetime-local" class="min-h-11 border border-slate-300 px-3" /><input v-model="delegation.expires_at" type="datetime-local" class="min-h-11 border border-slate-300 px-3" /></div>
                     </div>
-                    <p v-if="delegation.errors.delegation" class="mt-2 text-sm text-red-700">{{ delegation.errors.delegation }}</p>
+                    <p v-if="formError(delegation.errors, 'delegation')" class="mt-2 text-sm text-red-700">{{ formError(delegation.errors, 'delegation') }}</p>
                     <button type="submit" class="mt-4 min-h-11 bg-slate-950 px-4 text-sm font-semibold text-white">Freeze Delegation Proposal</button>
                 </form>
 
@@ -432,7 +437,7 @@ const formatDate = (value: string | null | undefined) =>
                         <div class="flex gap-4 text-sm"><label><input v-model="emergency.can_approve" type="checkbox" /> Approve</label><label><input v-model="emergency.can_vote" type="checkbox" /> Vote</label><label><input v-model="emergency.can_sign" type="checkbox" /> Sign</label></div>
                         <div class="grid gap-3 sm:grid-cols-2"><input v-model="emergency.effective_from" type="datetime-local" class="min-h-11 border border-slate-300 px-3" /><input v-model="emergency.expires_at" type="datetime-local" required class="min-h-11 border border-slate-300 px-3" /></div>
                     </div>
-                    <p v-if="emergency.errors.emergency_authority" class="mt-2 text-sm text-red-700">{{ emergency.errors.emergency_authority }}</p>
+                    <p v-if="formError(emergency.errors, 'emergency_authority')" class="mt-2 text-sm text-red-700">{{ formError(emergency.errors, 'emergency_authority') }}</p>
                     <button type="submit" class="mt-4 min-h-11 bg-slate-950 px-4 text-sm font-semibold text-white">Freeze Emergency Proposal</button>
                 </form>
             </section>
