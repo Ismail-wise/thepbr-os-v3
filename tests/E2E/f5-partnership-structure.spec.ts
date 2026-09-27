@@ -270,6 +270,13 @@ test(
             ),
         ).toBeVisible();
 
+        await page
+            .getByRole('button', {
+                name: 'Ownership',
+                exact: true,
+            })
+            .click();
+
         await expect(
             page.getByText(
                 'No Effective Ownership Register yet.',
