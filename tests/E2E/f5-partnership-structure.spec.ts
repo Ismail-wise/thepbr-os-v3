@@ -188,17 +188,13 @@ test(
         await expect(contributionWorkflow).toHaveAttribute('open', '');
 
         await contributionWorkflow
-            .getByLabel('Partner', {
-                exact: true,
-            })
+            .getByLabel(/^Partner\b/)
             .selectOption({
                 label: PARTNER,
             });
 
         await contributionWorkflow
-            .getByLabel('Type', {
-                exact: true,
-            })
+            .getByLabel(/^Type\b/)
             .selectOption('cash');
 
         await contributionWorkflow
