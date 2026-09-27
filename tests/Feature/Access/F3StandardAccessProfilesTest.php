@@ -95,6 +95,8 @@ final class F3StandardAccessProfilesTest extends TestCase
             CapabilityCatalog::FINANCE_PAY,
             CapabilityCatalog::REWARDS_VIEW,
             CapabilityCatalog::REWARDS_MANAGE,
+            CapabilityCatalog::CONFLICT_VIEW,
+            CapabilityCatalog::CONFLICT_MANAGE,
         ] as $capability) {
             $this->assertTrue(
                 $capabilities->decide(
@@ -128,6 +130,14 @@ final class F3StandardAccessProfilesTest extends TestCase
             $financeOwnerCapabilities,
             'Finance system access must not manufacture Governance authority.',
         );
+        self::assertContains(
+            CapabilityCatalog::CONFLICT_VIEW,
+            $financeOwnerCapabilities,
+        );
+        self::assertNotContains(
+            CapabilityCatalog::CONFLICT_MANAGE,
+            $financeOwnerCapabilities,
+        );
 
         $partnerCapabilities = StandardAccessProfileMatrix::capabilities(
             StandardAccessProfile::Partner,
@@ -140,6 +150,15 @@ final class F3StandardAccessProfilesTest extends TestCase
         self::assertNotContains(
             CapabilityCatalog::FINANCE_PAY,
             $partnerCapabilities,
+        );
+        self::assertContains(
+            CapabilityCatalog::CONFLICT_VIEW,
+            $partnerCapabilities,
+        );
+        self::assertNotContains(
+            CapabilityCatalog::CONFLICT_MANAGE,
+            $partnerCapabilities,
+            'Participant/profile access must not imply Conflict management.',
         );
     }
 

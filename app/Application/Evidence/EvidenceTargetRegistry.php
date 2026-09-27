@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Evidence;
 
 use App\Domain\Access\CapabilityCatalog;
+use App\Infrastructure\Persistence\Eloquent\Conflict\ConflictCase;
 use App\Infrastructure\Persistence\Eloquent\Continuity\ContinuityEmergencyAccessActivation;
 use App\Infrastructure\Persistence\Eloquent\Continuity\ContinuityTest;
 use App\Infrastructure\Persistence\Eloquent\Finance\FinanceException;
@@ -38,6 +39,7 @@ final class EvidenceTargetRegistry
         'risk_control_test' => RiskControlTest::class,
         'continuity_test' => ContinuityTest::class,
         'continuity_emergency_access_activation' => ContinuityEmergencyAccessActivation::class,
+        'conflict_case' => ConflictCase::class,
     ];
 
     /**
@@ -68,6 +70,7 @@ final class EvidenceTargetRegistry
             'risk_control_test' => CapabilityCatalog::RISK_MANAGE,
             'continuity_test',
             'continuity_emergency_access_activation' => CapabilityCatalog::CONTINUITY_MANAGE,
+            'conflict_case' => CapabilityCatalog::CONFLICT_MANAGE,
             default => CapabilityCatalog::RECORDS_MANAGE,
         };
     }

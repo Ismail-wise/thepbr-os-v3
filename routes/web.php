@@ -8,6 +8,7 @@ use App\Presentation\Http\Controllers\Access\WorkspaceAccessController;
 use App\Presentation\Http\Controllers\Access\WorkspaceAccessInvitationController;
 use App\Presentation\Http\Controllers\Account\AccountSettingsController;
 use App\Presentation\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Presentation\Http\Controllers\Conflict\ConflictWorkspaceController;
 use App\Presentation\Http\Controllers\Continuity\ContinuityWorkspaceController;
 use App\Presentation\Http\Controllers\Finance\FinanceWorkspaceController;
 use App\Presentation\Http\Controllers\Formation\FormationController;
@@ -670,6 +671,71 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 ->name('continuity.emergency-access.end');
             Route::post('/continuity/actions', [ContinuityWorkspaceController::class, 'createAction'])
                 ->name('continuity.actions.store');
+
+            Route::get('/conflict', [ConflictWorkspaceController::class, 'index'])
+                ->name('conflict.index');
+            Route::post('/conflict/policy', [ConflictWorkspaceController::class, 'createPolicy'])
+                ->name('conflict.policy.store');
+            Route::post('/conflict/policy/{formalRecordVersion}/submit', [ConflictWorkspaceController::class, 'submitPolicy'])
+                ->name('conflict.policy.submit');
+            Route::post('/conflict/policy/{formalRecordVersion}/content-review', [ConflictWorkspaceController::class, 'reviewPolicy'])
+                ->name('conflict.policy.content-review');
+            Route::post('/conflict/policy/{formalRecordVersion}/sync-decision', [ConflictWorkspaceController::class, 'syncPolicyDecision'])
+                ->name('conflict.policy.sync-decision');
+            Route::post('/conflict/cases', [ConflictWorkspaceController::class, 'openCase'])
+                ->name('conflict.cases.store');
+            Route::post('/conflict/cases/{case}/transition', [ConflictWorkspaceController::class, 'transitionCase'])
+                ->name('conflict.cases.transition');
+            Route::post('/conflict/cases/{case}/direct-discussions', [ConflictWorkspaceController::class, 'recordDirectDiscussion'])
+                ->name('conflict.discussions.store');
+            Route::post('/conflict/cases/{case}/mediations', [ConflictWorkspaceController::class, 'scheduleMediation'])
+                ->name('conflict.mediations.store');
+            Route::post('/conflict/cases/{case}/mediations/{mediation}/responses', [ConflictWorkspaceController::class, 'recordMediationResponse'])
+                ->name('conflict.mediations.responses.store');
+            Route::post('/conflict/cases/{case}/mediations/{mediation}/complete', [ConflictWorkspaceController::class, 'completeMediation'])
+                ->name('conflict.mediations.complete');
+            Route::post('/conflict/cases/{case}/decisions', [ConflictWorkspaceController::class, 'submitDecision'])
+                ->name('conflict.decisions.store');
+            Route::post('/conflict/cases/{case}/decisions/{submission}/open', [ConflictWorkspaceController::class, 'openDecision'])
+                ->name('conflict.decisions.open');
+            Route::post('/conflict/cases/{case}/decisions/{submission}/apply', [ConflictWorkspaceController::class, 'applyDecision'])
+                ->name('conflict.decisions.apply');
+            Route::post('/conflict/cases/{case}/escalations', [ConflictWorkspaceController::class, 'enterEscalation'])
+                ->name('conflict.escalations.store');
+            Route::post('/conflict/cases/{case}/deadlock', [ConflictWorkspaceController::class, 'enterDeadlock'])
+                ->name('conflict.deadlock.store');
+            Route::post('/conflict/cases/{case}/deadlock/{deadlock}/decision', [ConflictWorkspaceController::class, 'bindDeadlockDecision'])
+                ->name('conflict.deadlock.decision');
+            Route::post('/conflict/cases/{case}/deadlock/{deadlock}/resolve', [ConflictWorkspaceController::class, 'resolveDeadlock'])
+                ->name('conflict.deadlock.resolve');
+            Route::post('/conflict/cases/{case}/investigations', [ConflictWorkspaceController::class, 'openInvestigation'])
+                ->name('conflict.investigations.store');
+            Route::post('/conflict/cases/{case}/investigations/{investigation}/complete', [ConflictWorkspaceController::class, 'completeInvestigation'])
+                ->name('conflict.investigations.complete');
+            Route::post('/conflict/cases/{case}/urgent-risk', [ConflictWorkspaceController::class, 'openUrgentRisk'])
+                ->name('conflict.urgent-risk.store');
+            Route::post('/conflict/cases/{case}/urgent-risk/{urgentRisk}/decision', [ConflictWorkspaceController::class, 'bindUrgentDecision'])
+                ->name('conflict.urgent-risk.decision');
+            Route::post('/conflict/cases/{case}/settlements', [ConflictWorkspaceController::class, 'createSettlement'])
+                ->name('conflict.settlements.store');
+            Route::post('/conflict/cases/{case}/settlements/{formalRecordVersion}/submit', [ConflictWorkspaceController::class, 'submitSettlement'])
+                ->name('conflict.settlements.submit');
+            Route::post('/conflict/cases/{case}/settlements/{formalRecordVersion}/content-review', [ConflictWorkspaceController::class, 'reviewSettlement'])
+                ->name('conflict.settlements.content-review');
+            Route::post('/conflict/cases/{case}/settlements/{formalRecordVersion}/document', [ConflictWorkspaceController::class, 'bindSettlementDocument'])
+                ->name('conflict.settlements.document');
+            Route::post('/conflict/cases/{case}/settlements/{formalRecordVersion}/signature', [ConflictWorkspaceController::class, 'requestSettlementSignature'])
+                ->name('conflict.settlements.signature');
+            Route::post('/conflict/cases/{case}/settlements/{formalRecordVersion}/effect', [ConflictWorkspaceController::class, 'effectSettlement'])
+                ->name('conflict.settlements.effect');
+            Route::post('/conflict/cases/{case}/referrals', [ConflictWorkspaceController::class, 'refer'])
+                ->name('conflict.referrals.store');
+            Route::post('/conflict/cases/{case}/reviews', [ConflictWorkspaceController::class, 'createReview'])
+                ->name('conflict.reviews.store');
+            Route::post('/conflict/cases/{case}/reviews/{review}/complete', [ConflictWorkspaceController::class, 'completeReview'])
+                ->name('conflict.reviews.complete');
+            Route::post('/conflict/cases/{case}/actions', [ConflictWorkspaceController::class, 'createAction'])
+                ->name('conflict.actions.store');
 
             Route::get(
                 '/records/documents',

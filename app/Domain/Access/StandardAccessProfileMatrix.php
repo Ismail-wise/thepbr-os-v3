@@ -33,6 +33,7 @@ final class StandardAccessProfileMatrix
             CapabilityCatalog::OPERATIONS_VIEW,
             CapabilityCatalog::RISK_VIEW,
             CapabilityCatalog::CONTINUITY_VIEW,
+            CapabilityCatalog::CONFLICT_VIEW,
         ];
 
         return match ($profile) {
@@ -75,6 +76,8 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::RISK_MANAGE,
                 CapabilityCatalog::CONTINUITY_VIEW,
                 CapabilityCatalog::CONTINUITY_MANAGE,
+                CapabilityCatalog::CONFLICT_VIEW,
+                CapabilityCatalog::CONFLICT_MANAGE,
             ],
 
             StandardAccessProfile::Partner => [
@@ -119,6 +122,8 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::RISK_MANAGE,
                 CapabilityCatalog::CONTINUITY_VIEW,
                 CapabilityCatalog::CONTINUITY_MANAGE,
+                CapabilityCatalog::CONFLICT_VIEW,
+                CapabilityCatalog::CONFLICT_MANAGE,
             ],
 
             StandardAccessProfile::FinanceOwner => [
@@ -140,6 +145,7 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::REWARDS_VIEW,
                 CapabilityCatalog::RISK_VIEW,
                 CapabilityCatalog::CONTINUITY_VIEW,
+                CapabilityCatalog::CONFLICT_VIEW,
             ],
 
             StandardAccessProfile::GovernanceSecretary => [
@@ -170,6 +176,8 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::RISK_MANAGE,
                 CapabilityCatalog::CONTINUITY_VIEW,
                 CapabilityCatalog::CONTINUITY_MANAGE,
+                CapabilityCatalog::CONFLICT_VIEW,
+                CapabilityCatalog::CONFLICT_MANAGE,
             ],
 
             StandardAccessProfile::AdvisorConsultant => [

@@ -91,9 +91,15 @@ final class CapabilityCatalog
 
     public const CONTINUITY_MANAGE = 'continuity.manage';
 
+    public const CONFLICT_VIEW = 'conflict.view';
+
+    public const CONFLICT_MANAGE = 'conflict.manage';
+
     public static function all(): array
     {
         return [
+            self::CONFLICT_VIEW,
+            self::CONFLICT_MANAGE,
             self::RISK_VIEW,
             self::RISK_MANAGE,
             self::CONTINUITY_VIEW,

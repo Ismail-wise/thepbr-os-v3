@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Activity;
 
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
+use App\Infrastructure\Persistence\Eloquent\Conflict\ConflictCase;
 use App\Infrastructure\Persistence\Eloquent\Records\FormalRecordVersion;
 use App\Infrastructure\Persistence\Eloquent\Records\Proposal;
 use Illuminate\Database\Eloquent\Model;
@@ -19,6 +20,7 @@ final class ActivityTargetRegistry
         return match ($resourceType) {
             'formal_record_version' => FormalRecordVersion::class,
             'proposal' => Proposal::class,
+            'conflict_case' => ConflictCase::class,
             default => null,
         };
     }

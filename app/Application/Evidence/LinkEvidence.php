@@ -114,7 +114,7 @@ final class LinkEvidence
         }
 
         if (
-            $this->requiresF6dRecordAuthorization($targetType, $target)
+            $this->requiresRecordAuthorization($targetType, $target)
             && ! $this->businessAuthorization->decide(
                 $user,
                 $currentBusiness,
@@ -165,7 +165,7 @@ final class LinkEvidence
         );
     }
 
-    private function requiresF6dRecordAuthorization(
+    private function requiresRecordAuthorization(
         string $targetType,
         Model $target,
     ): bool {
@@ -173,7 +173,8 @@ final class LinkEvidence
             'risk_protection',
             'risk_incident',
             'risk_control_test' => (string) $target->getAttribute('confidentiality') === 'restricted',
-            'continuity_emergency_access_activation' => true,
+            'continuity_emergency_access_activation',
+            'conflict_case' => true,
             default => false,
         };
     }
