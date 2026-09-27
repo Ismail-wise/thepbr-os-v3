@@ -22,6 +22,9 @@ const form = useForm({
     timezone: detectedTimezone,
 });
 
+const invitationError = (): string =>
+    Object.entries(form.errors).find(([key]) => key === 'invitation')?.[1] ?? '';
+
 const submit = () => {
     form.post('/access/invitation/redeem', {
         preserveScroll: true,
@@ -58,13 +61,13 @@ const submit = () => {
 
             <form class="mt-8 space-y-5" @submit.prevent="submit">
                 <div
-                    v-if="form.errors.invitation"
+                    v-if="invitationError()"
                     id="invitation-error"
                     role="alert"
                     aria-live="polite"
                     class="border border-red-300 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800"
                 >
-                    {{ form.errors.invitation }}
+                    {{ invitationError() }}
                 </div>
 
                 <div>
