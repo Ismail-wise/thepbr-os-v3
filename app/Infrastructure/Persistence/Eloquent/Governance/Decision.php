@@ -23,6 +23,7 @@ final class Decision extends Model
         'authority_snapshot_id',
         'decision_type',
         'decision_amount',
+        'meeting_id',
         'status',
         'outcome',
         'opened_by_membership_id',

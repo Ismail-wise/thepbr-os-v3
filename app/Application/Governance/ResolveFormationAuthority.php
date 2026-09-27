@@ -44,7 +44,7 @@ final class ResolveFormationAuthority
         DecisionType $decisionType,
         ?string $decisionAmount = null,
     ): ?array {
-        $source = $this->resolveSource($business);
+        $source = $this->currentSource($business);
 
         if ($source === null) {
             return null;
@@ -221,7 +221,7 @@ final class ResolveFormationAuthority
      *     initial_bootstrap: bool
      * }|null
      */
-    private function resolveSource(Business $business): ?array
+    public function currentSource(Business $business): ?array
     {
         $effectiveVersionId =
             RecordFamilyEffectiveHead::query()

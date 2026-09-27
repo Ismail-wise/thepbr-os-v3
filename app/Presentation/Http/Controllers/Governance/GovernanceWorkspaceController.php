@@ -133,6 +133,7 @@ final class GovernanceWorkspaceController
         $validated = $request->validate([
             'decision_type' => ['required', 'string', 'max:160'],
             'decision_amount' => ['nullable', 'string', 'max:32'],
+            'meeting_id' => ['nullable', 'uuid'],
         ]);
 
         try {
@@ -144,6 +145,7 @@ final class GovernanceWorkspaceController
                     trim($validated['decision_type']),
                 ),
                 $validated['decision_amount'] ?? null,
+                $validated['meeting_id'] ?? null,
             );
         } catch (InvalidArgumentException|RuntimeException $exception) {
             throw ValidationException::withMessages([

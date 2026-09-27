@@ -9,7 +9,10 @@ use App\Presentation\Http\Controllers\Access\WorkspaceAccessInvitationController
 use App\Presentation\Http\Controllers\Account\AccountSettingsController;
 use App\Presentation\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Presentation\Http\Controllers\Formation\FormationController;
+use App\Presentation\Http\Controllers\Governance\GovernanceMeetingController;
+use App\Presentation\Http\Controllers\Governance\GovernanceRulesController;
 use App\Presentation\Http\Controllers\Governance\GovernanceWorkspaceController;
+use App\Presentation\Http\Controllers\Operations\OperationsWorkspaceController;
 use App\Presentation\Http\Controllers\Partnership\PartnershipWorkflowController;
 use App\Presentation\Http\Controllers\Partnership\PartnershipWorkspaceController;
 use App\Presentation\Http\Controllers\Records\ActivityController;
@@ -290,6 +293,66 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 [GovernanceWorkspaceController::class, 'index'],
             )->name('governance.index');
 
+            Route::get(
+                '/governance/rules',
+                [GovernanceRulesController::class, 'index'],
+            )->name('governance.rules.index');
+
+            Route::post(
+                '/governance/rules/charter',
+                [GovernanceRulesController::class, 'createDraft'],
+            )->name('governance.rules.charter.store');
+
+            Route::post(
+                '/governance/rules/charter/{formalRecordVersion}/submit',
+                [GovernanceRulesController::class, 'submit'],
+            )->name('governance.rules.charter.submit');
+
+            Route::post(
+                '/governance/rules/charter/{formalRecordVersion}/content-review',
+                [GovernanceRulesController::class, 'contentReview'],
+            )->name('governance.rules.charter.content-review');
+
+            Route::post(
+                '/governance/rules/delegations',
+                [GovernanceRulesController::class, 'proposeDelegation'],
+            )->name('governance.rules.delegations.store');
+
+            Route::post(
+                '/governance/rules/emergency-authority',
+                [GovernanceRulesController::class, 'proposeEmergency'],
+            )->name('governance.rules.emergency-authority.store');
+
+            Route::post(
+                '/governance/rules/authority-revocations',
+                [GovernanceRulesController::class, 'proposeRevocation'],
+            )->name('governance.rules.authority-revocations.store');
+
+            Route::post(
+                '/governance/rules/authority-changes/{submission}/authorize',
+                [GovernanceRulesController::class, 'authorizeChange'],
+            )->name('governance.rules.authority-changes.authorize');
+
+            Route::get(
+                '/governance/meetings',
+                [GovernanceMeetingController::class, 'index'],
+            )->name('governance.meetings.index');
+
+            Route::post(
+                '/governance/meetings',
+                [GovernanceMeetingController::class, 'store'],
+            )->name('governance.meetings.store');
+
+            Route::post(
+                '/governance/meetings/{meeting}/hold',
+                [GovernanceMeetingController::class, 'hold'],
+            )->name('governance.meetings.hold');
+
+            Route::post(
+                '/governance/meetings/{meeting}/cancel',
+                [GovernanceMeetingController::class, 'cancel'],
+            )->name('governance.meetings.cancel');
+
             Route::post(
                 '/governance/proposal-versions/{proposalVersion}/reviews',
                 [GovernanceWorkspaceController::class, 'createProposalReview'],
@@ -394,6 +457,36 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 '/governance/notifications/{notification}/read',
                 [GovernanceWorkspaceController::class, 'markNotificationRead'],
             )->name('governance.notifications.read');
+
+            Route::get(
+                '/operations',
+                [OperationsWorkspaceController::class, 'index'],
+            )->name('operations.index');
+
+            Route::post(
+                '/operations/register',
+                [OperationsWorkspaceController::class, 'createDraft'],
+            )->name('operations.register.store');
+
+            Route::post(
+                '/operations/register/{formalRecordVersion}/submit',
+                [OperationsWorkspaceController::class, 'submit'],
+            )->name('operations.register.submit');
+
+            Route::post(
+                '/operations/register/{formalRecordVersion}/content-review',
+                [OperationsWorkspaceController::class, 'contentReview'],
+            )->name('operations.register.content-review');
+
+            Route::post(
+                '/operations/actions',
+                [OperationsWorkspaceController::class, 'createAction'],
+            )->name('operations.actions.store');
+
+            Route::post(
+                '/operations/actions/{action}/status',
+                [OperationsWorkspaceController::class, 'updateAction'],
+            )->name('operations.actions.status.update');
 
             Route::get(
                 '/records/documents',

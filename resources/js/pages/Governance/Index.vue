@@ -42,6 +42,10 @@ type DecisionRow = {
     recordVersions: RecordVersionRow[];
     type: string;
     amount: string | null;
+    meetingId: string | null;
+    sourceKind: string | null;
+    meetingRequired: boolean;
+    recordRequired: boolean;
     status: string;
     outcome: string | null;
     openedAt: string | null;
@@ -140,7 +144,7 @@ type GovernanceWorkspace = {
     business: { id: string; name: string };
     membership: { id: string };
     authority: null | {
-        authority_mode: 'none' | 'bootstrap' | 'effective';
+        authority_mode: 'none' | 'bootstrap' | 'effective' | 'charter';
         source_version_id: string | null;
         source_content_hash: string | null;
         source_state: string | null;
@@ -148,12 +152,15 @@ type GovernanceWorkspace = {
             id: string;
             sequence: number;
             decision_type: string;
+            category: string;
             decision_method: string;
             required_approvals: number;
             required_votes: number;
             quorum_count: number;
             signature_required: boolean;
             reserved_matter: boolean;
+            meeting_required: boolean;
+            record_required: boolean;
             actors: Array<{
                 membership_id: string;
                 capacity: string;
@@ -163,6 +170,14 @@ type GovernanceWorkspace = {
             }>;
         }>;
     };
+    meetings: Array<{
+        id: string;
+        title: string;
+        heldAt: string | null;
+        quorumRequired: number;
+        quorumPresent: number;
+        authoritySourceVersionId: string;
+    }>;
     summary: {
         needsAttention: number;
         openDecisions: number;
@@ -416,15 +431,42 @@ const recusalReasons = reactive<Record<string, string>>({});
 const blockedReasons = reactive<Record<string, string>>({});
 const proposalDecisionTypes = reactive<Record<string, string>>({});
 const proposalDecisionAmounts = reactive<Record<string, string>>({});
+const proposalDecisionMeetingIds = reactive<Record<string, string>>({});
 
 const authorityLabel = computed(() => {
     const authorityMode = props.governance.authority?.authority_mode ?? 'none';
 
     if (authorityMode === 'bootstrap') return c.value.bootstrap;
-    if (authorityMode === 'effective') return c.value.effectiveAuthority;
+    if (authorityMode === 'effective' || authorityMode === 'charter') {
+        return c.value.effectiveAuthority;
+    }
 
     return c.value.noAuthority;
 });
+
+const selectedRule = (proposalId: string) => {
+    const type =
+        proposalDecisionTypes[proposalId] ||
+        props.governance.authority?.rules?.[0]?.decision_type ||
+        '';
+
+    return props.governance.authority?.rules.find(
+        (row) => row.decision_type === type,
+    );
+};
+
+const eligibleMeetings = (proposalId: string) => {
+    const sourceId = props.governance.authority?.source_version_id;
+    const rule = selectedRule(proposalId);
+
+    if (!rule?.meeting_required || !sourceId) return [];
+
+    return props.governance.meetings.filter(
+        (meeting) =>
+            meeting.authoritySourceVersionId === sourceId &&
+            meeting.quorumPresent >= meeting.quorumRequired,
+    );
+};
 
 const formatDate = (value: string | null): string => {
     if (value === null) return '—';
@@ -760,6 +802,21 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                             :placeholder="c.decisionAmount"
                                         />
 
+                                        <select
+                                            v-if="selectedRule(row.id)?.meeting_required"
+                                            v-model="proposalDecisionMeetingIds[row.id]"
+                                            class="min-h-10 border border-slate-300 bg-white px-2 text-xs sm:col-span-2"
+                                        >
+                                            <option value="">Select qualifying held meeting</option>
+                                            <option
+                                                v-for="meeting in eligibleMeetings(row.id)"
+                                                :key="meeting.id"
+                                                :value="meeting.id"
+                                            >
+                                                {{ meeting.title }}
+                                            </option>
+                                        </select>
+
                                         <button
                                             type="button"
                                             class="min-h-10 border border-slate-900 bg-slate-900 px-3 text-xs font-semibold text-white sm:col-span-2"
@@ -768,7 +825,9 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                                     proposalDecisionTypes[row.id] ||
                                                     governance.authority?.rules?.[0]
                                                         ?.decision_type
-                                                )
+                                                ) ||
+                                                (selectedRule(row.id)?.meeting_required &&
+                                                    !proposalDecisionMeetingIds[row.id])
                                             "
                                             @click="
                                                 post(
@@ -784,6 +843,10 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                                             '',
                                                         decision_amount:
                                                             proposalDecisionAmounts[
+                                                                row.id
+                                                            ] || null,
+                                                        meeting_id:
+                                                            proposalDecisionMeetingIds[
                                                                 row.id
                                                             ] || null,
                                                     },

@@ -30,6 +30,7 @@ final class StandardAccessProfileMatrix
             CapabilityCatalog::PARTNERS_VIEW,
             CapabilityCatalog::CONTRIBUTIONS_VIEW,
             CapabilityCatalog::OWNERSHIP_VIEW,
+            CapabilityCatalog::OPERATIONS_VIEW,
         ];
 
         return match ($profile) {
@@ -61,6 +62,8 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::OWNERSHIP_VIEW,
                 CapabilityCatalog::CONTRIBUTIONS_MANAGE,
                 CapabilityCatalog::OWNERSHIP_MANAGE,
+                CapabilityCatalog::OPERATIONS_VIEW,
+                CapabilityCatalog::OPERATIONS_MANAGE,
             ],
 
             StandardAccessProfile::Partner => [
@@ -94,6 +97,8 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::OWNERSHIP_VIEW,
                 CapabilityCatalog::CONTRIBUTIONS_MANAGE,
                 CapabilityCatalog::OWNERSHIP_MANAGE,
+                CapabilityCatalog::OPERATIONS_VIEW,
+                CapabilityCatalog::OPERATIONS_MANAGE,
             ],
 
             StandardAccessProfile::FinanceOwner => [
@@ -108,6 +113,7 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::CONTRIBUTIONS_VIEW,
                 CapabilityCatalog::OWNERSHIP_VIEW,
                 CapabilityCatalog::CONTRIBUTIONS_MANAGE,
+                CapabilityCatalog::OPERATIONS_VIEW,
             ],
 
             StandardAccessProfile::GovernanceSecretary => [
@@ -130,6 +136,8 @@ final class StandardAccessProfileMatrix
                 CapabilityCatalog::OWNERSHIP_VIEW,
                 CapabilityCatalog::CONTRIBUTIONS_MANAGE,
                 CapabilityCatalog::OWNERSHIP_MANAGE,
+                CapabilityCatalog::OPERATIONS_VIEW,
+                CapabilityCatalog::OPERATIONS_MANAGE,
             ],
 
             StandardAccessProfile::AdvisorConsultant => [

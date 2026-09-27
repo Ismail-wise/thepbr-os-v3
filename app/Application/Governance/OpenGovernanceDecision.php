@@ -18,12 +18,12 @@ use App\Domain\Governance\Enums\DecisionStatus;
 use App\Domain\Governance\Enums\ParticipantStatus;
 use App\Domain\Governance\Enums\ProposalReviewOutcome;
 use App\Domain\Governance\ValueObjects\DecisionType;
+use App\Domain\Governance\ValueObjects\ResolvedAuthorityActor;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Governance\ApprovalRequirement;
 use App\Infrastructure\Persistence\Eloquent\Governance\AuthoritySnapshot;
 use App\Infrastructure\Persistence\Eloquent\Governance\Decision;
 use App\Infrastructure\Persistence\Eloquent\Governance\DecisionParticipant;
-use App\Infrastructure\Persistence\Eloquent\Governance\FormationAuthorityPolicyActor;
 use App\Infrastructure\Persistence\Eloquent\Governance\ProposalReview;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use App\Infrastructure\Persistence\Eloquent\Records\ProposalVersion;
@@ -37,7 +37,7 @@ final class OpenGovernanceDecision
     public function __construct(
         private readonly AuthorizeBusinessCapability $authorizeBusinessCapability,
         private readonly ResolveMembershipCapabilities $membershipCapabilities,
-        private readonly ResolveFormationAuthority $resolveFormationAuthority,
+        private readonly ResolveGovernanceAuthority $resolveGovernanceAuthority,
         private readonly RecordBusinessOccurrence $recordBusinessOccurrence,
     ) {}
 
@@ -50,6 +50,7 @@ final class OpenGovernanceDecision
         string $proposalVersionId,
         DecisionType $decisionType,
         ?string $decisionAmount = null,
+        ?string $meetingId = null,
     ): ?Decision {
         $capability = new Capability(
             CapabilityCatalog::GOVERNANCE_RECORDS_MANAGE,
@@ -83,6 +84,7 @@ final class OpenGovernanceDecision
             $proposalVersionId,
             $decisionType,
             $amount,
+            $meetingId,
             $capability,
             $membership,
         ): ?Decision {
@@ -138,7 +140,7 @@ final class OpenGovernanceDecision
                 );
             }
 
-            $authority = $this->resolveFormationAuthority->resolve(
+            $authority = $this->resolveGovernanceAuthority->resolve(
                 $currentBusiness,
                 $decisionType,
                 $amount,
@@ -152,17 +154,48 @@ final class OpenGovernanceDecision
             $rule = $authority['rule'];
             $actors = $authority['actors'];
 
+            $resolvedMeetingId = null;
+
+            if ($rule['meeting_required'] || $meetingId !== null) {
+                if ($meetingId === null) {
+                    throw new RuntimeException(
+                        'This Governance rule requires a held, quorum-met Meeting.',
+                    );
+                }
+
+                $meeting = DB::table('governance_meetings')
+                    ->where('business_id', $currentBusiness->getKey())
+                    ->where('id', $meetingId)
+                    ->where('status', 'held')
+                    ->first();
+
+                if (
+                    $meeting === null
+                    || (string) $meeting->authority_source_formal_record_version_id
+                        !== (string) $sourceVersion->getKey()
+                    || (int) $meeting->quorum_present
+                        < (int) $meeting->quorum_required
+                ) {
+                    throw new RuntimeException(
+                        'Decision Meeting must be held under the same authority source with quorum satisfied.',
+                    );
+                }
+
+                $resolvedMeetingId = (string) $meeting->id;
+            }
+
             $actorProjection = $actors
                 ->map(
                     static function (
-                        FormationAuthorityPolicyActor $actor,
+                        ResolvedAuthorityActor $actor,
                     ): array {
                         return [
-                            'membership_id' => (string) $actor->membership_id,
-                            'capacity' => (string) $actor->capacity,
-                            'can_approve' => (bool) $actor->can_approve,
-                            'can_vote' => (bool) $actor->can_vote,
-                            'can_sign' => (bool) $actor->can_sign,
+                            'membership_id' => $actor->membershipId,
+                            'capacity' => $actor->capacity,
+                            'can_approve' => $actor->canApprove,
+                            'can_vote' => $actor->canVote,
+                            'can_sign' => $actor->canSign,
+                            'source' => $actor->source,
                         ];
                     },
                 )
@@ -172,17 +205,21 @@ final class OpenGovernanceDecision
             $snapshotPayload = [
                 'proposal_version_id' => (string) $proposalVersion->getKey(),
                 'source_formal_record_version_id' => (string) $sourceVersion->getKey(),
-                'source_rule_sequence' => (int) $rule->sequence,
+                'source_rule_sequence' => $rule['sequence'],
                 'source_content_hash' => (string) $sourceVersion->content_hash,
+                'source_kind' => $authority['source_kind'],
                 'decision_type' => $decisionType->value(),
-                'decision_method' => $rule->decision_method->value,
-                'required_approvals' => (int) $rule->required_approvals,
-                'required_votes' => (int) $rule->required_votes,
-                'quorum_count' => (int) $rule->quorum_count,
-                'signature_required' => (bool) $rule->signature_required,
-                'reserved_matter' => (bool) $rule->reserved_matter,
-                'amount_min' => $rule->amount_min,
-                'amount_max' => $rule->amount_max,
+                'decision_method' => $rule['decision_method']->value,
+                'required_approvals' => $rule['required_approvals'],
+                'required_votes' => $rule['required_votes'],
+                'quorum_count' => $rule['quorum_count'],
+                'signature_required' => $rule['signature_required'],
+                'reserved_matter' => $rule['reserved_matter'],
+                'meeting_required' => $rule['meeting_required'],
+                'record_required' => $rule['record_required'],
+                'amount_min' => $rule['amount_min'],
+                'amount_max' => $rule['amount_max'],
+                'meeting_id' => $resolvedMeetingId,
                 'actors' => $actorProjection,
             ];
 
@@ -200,17 +237,20 @@ final class OpenGovernanceDecision
                 'business_id' => $currentBusiness->getKey(),
                 'proposal_version_id' => $proposalVersion->getKey(),
                 'source_formal_record_version_id' => $sourceVersion->getKey(),
-                'source_rule_sequence' => $rule->sequence,
+                'source_rule_sequence' => $rule['sequence'],
                 'source_content_hash' => $sourceVersion->content_hash,
+                'source_kind' => $authority['source_kind'],
                 'decision_type' => $decisionType->value(),
-                'decision_method' => $rule->decision_method->value,
-                'required_approvals' => $rule->required_approvals,
-                'required_votes' => $rule->required_votes,
-                'quorum_count' => $rule->quorum_count,
-                'signature_required' => $rule->signature_required,
-                'reserved_matter' => $rule->reserved_matter,
-                'amount_min' => $rule->amount_min,
-                'amount_max' => $rule->amount_max,
+                'decision_method' => $rule['decision_method']->value,
+                'required_approvals' => $rule['required_approvals'],
+                'required_votes' => $rule['required_votes'],
+                'quorum_count' => $rule['quorum_count'],
+                'signature_required' => $rule['signature_required'],
+                'reserved_matter' => $rule['reserved_matter'],
+                'meeting_required' => $rule['meeting_required'],
+                'record_required' => $rule['record_required'],
+                'amount_min' => $rule['amount_min'],
+                'amount_max' => $rule['amount_max'],
                 'snapshot_hash' => $snapshotHash,
                 'captured_by_membership_id' => $membership->getKey(),
                 'captured_at' => now(),
@@ -222,6 +262,7 @@ final class OpenGovernanceDecision
                 'authority_snapshot_id' => $snapshot->getKey(),
                 'decision_type' => $decisionType->value(),
                 'decision_amount' => $amount,
+                'meeting_id' => $resolvedMeetingId,
                 'status' => DecisionStatus::Open->value,
                 'outcome' => null,
                 'opened_by_membership_id' => $membership->getKey(),
@@ -233,7 +274,7 @@ final class OpenGovernanceDecision
 
             if (
                 in_array(
-                    $rule->decision_method,
+                    $rule['decision_method'],
                     [
                         DecisionMethod::Approval,
                         DecisionMethod::ApprovalAndVote,
@@ -248,14 +289,14 @@ final class OpenGovernanceDecision
                     'authority_snapshot_id' => $snapshot->getKey(),
                     'sequence' => $sequence++,
                     'requirement_kind' => 'approval',
-                    'required_count' => $rule->required_approvals,
+                    'required_count' => $rule['required_approvals'],
                     'quorum_count' => null,
                 ]);
             }
 
             if (
                 in_array(
-                    $rule->decision_method,
+                    $rule['decision_method'],
                     [
                         DecisionMethod::Vote,
                         DecisionMethod::ApprovalAndVote,
@@ -270,8 +311,8 @@ final class OpenGovernanceDecision
                     'authority_snapshot_id' => $snapshot->getKey(),
                     'sequence' => $sequence,
                     'requirement_kind' => 'vote',
-                    'required_count' => $rule->required_votes,
-                    'quorum_count' => $rule->quorum_count,
+                    'required_count' => $rule['required_votes'],
+                    'quorum_count' => $rule['quorum_count'],
                 ]);
             }
 
@@ -281,11 +322,11 @@ final class OpenGovernanceDecision
                     'decision_id' => $decision->getKey(),
                     'proposal_version_id' => $proposalVersion->getKey(),
                     'authority_snapshot_id' => $snapshot->getKey(),
-                    'membership_id' => $actor->membership_id,
+                    'membership_id' => $actor->membershipId,
                     'capacity' => $actor->capacity,
-                    'can_approve' => $actor->can_approve,
-                    'can_vote' => $actor->can_vote,
-                    'can_sign' => $actor->can_sign,
+                    'can_approve' => $actor->canApprove,
+                    'can_vote' => $actor->canVote,
+                    'can_sign' => $actor->canSign,
                     'status' => ParticipantStatus::Eligible->value,
                     'recusal_reason' => null,
                     'recused_by_membership_id' => null,
@@ -311,9 +352,10 @@ final class OpenGovernanceDecision
                 ),
                 SafeAuditMetadata::from([
                     'decision_type' => $decisionType->value(),
-                    'decision_method' => $rule->decision_method->value,
-                    'signature_required' => (bool) $rule->signature_required,
-                    'reserved_matter' => (bool) $rule->reserved_matter,
+                    'decision_method' => $rule['decision_method']->value,
+                    'signature_required' => $rule['signature_required'],
+                    'reserved_matter' => $rule['reserved_matter'],
+                    'source_kind' => $authority['source_kind'],
                 ]),
                 $occurredAt,
                 $correlationId,
@@ -335,7 +377,7 @@ final class OpenGovernanceDecision
                 ),
                 SafeBusinessEventPayload::from([
                     'decision_type' => $decisionType->value(),
-                    'decision_method' => $rule->decision_method->value,
+                    'decision_method' => $rule['decision_method']->value,
                 ]),
                 $occurredAt,
                 $actor,

@@ -26,16 +26,6 @@ final class UpdateGovernanceActionStatus
         ActionStatus $status,
         ?string $blockedReason = null,
     ): ?Action {
-        $membership = $this->actorContext->membership(
-            $user,
-            $business,
-            CapabilityCatalog::GOVERNANCE_ACTION_MANAGE,
-        );
-
-        if ($membership === null) {
-            return null;
-        }
-
         if ($status === ActionStatus::Blocked) {
             $blockedReason = trim((string) $blockedReason);
 
@@ -65,13 +55,29 @@ final class UpdateGovernanceActionStatus
                 return null;
             }
 
-            if (! $this->actorContext->canAccessResource(
-                $user,
-                $business,
-                CapabilityCatalog::GOVERNANCE_ACTION_MANAGE,
-                Action::class,
-                (string) $action->getKey(),
-            )) {
+            $isOperationsAction = DB::table('operations_action_links')
+                ->where('business_id', $business->getKey())
+                ->where('action_id', $action->getKey())
+                ->exists();
+
+            $capability = $isOperationsAction
+                ? CapabilityCatalog::OPERATIONS_MANAGE
+                : CapabilityCatalog::GOVERNANCE_ACTION_MANAGE;
+
+            if (
+                $this->actorContext->membership(
+                    $user,
+                    $business,
+                    $capability,
+                ) === null
+                || ! $this->actorContext->canAccessResource(
+                    $user,
+                    $business,
+                    $capability,
+                    Action::class,
+                    (string) $action->getKey(),
+                )
+            ) {
                 return null;
             }
 
@@ -88,8 +94,12 @@ final class UpdateGovernanceActionStatus
             $this->occurrence->record(
                 $user,
                 $business,
-                'governance.action.status_changed',
-                'governance_action',
+                $isOperationsAction
+                    ? 'operations.action.status_changed'
+                    : 'governance.action.status_changed',
+                $isOperationsAction
+                    ? 'operations_action'
+                    : 'governance_action',
                 (string) $action->getKey(),
                 ['status' => $status->value],
             );

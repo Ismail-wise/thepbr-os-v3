@@ -69,9 +69,15 @@ final class CapabilityCatalog
 
     public const OWNERSHIP_MANAGE = 'ownership.manage';
 
+    public const OPERATIONS_VIEW = 'operations.view';
+
+    public const OPERATIONS_MANAGE = 'operations.manage';
+
     public static function all(): array
     {
         return [
+            self::OPERATIONS_VIEW,
+            self::OPERATIONS_MANAGE,
             self::OWNERSHIP_VIEW,
             self::OWNERSHIP_MANAGE,
             self::PERMISSION_PROFILES_VIEW,

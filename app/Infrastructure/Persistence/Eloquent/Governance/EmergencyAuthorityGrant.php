@@ -19,6 +19,10 @@ final class EmergencyAuthorityGrant extends Model
         'grantee_membership_id',
         'decision_type',
         'scope',
+        'capacity',
+        'can_approve',
+        'can_vote',
+        'can_sign',
         'reason',
         'status',
         'effective_from',
@@ -32,6 +36,9 @@ final class EmergencyAuthorityGrant extends Model
     {
         return [
             'status' => EmergencyAuthorityStatus::class,
+            'can_approve' => 'boolean',
+            'can_vote' => 'boolean',
+            'can_sign' => 'boolean',
             'effective_from' => 'immutable_datetime',
             'expires_at' => 'immutable_datetime',
             'revoked_at' => 'immutable_datetime',

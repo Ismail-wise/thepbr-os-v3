@@ -30,6 +30,10 @@ final class CreateEmergencyAuthorityGrant
         Business $business,
         string $granteeMembershipId,
         string $scope,
+        string $capacity,
+        bool $canApprove,
+        bool $canVote,
+        bool $canSign,
         string $reason,
         CarbonInterface $expiresAt,
         ?string $decisionType = null,
@@ -46,17 +50,20 @@ final class CreateEmergencyAuthorityGrant
         }
 
         $scope = trim($scope);
+        $capacity = trim($capacity);
         $reason = trim($reason);
         $decisionType = $decisionType === null ? null : trim($decisionType);
         $effectiveFrom ??= now();
 
         if (
             $scope === ''
+            || $capacity === ''
+            || (! $canApprove && ! $canVote && ! $canSign)
             || $reason === ''
             || ($decisionType !== null && $decisionType === '')
         ) {
             throw new InvalidArgumentException(
-                'Emergency authority scope, reason and decision type must be canonical.',
+                'Emergency authority requires canonical scope/capacity/reason and at least one explicit authority capability.',
             );
         }
 
@@ -71,6 +78,10 @@ final class CreateEmergencyAuthorityGrant
             $business,
             $granteeMembershipId,
             $scope,
+            $capacity,
+            $canApprove,
+            $canVote,
+            $canSign,
             $reason,
             $expiresAt,
             $decisionType,
@@ -93,6 +104,10 @@ final class CreateEmergencyAuthorityGrant
                 'grantee_membership_id' => $grantee->getKey(),
                 'decision_type' => $decisionType,
                 'scope' => $scope,
+                'capacity' => $capacity,
+                'can_approve' => $canApprove,
+                'can_vote' => $canVote,
+                'can_sign' => $canSign,
                 'reason' => $reason,
                 'status' => EmergencyAuthorityStatus::Active->value,
                 'effective_from' => $effectiveFrom,
@@ -111,6 +126,10 @@ final class CreateEmergencyAuthorityGrant
                 [
                     'grantee_membership_id' => (string) $grantee->getKey(),
                     'decision_type' => $decisionType,
+                    'capacity' => $capacity,
+                    'can_approve' => $canApprove,
+                    'can_vote' => $canVote,
+                    'can_sign' => $canSign,
                 ],
             );
 

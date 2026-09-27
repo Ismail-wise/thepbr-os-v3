@@ -28,12 +28,13 @@ use App\Infrastructure\Persistence\Eloquent\Records\ProposalVersion;
 use App\Infrastructure\Persistence\Eloquent\Records\ProposalVersionRecord;
 use App\Infrastructure\Persistence\Eloquent\Records\RecordVersionStateTransition;
 use DateTimeInterface;
+use Illuminate\Support\Facades\DB;
 
 final class GetGovernanceCommandCenter
 {
     public function __construct(
         private readonly GovernanceActorContext $actorContext,
-        private readonly GetFormationAuthorityWorkspace $formationAuthority,
+        private readonly GetCurrentAuthorityMatrix $authorityMatrix,
         private readonly ListGovernanceNotifications $notifications,
     ) {}
 
@@ -407,6 +408,12 @@ final class GetGovernanceCommandCenter
                     'recordVersions' => $recordVersions,
                     'type' => (string) $decision->decision_type,
                     'amount' => $decision->decision_amount,
+                    'meetingId' => $decision->meeting_id === null
+                        ? null
+                        : (string) $decision->meeting_id,
+                    'sourceKind' => $snapshot?->source_kind,
+                    'meetingRequired' => (bool) ($snapshot?->meeting_required ?? false),
+                    'recordRequired' => (bool) ($snapshot?->record_required ?? true),
                     'status' => $decision->status->value,
                     'outcome' => $decision->outcome?->value,
                     'openedAt' => $this->timestamp($decision->opened_at),
@@ -776,10 +783,32 @@ final class GetGovernanceCommandCenter
             'membership' => [
                 'id' => $membershipId,
             ],
-            'authority' => $this->formationAuthority->execute(
+            'authority' => $this->authorityMatrix->execute(
                 $user,
                 $business,
             ),
+            'meetings' => DB::table('governance_meetings')
+                ->where('business_id', $businessId)
+                ->where('status', 'held')
+                ->orderByDesc('held_at')
+                ->limit(50)
+                ->get([
+                    'id',
+                    'title',
+                    'held_at',
+                    'quorum_required',
+                    'quorum_present',
+                    'authority_source_formal_record_version_id',
+                ])
+                ->map(static fn ($meeting): array => [
+                    'id' => (string) $meeting->id,
+                    'title' => (string) $meeting->title,
+                    'heldAt' => $meeting->held_at,
+                    'quorumRequired' => (int) $meeting->quorum_required,
+                    'quorumPresent' => (int) $meeting->quorum_present,
+                    'authoritySourceVersionId' => (string) $meeting->authority_source_formal_record_version_id,
+                ])
+                ->all(),
             'summary' => [
                 'needsAttention' => $needsAttention,
                 'openDecisions' => $decisions
