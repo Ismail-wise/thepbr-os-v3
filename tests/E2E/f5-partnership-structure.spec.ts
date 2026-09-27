@@ -223,6 +223,13 @@ test(
             })
             .click();
 
+        await page
+            .getByRole('button', {
+                name: 'Contribution Register',
+                exact: true,
+            })
+            .click();
+
         await expect(
             page.getByText(
                 'Browser cash contribution',
