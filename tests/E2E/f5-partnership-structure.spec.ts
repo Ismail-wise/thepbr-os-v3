@@ -187,15 +187,16 @@ test(
 
         await expect(contributionWorkflow).toHaveAttribute('open', '');
 
-        await contributionWorkflow
-            .getByLabel(/^Partner\b/)
-            .selectOption({
-                label: PARTNER,
-            });
+        const contributionForm = contributionWorkflow.locator('form');
+        const contributionSelects = contributionForm.locator('select');
 
-        await contributionWorkflow
-            .getByLabel(/^Type\b/)
-            .selectOption('cash');
+        await expect(contributionSelects).toHaveCount(2);
+
+        await contributionSelects.first().selectOption({
+            label: PARTNER,
+        });
+
+        await contributionSelects.nth(1).selectOption('cash');
 
         await contributionWorkflow
             .getByLabel('Proposed value', {
