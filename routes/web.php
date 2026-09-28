@@ -23,6 +23,7 @@ use App\Presentation\Http\Controllers\Operations\OperationsWorkspaceController;
 use App\Presentation\Http\Controllers\PartnerChanges\PartnerChangesWorkspaceController;
 use App\Presentation\Http\Controllers\Partnership\PartnershipWorkflowController;
 use App\Presentation\Http\Controllers\Partnership\PartnershipWorkspaceController;
+use App\Presentation\Http\Controllers\Portability\PortabilityController;
 use App\Presentation\Http\Controllers\Records\ActivityController;
 use App\Presentation\Http\Controllers\Records\DocumentVaultController;
 use App\Presentation\Http\Controllers\Records\EvidenceController;
@@ -119,6 +120,36 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 '/import/batches/{batch}/confirm',
                 [ImportController::class, 'confirm'],
             )->name('import.batches.confirm');
+
+            Route::get(
+                '/records/portability',
+                [PortabilityController::class, 'index'],
+            )->name('portability.index');
+
+            Route::post(
+                '/records/portability/archive',
+                [PortabilityController::class, 'archive'],
+            )->name('portability.archive');
+
+            Route::post(
+                '/records/portability/unarchive',
+                [PortabilityController::class, 'unarchive'],
+            )->name('portability.unarchive');
+
+            Route::post(
+                '/records/portability/exports',
+                [PortabilityController::class, 'createExport'],
+            )->name('portability.exports.create');
+
+            Route::post(
+                '/records/portability/exports/{export}/generate',
+                [PortabilityController::class, 'generateExport'],
+            )->name('portability.exports.generate');
+
+            Route::get(
+                '/records/portability/exports/{export}/download',
+                [PortabilityController::class, 'downloadExport'],
+            )->name('portability.exports.download');
 
             Route::get(
                 '/workspace/access',
