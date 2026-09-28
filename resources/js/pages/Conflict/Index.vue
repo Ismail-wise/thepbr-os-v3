@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
 import { useI18n } from '../../i18n/useI18n';
 
@@ -155,6 +155,19 @@ const actionForm = useForm({
     description: '',
     due_at: '',
 });
+
+watch(
+    () => ({
+        id: selected.value?.id ?? '',
+        revision: selected.value?.revision ?? 1,
+    }),
+    ({ id, revision }) => {
+        directForm.expected_case_revision = revision;
+        mediationForm.expected_case_revision = revision;
+        decisionForm.expected_case_revision = revision;
+        actionForm.source_id = id;
+    },
+);
 
 const stageLabel = (value: string) => value.replaceAll('_', ' ');
 const shortDate = (value: string | null) =>

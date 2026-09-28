@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { expect, test, type Page } from '@playwright/test';
 
 const OWNER_EMAIL = 'f6e-owner@example.com';
@@ -11,6 +12,21 @@ if (!password) {
         'F6E_E2E_PASSWORD must be provided through the environment.',
     );
 }
+
+const resetFixture = () => {
+    if (process.env.APP_ENV !== 'testing') {
+        throw new Error('F6E E2E fixture reset is allowed only in APP_ENV=testing.');
+    }
+
+    execFileSync('php', ['tests/E2E/support/prepare-f6e-e2e.php'], {
+        cwd: process.cwd(),
+        env: {
+            ...process.env,
+            F6E_E2E_RESET: '1',
+        },
+        stdio: 'pipe',
+    });
+};
 
 const signIn = async (page: Page, email: string) => {
     await page.goto('/login');
@@ -84,6 +100,8 @@ test(
             testInfo.project.name !== 'chromium-desktop',
             'F6E deterministic journey runs only in desktop Chromium.',
         );
+
+        resetFixture();
 
         await signIn(page, OWNER_EMAIL);
         await switchBusiness(page);
@@ -225,6 +243,10 @@ test(
                 exact: true,
             })
             .click();
+
+        await expect(
+            page.getByText('mediation', { exact: true }).first(),
+        ).toBeVisible();
 
         await page
             .getByPlaceholder('External neutral mediator reference')

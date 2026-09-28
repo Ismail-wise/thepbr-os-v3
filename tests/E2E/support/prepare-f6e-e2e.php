@@ -65,6 +65,19 @@ if (! in_array($target, $allowedTargets, true)) {
     );
 }
 
+if (getenv('F6E_E2E_RESET') === '1') {
+    $exitCode = $app->make(Kernel::class)->call('migrate:fresh', [
+        '--force' => true,
+        '--no-interaction' => true,
+    ]);
+
+    if ($exitCode !== 0) {
+        throw new RuntimeException(
+            'F6E fixture failed to reset the isolated Test/CI database.',
+        );
+    }
+}
+
 foreach ([
     'users',
     'businesses',
