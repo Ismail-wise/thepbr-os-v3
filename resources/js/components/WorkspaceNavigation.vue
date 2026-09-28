@@ -24,6 +24,12 @@ const isSearchCurrent = computed(
         currentPath.value.startsWith('/search/'),
 );
 
+const isHealthCurrent = computed(
+    () =>
+        currentPath.value === '/health' ||
+        currentPath.value.startsWith('/health/'),
+);
+
 const isDocumentVaultCurrent = computed(
     () =>
         currentPath.value === '/records/documents' ||
@@ -132,6 +138,20 @@ const isClosureCurrent = computed(
             @click="emit('navigate')"
         >
             {{ t('nav.search') }}
+        </Link>
+
+        <Link
+            href="/health"
+            :aria-current="isHealthCurrent ? 'page' : undefined"
+            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
+            :class="
+                isHealthCurrent
+                    ? 'border-slate-950 bg-slate-100 text-slate-950'
+                    : 'border-transparent text-slate-700'
+            "
+            @click="emit('navigate')"
+        >
+            {{ t('nav.health') }}
         </Link>
 
         <Link

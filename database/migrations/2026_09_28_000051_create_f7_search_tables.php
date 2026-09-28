@@ -69,38 +69,40 @@ ON search_index_entries
 USING GIN (search_vector)
 SQL);
 
-        $this->backfillSearchCapability();
+        $this->backfillDerivedReadCapabilities();
     }
 
-    private function backfillSearchCapability(): void
+    private function backfillDerivedReadCapabilities(): void
     {
-        $permissionId = DB::table('permissions')
-            ->where('key', 'search.view')
-            ->value('id');
-
-        if ($permissionId === null) {
-            $permissionId = (string) Str::uuid7();
-
-            DB::table('permissions')->insert([
-                'id' => $permissionId,
-                'key' => 'search.view',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
         $profiles = DB::table('permission_profiles')
             ->whereIn('name', $this->profileNames)
             ->get(['id', 'business_id']);
 
-        foreach ($profiles as $profile) {
-            DB::table('permission_profile_permissions')->insertOrIgnore([
-                'business_id' => $profile->business_id,
-                'permission_profile_id' => $profile->id,
-                'permission_id' => $permissionId,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        foreach (['search.view', 'business_health.view'] as $capability) {
+            $permissionId = DB::table('permissions')
+                ->where('key', $capability)
+                ->value('id');
+
+            if ($permissionId === null) {
+                $permissionId = (string) Str::uuid7();
+
+                DB::table('permissions')->insert([
+                    'id' => $permissionId,
+                    'key' => $capability,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            foreach ($profiles as $profile) {
+                DB::table('permission_profile_permissions')->insertOrIgnore([
+                    'business_id' => $profile->business_id,
+                    'permission_profile_id' => $profile->id,
+                    'permission_id' => $permissionId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
     }
 

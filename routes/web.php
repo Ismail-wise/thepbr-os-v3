@@ -17,6 +17,7 @@ use App\Presentation\Http\Controllers\Formation\FormationController;
 use App\Presentation\Http\Controllers\Governance\GovernanceMeetingController;
 use App\Presentation\Http\Controllers\Governance\GovernanceRulesController;
 use App\Presentation\Http\Controllers\Governance\GovernanceWorkspaceController;
+use App\Presentation\Http\Controllers\Health\HealthController;
 use App\Presentation\Http\Controllers\Operations\OperationsWorkspaceController;
 use App\Presentation\Http\Controllers\PartnerChanges\PartnerChangesWorkspaceController;
 use App\Presentation\Http\Controllers\Partnership\PartnershipWorkflowController;
@@ -74,6 +75,9 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
         ->group(function (): void {
             Route::get('/search', SearchController::class)
                 ->name('search.index');
+
+            Route::get('/health', HealthController::class)
+                ->name('health.index');
 
             Route::get(
                 '/workspace/access',
