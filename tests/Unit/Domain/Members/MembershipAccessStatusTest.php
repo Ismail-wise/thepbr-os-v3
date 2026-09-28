@@ -7,13 +7,22 @@ use PHPUnit\Framework\TestCase;
 
 final class MembershipAccessStatusTest extends TestCase
 {
-    public function test_active_is_the_only_frozen_a7_membership_access_status(): void
+    public function test_f7_membership_access_lifecycle_contract_is_exact(): void
     {
         $this->assertSame(
-            [MembershipAccessStatus::Active],
+            [
+                MembershipAccessStatus::Active,
+                MembershipAccessStatus::Suspended,
+                MembershipAccessStatus::Revoked,
+            ],
             MembershipAccessStatus::cases(),
         );
 
         $this->assertSame('active', MembershipAccessStatus::Active->value);
+        $this->assertSame(
+            'suspended',
+            MembershipAccessStatus::Suspended->value,
+        );
+        $this->assertSame('revoked', MembershipAccessStatus::Revoked->value);
     }
 }

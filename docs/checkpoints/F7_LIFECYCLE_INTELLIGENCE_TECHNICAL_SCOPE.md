@@ -449,6 +449,8 @@ AI retrieval uses authorized Search/read services; no conversation-retention tab
 - routes/web.php
 - tests/Feature/Access/F3StandardAccessProfilesTest.php
 - tests/Feature/Access/BusinessAuthorizationTest.php
+- tests/Unit/Domain/Members/MembershipAccessStatusTest.php
+- tests/Feature/Access/AuthorizedPermissionProfileQueryTest.php
 - tests/Feature/Evidence/EvidencePrivacyTest.php
 - tests/Feature/Activity/ActivityPrivacyTest.php
 - tests/Feature/Security/BusinessTenantIsolationTest.php
@@ -461,6 +463,20 @@ This manifest is a hard ceiling.
 A listed MODIFY path may remain unchanged.
 Any genuinely required tracked path outside this manifest requires STOP at G1
 and an explicit narrow scope addendum before that path is touched.
+
+### Narrow G1 addendum — CI #60 repair
+
+Approved on 2026-09-28 solely to reconcile the intentional F7 Membership access lifecycle
+(`active`, `suspended`, `revoked`) with two stale pre-F7 test expectations.
+This addendum adds only:
+
+- tests/Unit/Domain/Members/MembershipAccessStatusTest.php
+- tests/Feature/Access/AuthorizedPermissionProfileQueryTest.php
+
+The repair must preserve fail-closed authorization: missing, suspended and revoked Memberships
+do not authorize access; active Membership remains necessary but never sufficient without the
+required capability, Business/resource scope and access-policy checks.
+No other F7 scope expansion is approved by this addendum.
 
 ## Capability plan
 

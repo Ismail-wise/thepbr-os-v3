@@ -136,15 +136,63 @@ final class AuthorizedPermissionProfileQueryTest extends TestCase
             'Protected Profile',
         );
 
-        $this->assertSame(
-            ['active'],
-            array_map(
-                static fn (
-                    MembershipAccessStatus $status,
-                ): string => $status->value,
-                MembershipAccessStatus::cases(),
+        $this->assertNull(
+            $this->useCase()->execute(
+                $user,
+                $business,
+                new Capability(self::CAPABILITY),
+                (string) $profile->getKey(),
             ),
         );
+    }
+
+    public function test_suspended_membership_denies_access_even_with_capability_and_resource_allow(): void
+    {
+        [$user, $business, $membership, $permission] =
+            $this->authorizedMembership();
+
+        $profile = $this->createProfile(
+            $business,
+            'Suspended Membership Profile',
+        );
+
+        $this->allowProfileClass(
+            $business,
+            $membership,
+            $permission,
+        );
+
+        $membership->access_status = MembershipAccessStatus::Suspended;
+        $membership->save();
+
+        $this->assertNull(
+            $this->useCase()->execute(
+                $user,
+                $business,
+                new Capability(self::CAPABILITY),
+                (string) $profile->getKey(),
+            ),
+        );
+    }
+
+    public function test_revoked_membership_denies_access_even_with_capability_and_resource_allow(): void
+    {
+        [$user, $business, $membership, $permission] =
+            $this->authorizedMembership();
+
+        $profile = $this->createProfile(
+            $business,
+            'Revoked Membership Profile',
+        );
+
+        $this->allowProfileClass(
+            $business,
+            $membership,
+            $permission,
+        );
+
+        $membership->access_status = MembershipAccessStatus::Revoked;
+        $membership->save();
 
         $this->assertNull(
             $this->useCase()->execute(
