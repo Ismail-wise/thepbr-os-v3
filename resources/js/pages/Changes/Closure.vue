@@ -167,6 +167,12 @@ const createForm = useForm({
     intended_legal_closure_at: '',
 });
 
+const createCaseError = computed(
+    () =>
+        (createForm.errors as Record<string, string | undefined>).closure ??
+        null,
+);
+
 const createCase = (): void => {
     createForm.post('/changes/closure', {
         preserveScroll: true,
@@ -473,8 +479,8 @@ const transitionClaim = (claim: Claim, target: string): void => {
                             {{ t('closure.openCaseAction') }}
                         </button>
 
-                        <p v-if="createForm.errors.closure" class="text-xs text-rose-700">
-                            {{ createForm.errors.closure }}
+                        <p v-if="createCaseError" class="text-xs text-rose-700">
+                            {{ createCaseError }}
                         </p>
                     </form>
                 </aside>
