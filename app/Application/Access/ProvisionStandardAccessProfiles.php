@@ -20,6 +20,7 @@ use App\Infrastructure\Persistence\Eloquent\Governance\ProposalReview;
 use App\Infrastructure\Persistence\Eloquent\Governance\Review;
 use App\Infrastructure\Persistence\Eloquent\Governance\SignatureRequest;
 use App\Infrastructure\Persistence\Eloquent\Members\Membership;
+use App\Infrastructure\Persistence\Eloquent\PartnerChanges\PartnerChangeCase;
 use App\Infrastructure\Persistence\Eloquent\Records\FormalRecordFamily;
 use App\Infrastructure\Persistence\Eloquent\Records\FormalRecordVersion;
 use App\Infrastructure\Persistence\Eloquent\Records\Proposal;
@@ -171,6 +172,11 @@ final class ProvisionStandardAccessProfiles
                 Action::class,
                 Decision::class,
                 FormalRecordVersion::class,
+            ],
+
+            CapabilityCatalog::PARTNER_CHANGES_VIEW,
+            CapabilityCatalog::PARTNER_CHANGES_MANAGE => [
+                PartnerChangeCase::class,
             ],
 
             default => [],

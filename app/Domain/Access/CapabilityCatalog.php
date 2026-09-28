@@ -69,6 +69,10 @@ final class CapabilityCatalog
 
     public const OWNERSHIP_MANAGE = 'ownership.manage';
 
+    public const PARTNER_CHANGES_VIEW = 'partner_changes.view';
+
+    public const PARTNER_CHANGES_MANAGE = 'partner_changes.manage';
+
     public const OPERATIONS_VIEW = 'operations.view';
 
     public const OPERATIONS_MANAGE = 'operations.manage';
@@ -98,6 +102,8 @@ final class CapabilityCatalog
     public static function all(): array
     {
         return [
+            self::PARTNER_CHANGES_VIEW,
+            self::PARTNER_CHANGES_MANAGE,
             self::CONFLICT_VIEW,
             self::CONFLICT_MANAGE,
             self::RISK_VIEW,

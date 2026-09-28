@@ -457,31 +457,6 @@ AI retrieval uses authorized Search/read services; no conversation-retention tab
 ## DELETE manifest
 
 None.
-- tests/E2E/f7-lifecycle-intelligence.spec.ts
-- tests/E2E/support/prepare-f7-e2e.php
-
-## MODIFY manifest
-
-- app/Domain/Access/CapabilityCatalog.php
-- app/Domain/Access/StandardAccessProfileMatrix.php
-- app/Domain/Members/Enums/MembershipAccessStatus.php
-- app/Application/Access/ProvisionStandardAccessProfiles.php
-- app/Application/Evidence/EvidenceTargetRegistry.php
-- app/Application/Activity/ActivityTargetRegistry.php
-- app/Providers/AppServiceProvider.php
-- resources/js/components/WorkspaceNavigation.vue
-- resources/js/i18n/catalog.ts
-- routes/web.php
-- tests/Feature/Access/F3StandardAccessProfilesTest.php
-- tests/Feature/Access/BusinessAuthorizationTest.php
-- tests/Feature/Evidence/EvidencePrivacyTest.php
-- tests/Feature/Activity/ActivityPrivacyTest.php
-- tests/Feature/Security/BusinessTenantIsolationTest.php
-- .github/workflows/ci.yml
-
-## DELETE manifest
-
-None.
 This manifest is a hard ceiling.
 A listed MODIFY path may remain unchanged.
 Any genuinely required tracked path outside this manifest requires STOP at G1

@@ -16,6 +16,7 @@ use App\Presentation\Http\Controllers\Governance\GovernanceMeetingController;
 use App\Presentation\Http\Controllers\Governance\GovernanceRulesController;
 use App\Presentation\Http\Controllers\Governance\GovernanceWorkspaceController;
 use App\Presentation\Http\Controllers\Operations\OperationsWorkspaceController;
+use App\Presentation\Http\Controllers\PartnerChanges\PartnerChangesWorkspaceController;
 use App\Presentation\Http\Controllers\Partnership\PartnershipWorkflowController;
 use App\Presentation\Http\Controllers\Partnership\PartnershipWorkspaceController;
 use App\Presentation\Http\Controllers\Records\ActivityController;
@@ -292,6 +293,71 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 '/partnership/ownership-submissions/{submission}/effect',
                 [PartnershipWorkflowController::class, 'effectOwnership'],
             )->name('partnership.ownership-submissions.effect');
+
+            Route::get(
+                '/changes/partner-changes',
+                [PartnerChangesWorkspaceController::class, 'index'],
+            )->name('partner-changes.index');
+
+            Route::post(
+                '/changes/partner-changes',
+                [PartnerChangesWorkspaceController::class, 'createCase'],
+            )->name('partner-changes.store');
+
+            Route::post(
+                '/changes/partner-changes/{case}/transition',
+                [PartnerChangesWorkspaceController::class, 'transitionCase'],
+            )->name('partner-changes.transition');
+
+            Route::post(
+                '/changes/partner-changes/{case}/eligibility',
+                [PartnerChangesWorkspaceController::class, 'recordEligibility'],
+            )->name('partner-changes.eligibility.store');
+
+            Route::post(
+                '/changes/partner-changes/{case}/requirements',
+                [PartnerChangesWorkspaceController::class, 'recordRequirement'],
+            )->name('partner-changes.requirements.store');
+
+            Route::post(
+                '/changes/partner-changes/{case}/rofr',
+                [PartnerChangesWorkspaceController::class, 'openRofr'],
+            )->name('partner-changes.rofr.store');
+
+            Route::post(
+                '/changes/partner-changes/{case}/rofr/{round}/responses',
+                [PartnerChangesWorkspaceController::class, 'respondRofr'],
+            )->name('partner-changes.rofr.responses.store');
+
+            Route::post(
+                '/changes/partner-changes/{case}/rofr/{round}/complete',
+                [PartnerChangesWorkspaceController::class, 'completeRofr'],
+            )->name('partner-changes.rofr.complete');
+
+            Route::post(
+                '/changes/partner-changes/{case}/governance',
+                [PartnerChangesWorkspaceController::class, 'submitGovernance'],
+            )->name('partner-changes.governance.store');
+
+            Route::post(
+                '/changes/partner-changes/{case}/records/{formalRecordVersion}/content-review',
+                [PartnerChangesWorkspaceController::class, 'review'],
+            )->name('partner-changes.content-review');
+
+            Route::post(
+                '/changes/partner-changes/{case}/sync-decision',
+                [PartnerChangesWorkspaceController::class, 'syncDecision'],
+            )->name('partner-changes.sync-decision');
+
+            Route::post(
+                '/changes/partner-changes/{case}/prepare-effect',
+                [PartnerChangesWorkspaceController::class, 'prepareEffect'],
+            )->name('partner-changes.prepare-effect');
+
+            Route::post(
+                '/changes/partner-changes/{case}/effect',
+                [PartnerChangesWorkspaceController::class, 'effect'],
+            )->name('partner-changes.effect');
 
             Route::get(
                 '/governance',

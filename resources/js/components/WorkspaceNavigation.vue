@@ -78,6 +78,12 @@ const isConflictCurrent = computed(
         currentPath.value === '/conflict' ||
         currentPath.value.startsWith('/conflict/'),
 );
+
+const isPartnerChangesCurrent = computed(
+    () =>
+        currentPath.value === '/changes/partner-changes' ||
+        currentPath.value.startsWith('/changes/partner-changes/'),
+);
 </script>
 
 <template>
@@ -248,6 +254,20 @@ const isConflictCurrent = computed(
             @click="emit('navigate')"
         >
             {{ t('nav.conflict') }}
+        </Link>
+
+        <Link
+            href="/changes/partner-changes"
+            :aria-current="isPartnerChangesCurrent ? 'page' : undefined"
+            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
+            :class="
+                isPartnerChangesCurrent
+                    ? 'border-slate-950 bg-slate-100 text-slate-950'
+                    : 'border-transparent text-slate-700'
+            "
+            @click="emit('navigate')"
+        >
+            {{ t('nav.partnerChanges') }}
         </Link>
 
         <Link
