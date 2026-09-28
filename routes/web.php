@@ -25,6 +25,7 @@ use App\Presentation\Http\Controllers\Partnership\PartnershipWorkspaceController
 use App\Presentation\Http\Controllers\Records\ActivityController;
 use App\Presentation\Http\Controllers\Records\DocumentVaultController;
 use App\Presentation\Http\Controllers\Records\EvidenceController;
+use App\Presentation\Http\Controllers\Reporting\ReportsController;
 use App\Presentation\Http\Controllers\Rewards\RewardsWorkspaceController;
 use App\Presentation\Http\Controllers\Risk\RiskWorkspaceController;
 use App\Presentation\Http\Controllers\Search\SearchController;
@@ -78,6 +79,24 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
 
             Route::get('/health', HealthController::class)
                 ->name('health.index');
+
+            Route::get('/reports', [ReportsController::class, 'index'])
+                ->name('reports.index');
+
+            Route::post(
+                '/reports/business-packs',
+                [ReportsController::class, 'create'],
+            )->name('reports.business-packs.create');
+
+            Route::post(
+                '/reports/business-packs/{export}/generate',
+                [ReportsController::class, 'generate'],
+            )->name('reports.business-packs.generate');
+
+            Route::get(
+                '/reports/business-packs/{export}/download',
+                [ReportsController::class, 'download'],
+            )->name('reports.business-packs.download');
 
             Route::get(
                 '/workspace/access',
