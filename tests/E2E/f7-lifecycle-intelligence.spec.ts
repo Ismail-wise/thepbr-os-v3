@@ -154,7 +154,8 @@ test(
             .click();
 
         await expect(
-            page.getByText('Lifecycle Local Partner', {
+            page.getByRole('heading', {
+                name: 'Lifecycle Local Partner',
                 exact: true,
             }),
         ).toBeVisible();
