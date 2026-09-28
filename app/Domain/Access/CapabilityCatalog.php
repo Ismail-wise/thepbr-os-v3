@@ -14,6 +14,8 @@ final class CapabilityCatalog
 
     public const string RECORDS_ACTIVITY_VIEW = 'records.activity.view';
 
+    public const string SEARCH_VIEW = 'search.view';
+
     public const string ACCESS_ADMIN_VIEW = 'access.admin.view';
 
     public const string ACCESS_ADMIN_MANAGE = 'access.admin.manage';
@@ -135,6 +137,7 @@ final class CapabilityCatalog
             self::RECORDS_VIEW,
             self::RECORDS_MANAGE,
             self::RECORDS_ACTIVITY_VIEW,
+            self::SEARCH_VIEW,
             self::ACCESS_ADMIN_VIEW,
             self::ACCESS_ADMIN_MANAGE,
             self::FORMATION_VIEW,

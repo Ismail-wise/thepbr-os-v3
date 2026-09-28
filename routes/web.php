@@ -26,6 +26,7 @@ use App\Presentation\Http\Controllers\Records\DocumentVaultController;
 use App\Presentation\Http\Controllers\Records\EvidenceController;
 use App\Presentation\Http\Controllers\Rewards\RewardsWorkspaceController;
 use App\Presentation\Http\Controllers\Risk\RiskWorkspaceController;
+use App\Presentation\Http\Controllers\Search\SearchController;
 use App\Presentation\Http\Middleware\EnsureActiveAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -71,6 +72,9 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
 
     Route::middleware(EnsureCurrentBusinessContext::class)
         ->group(function (): void {
+            Route::get('/search', SearchController::class)
+                ->name('search.index');
+
             Route::get(
                 '/workspace/access',
                 WorkspaceAccessController::class,

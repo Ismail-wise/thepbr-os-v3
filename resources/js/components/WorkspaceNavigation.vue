@@ -18,6 +18,12 @@ const currentPath = computed(() => {
 
 const isCurrent = (href: string): boolean => currentPath.value === href;
 
+const isSearchCurrent = computed(
+    () =>
+        currentPath.value === '/search' ||
+        currentPath.value.startsWith('/search/'),
+);
+
 const isDocumentVaultCurrent = computed(
     () =>
         currentPath.value === '/records/documents' ||
@@ -112,6 +118,20 @@ const isClosureCurrent = computed(
             @click="emit('navigate')"
         >
             {{ t('nav.home') }}
+        </Link>
+
+        <Link
+            href="/search"
+            :aria-current="isSearchCurrent ? 'page' : undefined"
+            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
+            :class="
+                isSearchCurrent
+                    ? 'border-slate-950 bg-slate-100 text-slate-950'
+                    : 'border-transparent text-slate-700'
+            "
+            @click="emit('navigate')"
+        >
+            {{ t('nav.search') }}
         </Link>
 
         <Link
