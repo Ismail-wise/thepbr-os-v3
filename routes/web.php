@@ -7,6 +7,7 @@ use App\Presentation\Http\Controllers\Access\BusinessAccessInvitationRedemptionC
 use App\Presentation\Http\Controllers\Access\WorkspaceAccessController;
 use App\Presentation\Http\Controllers\Access\WorkspaceAccessInvitationController;
 use App\Presentation\Http\Controllers\Account\AccountSettingsController;
+use App\Presentation\Http\Controllers\AI\PbrAiController;
 use App\Presentation\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Presentation\Http\Controllers\Closure\ClosureWorkspaceController;
 use App\Presentation\Http\Controllers\Conflict\ConflictWorkspaceController;
@@ -78,6 +79,12 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
         ->group(function (): void {
             Route::get('/search', SearchController::class)
                 ->name('search.index');
+
+            Route::get('/ai', [PbrAiController::class, 'index'])
+                ->name('ai.index');
+
+            Route::post('/ai/ask', [PbrAiController::class, 'ask'])
+                ->name('ai.ask');
 
             Route::get('/health', HealthController::class)
                 ->name('health.index');

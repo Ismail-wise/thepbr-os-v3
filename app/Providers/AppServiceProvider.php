@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Application\AI\PbrAiProvider;
 use App\Domain\Identity\ValueObjects\EmailAddress;
+use App\Infrastructure\AI\DisabledPbrAiProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -16,7 +18,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(
+            PbrAiProvider::class,
+            DisabledPbrAiProvider::class,
+        );
     }
 
     /**

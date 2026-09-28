@@ -30,6 +30,10 @@ final class CapabilityCatalog
 
     public const string PORTABILITY_MANAGE = 'portability.manage';
 
+    public const string PBR_AI_VIEW = 'pbr_ai.view';
+
+    public const string PBR_AI_MANAGE = 'pbr_ai.manage';
+
     public const string ACCESS_ADMIN_VIEW = 'access.admin.view';
 
     public const string ACCESS_ADMIN_MANAGE = 'access.admin.manage';
@@ -159,6 +163,8 @@ final class CapabilityCatalog
             self::IMPORT_MANAGE,
             self::PORTABILITY_VIEW,
             self::PORTABILITY_MANAGE,
+            self::PBR_AI_VIEW,
+            self::PBR_AI_MANAGE,
             self::ACCESS_ADMIN_VIEW,
             self::ACCESS_ADMIN_MANAGE,
             self::FORMATION_VIEW,
