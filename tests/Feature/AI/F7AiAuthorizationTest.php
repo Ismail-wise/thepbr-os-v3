@@ -93,6 +93,8 @@ final class F7AiAuthorizationTest extends TestCase
 
     public function test_ai_routes_use_authenticated_current_business_context(): void
     {
+        $this->withoutVite();
+
         [$user, $business] = $this->workspace('ai-route', true);
 
         $this->actingAs($user)
