@@ -18,6 +18,7 @@ use App\Presentation\Http\Controllers\Governance\GovernanceMeetingController;
 use App\Presentation\Http\Controllers\Governance\GovernanceRulesController;
 use App\Presentation\Http\Controllers\Governance\GovernanceWorkspaceController;
 use App\Presentation\Http\Controllers\Health\HealthController;
+use App\Presentation\Http\Controllers\Import\ImportController;
 use App\Presentation\Http\Controllers\Operations\OperationsWorkspaceController;
 use App\Presentation\Http\Controllers\PartnerChanges\PartnerChangesWorkspaceController;
 use App\Presentation\Http\Controllers\Partnership\PartnershipWorkflowController;
@@ -97,6 +98,27 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 '/reports/business-packs/{export}/download',
                 [ReportsController::class, 'download'],
             )->name('reports.business-packs.download');
+
+            Route::get('/import', [ImportController::class, 'index'])
+                ->name('import.index');
+
+            Route::post('/import/batches', [ImportController::class, 'create'])
+                ->name('import.batches.create');
+
+            Route::post(
+                '/import/batches/{batch}/parse',
+                [ImportController::class, 'parse'],
+            )->name('import.batches.parse');
+
+            Route::post(
+                '/import/batches/{batch}/validate',
+                [ImportController::class, 'validateBatch'],
+            )->name('import.batches.validate');
+
+            Route::post(
+                '/import/batches/{batch}/confirm',
+                [ImportController::class, 'confirm'],
+            )->name('import.batches.confirm');
 
             Route::get(
                 '/workspace/access',

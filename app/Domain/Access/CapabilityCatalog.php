@@ -22,6 +22,10 @@ final class CapabilityCatalog
 
     public const string REPORTS_MANAGE = 'reports.manage';
 
+    public const string IMPORT_VIEW = 'import.view';
+
+    public const string IMPORT_MANAGE = 'import.manage';
+
     public const string ACCESS_ADMIN_VIEW = 'access.admin.view';
 
     public const string ACCESS_ADMIN_MANAGE = 'access.admin.manage';
@@ -147,6 +151,8 @@ final class CapabilityCatalog
             self::BUSINESS_HEALTH_VIEW,
             self::REPORTS_VIEW,
             self::REPORTS_MANAGE,
+            self::IMPORT_VIEW,
+            self::IMPORT_MANAGE,
             self::ACCESS_ADMIN_VIEW,
             self::ACCESS_ADMIN_MANAGE,
             self::FORMATION_VIEW,
