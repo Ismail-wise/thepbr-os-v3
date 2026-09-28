@@ -13,6 +13,7 @@ use App\Infrastructure\Persistence\Eloquent\Access\AccessPolicy;
 use App\Infrastructure\Persistence\Eloquent\Access\Permission;
 use App\Infrastructure\Persistence\Eloquent\Access\PermissionProfile;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
+use App\Infrastructure\Persistence\Eloquent\Closure\ClosureCase;
 use App\Infrastructure\Persistence\Eloquent\Exit\ExitCase;
 use App\Infrastructure\Persistence\Eloquent\Governance\Action;
 use App\Infrastructure\Persistence\Eloquent\Governance\AmendmentRequest;
@@ -183,6 +184,11 @@ final class ProvisionStandardAccessProfiles
             CapabilityCatalog::EXIT_VIEW,
             CapabilityCatalog::EXIT_MANAGE => [
                 ExitCase::class,
+            ],
+
+            CapabilityCatalog::CLOSURE_VIEW,
+            CapabilityCatalog::CLOSURE_MANAGE => [
+                ClosureCase::class,
             ],
 
             default => [],

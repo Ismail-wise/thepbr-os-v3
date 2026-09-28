@@ -90,6 +90,12 @@ const isExitCurrent = computed(
         currentPath.value === '/changes/exit' ||
         currentPath.value.startsWith('/changes/exit/'),
 );
+
+const isClosureCurrent = computed(
+    () =>
+        currentPath.value === '/changes/closure' ||
+        currentPath.value.startsWith('/changes/closure/'),
+);
 </script>
 
 <template>
@@ -288,6 +294,20 @@ const isExitCurrent = computed(
             @click="emit('navigate')"
         >
             {{ t('nav.exitBuyout') }}
+        </Link>
+
+        <Link
+            href="/changes/closure"
+            :aria-current="isClosureCurrent ? 'page' : undefined"
+            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
+            :class="
+                isClosureCurrent
+                    ? 'border-slate-950 bg-slate-100 text-slate-950'
+                    : 'border-transparent text-slate-700'
+            "
+            @click="emit('navigate')"
+        >
+            {{ t('nav.closure') }}
         </Link>
 
         <Link

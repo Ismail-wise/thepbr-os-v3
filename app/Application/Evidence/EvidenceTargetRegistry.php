@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Evidence;
 
 use App\Domain\Access\CapabilityCatalog;
+use App\Infrastructure\Persistence\Eloquent\Closure\ClosureCase;
 use App\Infrastructure\Persistence\Eloquent\Conflict\ConflictCase;
 use App\Infrastructure\Persistence\Eloquent\Continuity\ContinuityEmergencyAccessActivation;
 use App\Infrastructure\Persistence\Eloquent\Continuity\ContinuityTest;
@@ -42,6 +43,7 @@ final class EvidenceTargetRegistry
         'continuity_emergency_access_activation' => ContinuityEmergencyAccessActivation::class,
         'conflict_case' => ConflictCase::class,
         'exit_case' => ExitCase::class,
+        'closure_case' => ClosureCase::class,
     ];
 
     /**
@@ -74,6 +76,7 @@ final class EvidenceTargetRegistry
             'continuity_emergency_access_activation' => CapabilityCatalog::CONTINUITY_MANAGE,
             'conflict_case' => CapabilityCatalog::CONFLICT_MANAGE,
             'exit_case' => CapabilityCatalog::EXIT_MANAGE,
+            'closure_case' => CapabilityCatalog::CLOSURE_MANAGE,
             default => CapabilityCatalog::RECORDS_MANAGE,
         };
     }

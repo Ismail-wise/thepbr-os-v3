@@ -231,6 +231,7 @@ final class EvidencePrivacyTest extends TestCase
                 'continuity_emergency_access_activation',
                 'conflict_case',
                 'exit_case',
+                'closure_case',
             ],
             $registry->supportedTypes(),
         );

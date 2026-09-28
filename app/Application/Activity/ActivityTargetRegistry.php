@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Activity;
 
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
+use App\Infrastructure\Persistence\Eloquent\Closure\ClosureCase;
 use App\Infrastructure\Persistence\Eloquent\Conflict\ConflictCase;
 use App\Infrastructure\Persistence\Eloquent\Exit\ExitCase;
 use App\Infrastructure\Persistence\Eloquent\Records\FormalRecordVersion;
@@ -23,6 +24,7 @@ final class ActivityTargetRegistry
             'proposal' => Proposal::class,
             'conflict_case' => ConflictCase::class,
             'exit_case' => ExitCase::class,
+            'closure_case' => ClosureCase::class,
             default => null,
         };
     }

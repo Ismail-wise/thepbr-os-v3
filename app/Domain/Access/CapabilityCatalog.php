@@ -77,6 +77,10 @@ final class CapabilityCatalog
 
     public const EXIT_MANAGE = 'exit.manage';
 
+    public const CLOSURE_VIEW = 'closure.view';
+
+    public const CLOSURE_MANAGE = 'closure.manage';
+
     public const OPERATIONS_VIEW = 'operations.view';
 
     public const OPERATIONS_MANAGE = 'operations.manage';
@@ -110,6 +114,8 @@ final class CapabilityCatalog
             self::PARTNER_CHANGES_MANAGE,
             self::EXIT_VIEW,
             self::EXIT_MANAGE,
+            self::CLOSURE_VIEW,
+            self::CLOSURE_MANAGE,
             self::CONFLICT_VIEW,
             self::CONFLICT_MANAGE,
             self::RISK_VIEW,

@@ -8,6 +8,7 @@ use App\Presentation\Http\Controllers\Access\WorkspaceAccessController;
 use App\Presentation\Http\Controllers\Access\WorkspaceAccessInvitationController;
 use App\Presentation\Http\Controllers\Account\AccountSettingsController;
 use App\Presentation\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Presentation\Http\Controllers\Closure\ClosureWorkspaceController;
 use App\Presentation\Http\Controllers\Conflict\ConflictWorkspaceController;
 use App\Presentation\Http\Controllers\Continuity\ContinuityWorkspaceController;
 use App\Presentation\Http\Controllers\Exit\ExitWorkspaceController;
@@ -439,6 +440,86 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 '/changes/exit/{case}/complete',
                 [ExitWorkspaceController::class, 'complete'],
             )->name('exit.complete');
+
+            Route::get(
+                '/changes/closure',
+                [ClosureWorkspaceController::class, 'index'],
+            )->name('closure.index');
+
+            Route::post(
+                '/changes/closure',
+                [ClosureWorkspaceController::class, 'createCase'],
+            )->name('closure.store');
+
+            Route::post(
+                '/changes/closure/{case}/requirements',
+                [ClosureWorkspaceController::class, 'recordRequirement'],
+            )->name('closure.requirements.store');
+
+            Route::post(
+                '/changes/closure/{case}/claims',
+                [ClosureWorkspaceController::class, 'createClaim'],
+            )->name('closure.claims.store');
+
+            Route::post(
+                '/changes/closure/{case}/claims/{claim}/transition',
+                [ClosureWorkspaceController::class, 'transitionClaim'],
+            )->name('closure.claims.transition');
+
+            Route::post(
+                '/changes/closure/{case}/finance-links',
+                [ClosureWorkspaceController::class, 'linkFinancePayment'],
+            )->name('closure.finance-links.store');
+
+            Route::post(
+                '/changes/closure/{case}/governance',
+                [ClosureWorkspaceController::class, 'submitGovernance'],
+            )->name('closure.governance.store');
+
+            Route::post(
+                '/changes/closure/{case}/records/{formalRecordVersion}/content-review',
+                [ClosureWorkspaceController::class, 'review'],
+            )->name('closure.content-review');
+
+            Route::post(
+                '/changes/closure/{case}/sync-decision',
+                [ClosureWorkspaceController::class, 'syncDecision'],
+            )->name('closure.sync-decision');
+
+            Route::post(
+                '/changes/closure/{case}/activate-wind-down',
+                [ClosureWorkspaceController::class, 'activateWindDown'],
+            )->name('closure.activate-wind-down');
+
+            Route::post(
+                '/changes/closure/{case}/prepare-residual',
+                [ClosureWorkspaceController::class, 'prepareResidual'],
+            )->name('closure.prepare-residual');
+
+            Route::post(
+                '/changes/closure/{case}/residual',
+                [ClosureWorkspaceController::class, 'recordResidual'],
+            )->name('closure.residual.store');
+
+            Route::post(
+                '/changes/closure/{case}/prepare-legal-closure',
+                [ClosureWorkspaceController::class, 'prepareLegalClosure'],
+            )->name('closure.prepare-legal-closure');
+
+            Route::post(
+                '/changes/closure/{case}/effect-legal-closure',
+                [ClosureWorkspaceController::class, 'effectLegalClosure'],
+            )->name('closure.effect-legal-closure');
+
+            Route::post(
+                '/changes/closure/{case}/close-workspace',
+                [ClosureWorkspaceController::class, 'closeWorkspace'],
+            )->name('closure.close-workspace');
+
+            Route::post(
+                '/changes/closure/{case}/transition',
+                [ClosureWorkspaceController::class, 'transitionCase'],
+            )->name('closure.transition');
 
             Route::get(
                 '/governance',
