@@ -10,6 +10,7 @@ use App\Presentation\Http\Controllers\Account\AccountSettingsController;
 use App\Presentation\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Presentation\Http\Controllers\Conflict\ConflictWorkspaceController;
 use App\Presentation\Http\Controllers\Continuity\ContinuityWorkspaceController;
+use App\Presentation\Http\Controllers\Exit\ExitWorkspaceController;
 use App\Presentation\Http\Controllers\Finance\FinanceWorkspaceController;
 use App\Presentation\Http\Controllers\Formation\FormationController;
 use App\Presentation\Http\Controllers\Governance\GovernanceMeetingController;
@@ -358,6 +359,86 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 '/changes/partner-changes/{case}/effect',
                 [PartnerChangesWorkspaceController::class, 'effect'],
             )->name('partner-changes.effect');
+
+            Route::get(
+                '/changes/exit',
+                [ExitWorkspaceController::class, 'index'],
+            )->name('exit.index');
+
+            Route::post(
+                '/changes/exit',
+                [ExitWorkspaceController::class, 'createCase'],
+            )->name('exit.store');
+
+            Route::post(
+                '/changes/exit/{case}/notice',
+                [ExitWorkspaceController::class, 'recordNotice'],
+            )->name('exit.notice.store');
+
+            Route::post(
+                '/changes/exit/{case}/share-treatment',
+                [ExitWorkspaceController::class, 'recordShareTreatment'],
+            )->name('exit.share-treatment.store');
+
+            Route::post(
+                '/changes/exit/{case}/payment-terms',
+                [ExitWorkspaceController::class, 'recordPaymentTerms'],
+            )->name('exit.payment-terms.store');
+
+            Route::post(
+                '/changes/exit/{case}/transition',
+                [ExitWorkspaceController::class, 'transitionCase'],
+            )->name('exit.transition');
+
+            Route::post(
+                '/changes/exit/{case}/requirements',
+                [ExitWorkspaceController::class, 'recordRequirement'],
+            )->name('exit.requirements.store');
+
+            Route::post(
+                '/changes/exit/{case}/finance-links',
+                [ExitWorkspaceController::class, 'linkFinancePayment'],
+            )->name('exit.finance-links.store');
+
+            Route::post(
+                '/changes/exit/{case}/governance',
+                [ExitWorkspaceController::class, 'submitGovernance'],
+            )->name('exit.governance.store');
+
+            Route::post(
+                '/changes/exit/{case}/records/{formalRecordVersion}/content-review',
+                [ExitWorkspaceController::class, 'review'],
+            )->name('exit.content-review');
+
+            Route::post(
+                '/changes/exit/{case}/sync-decision',
+                [ExitWorkspaceController::class, 'syncDecision'],
+            )->name('exit.sync-decision');
+
+            Route::post(
+                '/changes/exit/{case}/prepare-effect',
+                [ExitWorkspaceController::class, 'prepareEffect'],
+            )->name('exit.prepare-effect');
+
+            Route::post(
+                '/changes/exit/{case}/effect',
+                [ExitWorkspaceController::class, 'effect'],
+            )->name('exit.effect');
+
+            Route::post(
+                '/changes/exit/{case}/access',
+                [ExitWorkspaceController::class, 'transitionAccess'],
+            )->name('exit.access.transition');
+
+            Route::post(
+                '/changes/exit/{case}/settlement/refresh',
+                [ExitWorkspaceController::class, 'refreshSettlement'],
+            )->name('exit.settlement.refresh');
+
+            Route::post(
+                '/changes/exit/{case}/complete',
+                [ExitWorkspaceController::class, 'complete'],
+            )->name('exit.complete');
 
             Route::get(
                 '/governance',

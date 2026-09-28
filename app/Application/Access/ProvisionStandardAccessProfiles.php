@@ -13,6 +13,7 @@ use App\Infrastructure\Persistence\Eloquent\Access\AccessPolicy;
 use App\Infrastructure\Persistence\Eloquent\Access\Permission;
 use App\Infrastructure\Persistence\Eloquent\Access\PermissionProfile;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
+use App\Infrastructure\Persistence\Eloquent\Exit\ExitCase;
 use App\Infrastructure\Persistence\Eloquent\Governance\Action;
 use App\Infrastructure\Persistence\Eloquent\Governance\AmendmentRequest;
 use App\Infrastructure\Persistence\Eloquent\Governance\Decision;
@@ -177,6 +178,11 @@ final class ProvisionStandardAccessProfiles
             CapabilityCatalog::PARTNER_CHANGES_VIEW,
             CapabilityCatalog::PARTNER_CHANGES_MANAGE => [
                 PartnerChangeCase::class,
+            ],
+
+            CapabilityCatalog::EXIT_VIEW,
+            CapabilityCatalog::EXIT_MANAGE => [
+                ExitCase::class,
             ],
 
             default => [],

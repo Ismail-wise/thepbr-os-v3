@@ -73,6 +73,10 @@ final class CapabilityCatalog
 
     public const PARTNER_CHANGES_MANAGE = 'partner_changes.manage';
 
+    public const EXIT_VIEW = 'exit.view';
+
+    public const EXIT_MANAGE = 'exit.manage';
+
     public const OPERATIONS_VIEW = 'operations.view';
 
     public const OPERATIONS_MANAGE = 'operations.manage';
@@ -104,6 +108,8 @@ final class CapabilityCatalog
         return [
             self::PARTNER_CHANGES_VIEW,
             self::PARTNER_CHANGES_MANAGE,
+            self::EXIT_VIEW,
+            self::EXIT_MANAGE,
             self::CONFLICT_VIEW,
             self::CONFLICT_MANAGE,
             self::RISK_VIEW,

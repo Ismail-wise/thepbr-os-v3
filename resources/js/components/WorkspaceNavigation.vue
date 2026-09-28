@@ -84,6 +84,12 @@ const isPartnerChangesCurrent = computed(
         currentPath.value === '/changes/partner-changes' ||
         currentPath.value.startsWith('/changes/partner-changes/'),
 );
+
+const isExitCurrent = computed(
+    () =>
+        currentPath.value === '/changes/exit' ||
+        currentPath.value.startsWith('/changes/exit/'),
+);
 </script>
 
 <template>
@@ -268,6 +274,20 @@ const isPartnerChangesCurrent = computed(
             @click="emit('navigate')"
         >
             {{ t('nav.partnerChanges') }}
+        </Link>
+
+        <Link
+            href="/changes/exit"
+            :aria-current="isExitCurrent ? 'page' : undefined"
+            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
+            :class="
+                isExitCurrent
+                    ? 'border-slate-950 bg-slate-100 text-slate-950'
+                    : 'border-transparent text-slate-700'
+            "
+            @click="emit('navigate')"
+        >
+            {{ t('nav.exitBuyout') }}
         </Link>
 
         <Link

@@ -28,11 +28,12 @@ final class PartnerLifecycleWorkflow
         string $reasonCode,
         ?string $sourceType = null,
         ?string $sourceId = null,
+        string $requiredCapability = CapabilityCatalog::PARTNER_CHANGES_MANAGE,
     ): bool {
         $membership = $this->actor->membership(
             $user,
             $business,
-            CapabilityCatalog::PARTNER_CHANGES_MANAGE,
+            $requiredCapability,
         );
 
         if ($membership === null) {

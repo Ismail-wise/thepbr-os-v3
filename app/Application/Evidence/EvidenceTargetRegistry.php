@@ -8,6 +8,7 @@ use App\Domain\Access\CapabilityCatalog;
 use App\Infrastructure\Persistence\Eloquent\Conflict\ConflictCase;
 use App\Infrastructure\Persistence\Eloquent\Continuity\ContinuityEmergencyAccessActivation;
 use App\Infrastructure\Persistence\Eloquent\Continuity\ContinuityTest;
+use App\Infrastructure\Persistence\Eloquent\Exit\ExitCase;
 use App\Infrastructure\Persistence\Eloquent\Finance\FinanceException;
 use App\Infrastructure\Persistence\Eloquent\Finance\FinancePayment;
 use App\Infrastructure\Persistence\Eloquent\Finance\FinanceReconciliationReview;
@@ -40,6 +41,7 @@ final class EvidenceTargetRegistry
         'continuity_test' => ContinuityTest::class,
         'continuity_emergency_access_activation' => ContinuityEmergencyAccessActivation::class,
         'conflict_case' => ConflictCase::class,
+        'exit_case' => ExitCase::class,
     ];
 
     /**
@@ -71,6 +73,7 @@ final class EvidenceTargetRegistry
             'continuity_test',
             'continuity_emergency_access_activation' => CapabilityCatalog::CONTINUITY_MANAGE,
             'conflict_case' => CapabilityCatalog::CONFLICT_MANAGE,
+            'exit_case' => CapabilityCatalog::EXIT_MANAGE,
             default => CapabilityCatalog::RECORDS_MANAGE,
         };
     }
