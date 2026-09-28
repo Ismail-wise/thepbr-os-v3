@@ -279,16 +279,31 @@ test(
         ).toBeVisible();
 
         await page
+            .getByRole('navigation', {
+                name: 'Workspace navigation',
+            })
+            .getByRole('link', {
+                name: 'Home',
+                exact: true,
+            })
+            .click();
+
+        await expect(page).toHaveURL(/\/$/);
+        await expect(
+            page.getByRole('heading', {
+                name: 'Account',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await page
             .getByRole('button', {
                 name: 'Sign out',
                 exact: true,
             })
             .click();
 
-        await page.waitForURL(
-            (url) => url.pathname === '/login',
-            { waitUntil: 'domcontentloaded' },
-        );
+        await expect(page).toHaveURL(/\/login$/);
 
         await signIn(page, VIEWER_EMAIL);
         await switchBusiness(page);
