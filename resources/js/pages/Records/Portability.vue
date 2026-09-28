@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
 import { useI18n } from '../../i18n/useI18n';
 
@@ -48,6 +49,13 @@ const { t } = useI18n();
 
 const archiveForm = useForm({
     reason: '',
+});
+
+const archiveError = computed(() => {
+    const errors: Partial<Record<'reason' | 'archive', string>> =
+        archiveForm.errors;
+
+    return errors.archive ?? errors.reason;
 });
 
 const exportForm = useForm({
@@ -166,10 +174,10 @@ const formatBytes = (bytes: number | null): string => {
                         {{ t('portability.reasonHelp') }}
                     </p>
                     <p
-                        v-if="archiveForm.errors.archive || archiveForm.errors.reason"
+                        v-if="archiveError"
                         class="text-sm text-rose-700"
                     >
-                        {{ archiveForm.errors.archive || archiveForm.errors.reason }}
+                        {{ archiveError }}
                     </p>
                     <button
                         type="submit"
