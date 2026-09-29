@@ -224,13 +224,51 @@ const attentionCount = computed(() => props.rewards.distribution_runs.filter((ro
                         </article>
                         <p v-if="rewards.distribution_runs.length === 0" class="text-sm text-slate-500">No Distribution Runs.</p>
                     </div>
-                    <details v-if="rewards.permissions.manage && rewards.current" class="mt-3 border border-slate-200"><summary class="cursor-pointer px-4 py-3 font-semibold">Create Distribution Run</summary><form class="grid gap-3 border-t border-slate-200 p-4 md:grid-cols-2" @submit.prevent="distribution.post('/rewards/distributions', { preserveScroll: true })"><select v-model="distribution.reconciliation_review_id" class="min-h-10 border border-slate-300 px-2"><option v-for="rec in rewards.reconciliations" :key="rec.id" :value="rec.id">{{ rec.period_end }} · {{ money(rec.approved_net_profit_minor_units, rec.currency) }}</option></select><input v-model="distribution.record_date" type="date" class="min-h-10 border border-slate-300 px-2" /><input v-model.number="distribution.required_reserve_minor_units" type="number" min="0" class="min-h-10 border border-slate-300 px-2" placeholder="Reserve minor units (optional)" /><input v-model.number="distribution.reinvestment_minor_units" type="number" min="0" class="min-h-10 border border-slate-300 px-2" placeholder="Reinvestment minor units (optional)" /><input v-model.number="distribution.adjustments_minor_units" type="number" class="min-h-10 border border-slate-300 px-2" placeholder="Adjustments minor units" /><input v-model="distribution.notes" class="min-h-10 border border-slate-300 px-2" placeholder="Adjustment reason / run notes" /><button type="submit" class="min-h-10 bg-slate-950 px-4 text-sm font-semibold text-white">Create Run</button></form></details>
+                    <details v-if="rewards.permissions.manage && rewards.current" class="mt-3 border border-slate-200">
+                        <summary class="cursor-pointer px-4 py-3 font-semibold">Create Distribution Run</summary>
+                        <form class="grid gap-3 border-t border-slate-200 p-4 md:grid-cols-2" @submit.prevent="distribution.post('/rewards/distributions', { preserveScroll: true })">
+                            <label class="text-sm font-medium text-slate-700">{{ t('rewards.distribution.reconciliation') }}<select v-model="distribution.reconciliation_review_id" class="mt-1 min-h-10 w-full border border-slate-300 px-2"><option v-for="rec in rewards.reconciliations" :key="rec.id" :value="rec.id">{{ rec.period_end }} · {{ money(rec.approved_net_profit_minor_units, rec.currency) }}</option></select></label>
+                            <label class="text-sm font-medium text-slate-700">{{ t('rewards.distribution.recordDate') }}<input v-model="distribution.record_date" type="date" class="mt-1 min-h-10 w-full border border-slate-300 px-2" /></label>
+                            <label class="text-sm font-medium text-slate-700">{{ t('rewards.distribution.requiredReserve') }}<input v-model.number="distribution.required_reserve_minor_units" type="number" min="0" class="mt-1 min-h-10 w-full border border-slate-300 px-2" placeholder="e.g. 15000" /></label>
+                            <label class="text-sm font-medium text-slate-700">{{ t('rewards.distribution.reinvestment') }}<input v-model.number="distribution.reinvestment_minor_units" type="number" min="0" class="mt-1 min-h-10 w-full border border-slate-300 px-2" placeholder="e.g. 20000" /></label>
+                            <label class="text-sm font-medium text-slate-700">{{ t('rewards.distribution.adjustments') }}<input v-model.number="distribution.adjustments_minor_units" type="number" class="mt-1 min-h-10 w-full border border-slate-300 px-2" placeholder="e.g. 0" /></label>
+                            <label class="text-sm font-medium text-slate-700">{{ t('rewards.distribution.notes') }}<input v-model="distribution.notes" class="mt-1 min-h-10 w-full border border-slate-300 px-2" placeholder="e.g. Approved adjustment note" /></label>
+                            <button type="submit" class="min-h-10 bg-slate-950 px-4 text-sm font-semibold text-white md:self-end">Create Run</button>
+                        </form>
+                    </details>
                 </div>
 
                 <aside>
                     <h2 class="text-lg font-bold">Distribution Scenario</h2>
                     <p class="mt-1 text-sm text-slate-600">Pure calculation only. This never changes live Finance or Ownership truth.</p>
-                    <div class="mt-3 grid gap-2 border border-dashed border-slate-300 p-4"><input v-model.number="simulator.approved_net_profit_minor_units" type="number" class="min-h-9 border border-slate-300 px-2 text-sm" placeholder="Approved net profit" /><input v-model.number="simulator.tax_due_minor_units" type="number" min="0" class="min-h-9 border border-slate-300 px-2 text-sm" placeholder="Tax due" /><input v-model.number="simulator.debt_due_minor_units" type="number" min="0" class="min-h-9 border border-slate-300 px-2 text-sm" placeholder="Debt due" /><input v-model.number="simulator.required_reserve_minor_units" type="number" min="0" class="min-h-9 border border-slate-300 px-2 text-sm" placeholder="Reserve" /><input v-model.number="simulator.reinvestment_minor_units" type="number" min="0" class="min-h-9 border border-slate-300 px-2 text-sm" placeholder="Reinvestment" /><input v-model.number="simulator.adjustments_minor_units" type="number" class="min-h-9 border border-slate-300 px-2 text-sm" placeholder="Approved adjustments" /><button type="button" class="min-h-10 bg-slate-950 px-4 text-sm font-semibold text-white" @click="simulate">Calculate only</button><p v-if="simulationResult" class="border-t border-slate-200 pt-3 text-sm"><strong>Distributable:</strong> {{ money(simulationResult.waterfall.distributable_profit_minor_units) }}</p></div>
+                    <div class="mt-3 grid gap-3 border border-dashed border-slate-300 p-4">
+                        <label class="text-sm font-medium text-slate-700">
+                            {{ t('rewards.simulation.approvedNetProfit') }}
+                            <input v-model.number="simulator.approved_net_profit_minor_units" type="number" class="mt-1 min-h-9 w-full border border-slate-300 px-2 text-sm" placeholder="e.g. 100000" />
+                        </label>
+                        <label class="text-sm font-medium text-slate-700">
+                            {{ t('rewards.simulation.taxDue') }}
+                            <input v-model.number="simulator.tax_due_minor_units" type="number" min="0" class="mt-1 min-h-9 w-full border border-slate-300 px-2 text-sm" placeholder="e.g. 10000" />
+                        </label>
+                        <label class="text-sm font-medium text-slate-700">
+                            {{ t('rewards.simulation.debtDue') }}
+                            <input v-model.number="simulator.debt_due_minor_units" type="number" min="0" class="mt-1 min-h-9 w-full border border-slate-300 px-2 text-sm" placeholder="e.g. 5000" />
+                        </label>
+                        <label class="text-sm font-medium text-slate-700">
+                            {{ t('rewards.simulation.requiredReserve') }}
+                            <input v-model.number="simulator.required_reserve_minor_units" type="number" min="0" class="mt-1 min-h-9 w-full border border-slate-300 px-2 text-sm" placeholder="e.g. 15000" />
+                        </label>
+                        <label class="text-sm font-medium text-slate-700">
+                            {{ t('rewards.simulation.reinvestment') }}
+                            <input v-model.number="simulator.reinvestment_minor_units" type="number" min="0" class="mt-1 min-h-9 w-full border border-slate-300 px-2 text-sm" placeholder="e.g. 20000" />
+                        </label>
+                        <label class="text-sm font-medium text-slate-700">
+                            {{ t('rewards.simulation.adjustments') }}
+                            <input v-model.number="simulator.adjustments_minor_units" type="number" class="mt-1 min-h-9 w-full border border-slate-300 px-2 text-sm" placeholder="e.g. 0" />
+                        </label>
+                        <button type="button" class="min-h-10 bg-slate-950 px-4 text-sm font-semibold text-white" @click="simulate">Calculate only</button>
+                        <p v-if="simulationResult" class="border-t border-slate-200 pt-3 text-sm"><strong>Distributable:</strong> {{ money(simulationResult.waterfall.distributable_profit_minor_units) }}</p>
+                    </div>
                 </aside>
             </section>
 

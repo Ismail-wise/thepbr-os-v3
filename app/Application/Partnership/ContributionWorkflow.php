@@ -12,6 +12,7 @@ use App\Application\Records\SubmitRecordVersionForReview;
 use App\Application\Records\TransitionFormalRecordVersion;
 use App\Domain\Access\CapabilityCatalog;
 use App\Domain\Access\ValueObjects\Capability;
+use App\Domain\Governance\Exceptions\MissingGovernanceDecision;
 use App\Domain\Partnership\Enums\ContributionStatus;
 use App\Domain\Partnership\Enums\ContributionType;
 use App\Domain\Partnership\ValueObjects\ContributionValue;
@@ -683,7 +684,7 @@ final class ContributionWorkflow
                 ->first();
 
             if ($decision === null) {
-                return false;
+                throw new MissingGovernanceDecision;
             }
 
             $row = $this->lockContribution(

@@ -19,6 +19,7 @@ use App\Domain\Businesses\Enums\WorkspaceStatus;
 use App\Domain\Closure\Enums\ClosureCaseStatus;
 use App\Domain\Closure\Enums\ClosureClaimStatus;
 use App\Domain\Closure\Services\ClosureCaseStateMachine;
+use App\Domain\Governance\Exceptions\MissingGovernanceDecision;
 use App\Domain\Records\Enums\FormalRecordState;
 use App\Domain\Records\Exceptions\StaleRevision;
 use App\Domain\Records\ValueObjects\RecordScope;
@@ -948,7 +949,7 @@ final class ClosureWorkflow
                 ->get();
 
             if ($decisions->count() !== 1) {
-                return null;
+                throw new MissingGovernanceDecision;
             }
 
             $decision = $decisions->first();

@@ -7,7 +7,13 @@ namespace Tests\Feature\Continuity;
 use App\Application\Access\ProvisionStandardAccessProfiles;
 use App\Application\Continuity\ContinuityPlanWorkflow;
 use App\Application\Continuity\ContinuityRecordVisibility;
+use App\Application\Continuity\GetContinuityWorkspace;
+use App\Domain\Access\CapabilityCatalog;
+use App\Domain\Access\Enums\PermissionEffect;
+use App\Domain\Records\Enums\FormalRecordState;
+use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Infrastructure\Persistence\Eloquent\Access\Permission;
+use App\Infrastructure\Persistence\Eloquent\Access\PermissionGrant;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use App\Infrastructure\Persistence\Eloquent\Members\Membership;
@@ -104,6 +110,92 @@ final class F6DContinuityPlanTest extends TestCase
         );
     }
 
+    public function test_missing_governance_decision_is_actionable_without_effecting_continuity_truth(): void
+    {
+        $context = $this->context();
+        $workflow = $this->app->make(ContinuityPlanWorkflow::class);
+
+        $created = $workflow->createDraft(
+            $context['user'],
+            $context['business'],
+            $this->payload($context),
+            now()->subMinute(),
+        );
+
+        self::assertNotNull($created);
+        $versionId = $created['formal_record_version_id'];
+
+        self::assertNotNull($workflow->submitForGovernance(
+            $context['user'],
+            $context['business'],
+            $versionId,
+            1,
+        ));
+        self::assertTrue($workflow->advanceContentReview(
+            $context['user'],
+            $context['business'],
+            $versionId,
+            FormalRecordState::UnderReview,
+        ));
+        self::assertTrue($workflow->advanceContentReview(
+            $context['user'],
+            $context['business'],
+            $versionId,
+            FormalRecordState::Approved,
+        ));
+
+        $session = [
+            EnsureCurrentBusinessContext::SESSION_KEY => (string) $context['business']->getKey(),
+        ];
+
+        $this
+            ->actingAs($context['user'])
+            ->withSession($session)
+            ->from('/continuity')
+            ->post('/continuity/plan/'.$versionId.'/sync-decision')
+            ->assertRedirect('/continuity')
+            ->assertSessionHasErrors([
+                'continuity' => 'A Governance Decision for this frozen proposal must be decided before this action can continue.',
+            ]);
+
+        self::assertSame(
+            FormalRecordState::Approved->value,
+            DB::table('record_version_state_transitions')
+                ->where('formal_record_version_id', $versionId)
+                ->orderByDesc('sequence')
+                ->value('to_state'),
+        );
+
+        $familyId = FormalRecordVersion::query()
+            ->findOrFail($versionId)
+            ->formal_record_family_id;
+
+        $this->assertDatabaseMissing('record_family_effective_heads', [
+            'business_id' => $context['business']->getKey(),
+            'formal_record_family_id' => $familyId,
+            'formal_record_version_id' => $versionId,
+        ]);
+
+        [$unauthorizedUser] = $this->member(
+            $context['business'],
+            'continuity-sync-denied',
+        );
+
+        $this
+            ->actingAs($unauthorizedUser)
+            ->withSession($session)
+            ->post('/continuity/plan/'.$versionId.'/sync-decision')
+            ->assertNotFound();
+
+        self::assertSame(
+            FormalRecordState::Approved->value,
+            DB::table('record_version_state_transitions')
+                ->where('formal_record_version_id', $versionId)
+                ->orderByDesc('sequence')
+                ->value('to_state'),
+        );
+    }
+
     public function test_primary_backup_cannot_be_same_person(): void
     {
         $context = $this->context();
@@ -135,6 +227,84 @@ final class F6DContinuityPlanTest extends TestCase
             $payload,
             now()->subMinute(),
         );
+    }
+
+    public function test_workspace_surfaces_operations_prerequisite_without_leaking_denied_operations(): void
+    {
+        $business = Business::query()->create([
+            'name' => 'F6D Continuity Missing Operations '.Str::uuid7(),
+            'origin_type' => 'started_through_pbr',
+            'business_stage' => 'operating',
+            'setup_phase' => 'formation',
+            'workspace_status' => 'active',
+            'base_currency' => 'USD',
+        ]);
+
+        [$user, $membership] = $this->member(
+            $business,
+            'prerequisite',
+        );
+
+        $this->app->make(ProvisionStandardAccessProfiles::class)
+            ->execute($business, $membership);
+
+        $workspace = $this->app->make(
+            GetContinuityWorkspace::class,
+        );
+
+        $missing = $workspace->execute($user, $business);
+
+        self::assertNotNull($missing);
+        self::assertSame(
+            'missing',
+            $missing['prerequisites']['operations_register']['status'],
+        );
+        self::assertTrue(
+            $missing['prerequisites']['operations_register']['can_open_operations'],
+        );
+        self::assertCount(0, $missing['operations_roles']);
+
+        $context = $this->context();
+        $met = $workspace->execute(
+            $context['user'],
+            $context['business'],
+        );
+
+        self::assertNotNull($met);
+        self::assertSame(
+            'met',
+            $met['prerequisites']['operations_register']['status'],
+        );
+        self::assertTrue(
+            $met['prerequisites']['operations_register']['can_open_operations'],
+        );
+        self::assertNotEmpty($met['operations_roles']);
+
+        $permission = Permission::query()
+            ->where('key', CapabilityCatalog::OPERATIONS_VIEW)
+            ->sole();
+
+        PermissionGrant::query()->create([
+            'business_id' => $context['business']->getKey(),
+            'membership_id' => $context['membership']->getKey(),
+            'permission_id' => $permission->getKey(),
+            'effect' => PermissionEffect::Deny,
+        ]);
+
+        $restricted = $workspace->execute(
+            $context['user'],
+            $context['business'],
+        );
+
+        self::assertNotNull($restricted);
+        self::assertSame(
+            'unknown',
+            $restricted['prerequisites']['operations_register']['status'],
+        );
+        self::assertFalse(
+            $restricted['prerequisites']['operations_register']['can_open_operations'],
+        );
+        self::assertCount(0, $restricted['operations_roles']);
     }
 
     /** @return array<string,mixed> */

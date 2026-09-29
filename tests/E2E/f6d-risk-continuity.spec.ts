@@ -139,47 +139,30 @@ test(
             }),
         ).toBeVisible();
 
-        const continuityDraft = page
-            .locator('details')
-            .filter({
-                has: page.getByText(
-                    'Create Continuity Plan Draft / Amendment',
-                    { exact: true },
-                ),
-            });
-
-        await continuityDraft.locator('summary').click();
+        await expect(
+            page.getByText(
+                'A Current Effective Operations Register is required before you can prepare a Continuity Plan.',
+                { exact: true },
+            ),
+        ).toBeVisible();
 
         await expect(
-            continuityDraft.getByRole('heading', {
-                name: 'Critical Functions & Temporary Backups',
+            page.getByRole('link', {
+                name: 'Open Operations',
                 exact: true,
             }),
         ).toBeVisible();
+
         await expect(
-            continuityDraft.getByRole('heading', {
-                name: 'Successor Candidates',
-                exact: true,
-            }),
-        ).toBeVisible();
-        await expect(
-            continuityDraft.getByText(
-                'Successor is a long-term candidate and never mutates Ownership.',
-                { exact: true },
-            ),
-        ).toBeVisible();
-        await expect(
-            continuityDraft.getByText(
-                'Never store passwords, PINs, OTPs, tokens, credentials or recovery secrets here.',
-                { exact: true },
-            ),
-        ).toBeVisible();
-        await expect(
-            continuityDraft.getByText(
-                'Planning record only. Actual authority requires the governed F6A Emergency Authority workflow.',
-                { exact: true },
-            ),
-        ).toBeVisible();
+            page
+                .locator('details')
+                .filter({
+                    has: page.getByText(
+                        'Create Continuity Plan Draft / Amendment',
+                        { exact: true },
+                    ),
+                }),
+        ).toHaveCount(0);
 
         await expect(page.locator('input[type="password"]')).toHaveCount(0);
         await expect(

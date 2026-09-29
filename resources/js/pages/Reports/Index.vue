@@ -147,13 +147,18 @@ const formatBytes = (bytes: number | null): string => {
                     {{ form.errors.requested_scope }}
                 </p>
 
-                <button
-                    type="submit"
-                    class="min-h-11 rounded-lg bg-slate-950 px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
-                    :disabled="form.processing || form.requested_scope.length === 0"
-                >
-                    {{ t('reports.create') }}
-                </button>
+                <div>
+                    <button
+                        type="submit"
+                        class="min-h-11 rounded-lg bg-slate-950 px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                        :disabled="form.processing || form.requested_scope.length === 0"
+                    >
+                        {{ t('reports.create') }}
+                    </button>
+                    <p class="mt-2 text-xs text-slate-500">
+                        {{ t('reports.createHelp') }}
+                    </p>
+                </div>
             </form>
 
             <section class="overflow-hidden rounded-xl border border-slate-200 bg-white">

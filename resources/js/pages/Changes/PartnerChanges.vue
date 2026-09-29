@@ -282,6 +282,10 @@ const openRofr = (): void => {
     });
 };
 
+const revisionActionForm = useForm({
+    expected_revision: 1,
+});
+
 const postRevisionAction = (suffix: string): void => {
     const item = selectedCase.value;
 
@@ -289,9 +293,14 @@ const postRevisionAction = (suffix: string): void => {
         return;
     }
 
-    useForm({ expected_revision: item.revision }).post(
+    revisionActionForm.clearErrors();
+    revisionActionForm.expected_revision = item.revision;
+    revisionActionForm.post(
         `/changes/partner-changes/${item.id}/${suffix}`,
-        { preserveScroll: true },
+        {
+            preserveScroll: true,
+            onSuccess: () => revisionActionForm.clearErrors(),
+        },
     );
 };
 
@@ -673,6 +682,12 @@ const statusClass = (status: string): string => {
                         >
                             {{ Object.values(transitionForm.errors)[0] }}
                         </p>
+                        <p
+                            v-if="Object.keys(revisionActionForm.errors).length"
+                            class="mt-3 text-sm text-rose-700"
+                        >
+                            {{ Object.values(revisionActionForm.errors)[0] }}
+                        </p>
                     </div>
 
                     <div v-if="selectedCase.governance_submission" class="border-t border-slate-200 p-4 text-sm">
@@ -712,7 +727,7 @@ const statusClass = (status: string): string => {
                         </summary>
                         <form class="space-y-3 border-t border-slate-200 p-4" @submit.prevent="submitEligibility">
                             <label class="block space-y-1 text-sm">
-                                <span class="font-medium text-slate-700">Check</span>
+                                <span class="font-medium text-slate-700">{{ t('partnerChanges.eligibilityCheck') }}</span>
                                 <select v-model="eligibilityForm.check_key" class="min-h-11 w-full rounded-md border-slate-300 text-sm">
                                     <option value="buyer_eligible">Buyer eligibility</option>
                                     <option value="vesting_and_restrictions">Vesting & restrictions</option>
@@ -722,14 +737,17 @@ const statusClass = (status: string): string => {
                                 </select>
                             </label>
                             <label class="block space-y-1 text-sm">
-                                <span class="font-medium text-slate-700">Result</span>
+                                <span class="font-medium text-slate-700">{{ t('partnerChanges.eligibilityResult') }}</span>
                                 <select v-model="eligibilityForm.result" class="min-h-11 w-full rounded-md border-slate-300 text-sm">
                                     <option value="met">Met</option>
                                     <option value="blocked">Blocked</option>
                                     <option value="not_applicable">Not applicable</option>
                                 </select>
                             </label>
-                            <textarea v-model="eligibilityForm.detail" rows="2" placeholder="Review note" class="w-full rounded-md border-slate-300 text-sm" />
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">{{ t('partnerChanges.eligibilityDetail') }}</span>
+                                <textarea v-model="eligibilityForm.detail" rows="2" class="w-full rounded-md border-slate-300 text-sm" placeholder="Optional supporting context" />
+                            </label>
                             <button
                                 type="submit"
                                 :disabled="eligibilityForm.processing"
@@ -749,7 +767,7 @@ const statusClass = (status: string): string => {
                         </summary>
                         <form class="space-y-3 border-t border-slate-200 p-4" @submit.prevent="submitRequirement">
                             <label class="block space-y-1 text-sm">
-                                <span class="font-medium text-slate-700">Requirement type</span>
+                                <span class="font-medium text-slate-700">{{ t('partnerChanges.requirementType') }}</span>
                                 <select v-model="requirementForm.requirement_type" class="min-h-11 w-full rounded-md border-slate-300 text-sm">
                                     <option value="due_diligence">Due diligence</option>
                                     <option value="contribution">Contribution</option>
@@ -760,13 +778,22 @@ const statusClass = (status: string): string => {
                                     <option value="other">Other</option>
                                 </select>
                             </label>
-                            <input v-model="requirementForm.requirement_key" class="min-h-11 w-full rounded-md border-slate-300 text-sm" placeholder="Requirement key" />
-                            <select v-model="requirementForm.status" class="min-h-11 w-full rounded-md border-slate-300 text-sm">
-                                <option value="met">Met</option>
-                                <option value="blocked">Blocked</option>
-                                <option value="not_applicable">Not applicable</option>
-                            </select>
-                            <textarea v-model="requirementForm.detail" rows="2" placeholder="Requirement note" class="w-full rounded-md border-slate-300 text-sm" />
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">{{ t('partnerChanges.requirementKey') }}</span>
+                                <input v-model="requirementForm.requirement_key" class="min-h-11 w-full rounded-md border-slate-300 text-sm" placeholder="e.g. contribution_terms_resolved" />
+                            </label>
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">{{ t('partnerChanges.requirementStatus') }}</span>
+                                <select v-model="requirementForm.status" class="min-h-11 w-full rounded-md border-slate-300 text-sm">
+                                    <option value="met">Met</option>
+                                    <option value="blocked">Blocked</option>
+                                    <option value="not_applicable">Not applicable</option>
+                                </select>
+                            </label>
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">{{ t('partnerChanges.requirementDetail') }}</span>
+                                <textarea v-model="requirementForm.detail" rows="2" class="w-full rounded-md border-slate-300 text-sm" placeholder="Optional supporting context" />
+                            </label>
                             <button type="submit" class="min-h-10 rounded-md bg-slate-950 px-3 text-sm font-semibold text-white">
                                 Record requirement
                             </button>
@@ -781,8 +808,14 @@ const statusClass = (status: string): string => {
                             {{ t('partnerChanges.rofr') }}
                         </summary>
                         <form class="space-y-3 border-t border-slate-200 p-4" @submit.prevent="openRofr">
-                            <textarea v-model="rofrForm.terms_summary" required rows="3" placeholder="Exact ROFR terms" class="w-full rounded-md border-slate-300 text-sm" />
-                            <input v-model="rofrForm.deadline_at" required type="datetime-local" class="min-h-11 w-full rounded-md border-slate-300 text-sm" />
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">{{ t('partnerChanges.rofrTerms') }}</span>
+                                <textarea v-model="rofrForm.terms_summary" required rows="3" class="w-full rounded-md border-slate-300 text-sm" placeholder="Enter the exact offered terms" />
+                            </label>
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">{{ t('partnerChanges.rofrDeadline') }}</span>
+                                <input v-model="rofrForm.deadline_at" required type="datetime-local" class="min-h-11 w-full rounded-md border-slate-300 text-sm" />
+                            </label>
                             <button type="submit" class="min-h-10 rounded-md bg-slate-950 px-3 text-sm font-semibold text-white">
                                 Open ROFR round
                             </button>

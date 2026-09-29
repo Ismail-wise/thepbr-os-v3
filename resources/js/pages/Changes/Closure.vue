@@ -277,13 +277,22 @@ const closeWorkspace = (): void => {
     });
 };
 
+const revisionActionForm = useForm({
+    expected_revision: 1,
+});
+
 const revisionAction = (suffix: string): void => {
     const item = selectedCase.value;
     if (item === null) return;
 
-    useForm({ expected_revision: item.revision }).post(
+    revisionActionForm.clearErrors();
+    revisionActionForm.expected_revision = item.revision;
+    revisionActionForm.post(
         `/changes/closure/${item.id}/${suffix}`,
-        { preserveScroll: true },
+        {
+            preserveScroll: true,
+            onSuccess: () => revisionActionForm.clearErrors(),
+        },
     );
 };
 
@@ -1036,6 +1045,12 @@ const transitionClaim = (claim: Claim, target: string): void => {
                                     {{ t('closure.cancel') }}
                                 </button>
                             </div>
+                            <p
+                                v-if="Object.keys(revisionActionForm.errors).length"
+                                class="text-sm text-rose-700"
+                            >
+                                {{ Object.values(revisionActionForm.errors)[0] }}
+                            </p>
                         </div>
                     </section>
 

@@ -15,6 +15,7 @@ use App\Domain\Closure\Enums\ClosureCaseStatus;
 use App\Domain\Identity\Enums\AccountStatus;
 use App\Domain\Identity\Enums\LanguageMode;
 use App\Domain\Records\Exceptions\StaleRevision;
+use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -55,6 +56,12 @@ final class F7ClosureWorkflowTest extends TestCase
         self::assertNotNull($case);
         self::assertSame(ClosureCaseStatus::Draft, $case->status);
         self::assertSame(1, (int) $case->revision);
+        self::assertNull($case->intended_legal_closure_at);
+        self::assertDatabaseHas('closure_cases', [
+            'id' => $case->getKey(),
+            'business_id' => $business->getKey(),
+            'intended_legal_closure_at' => null,
+        ]);
         self::assertSame(
             WorkspaceStatus::Active,
             $business->fresh()->workspace_status,
@@ -151,6 +158,106 @@ final class F7ClosureWorkflowTest extends TestCase
             WorkspaceStatus::Active,
             $business->fresh()->workspace_status,
             'Governance submission is not legal or workspace closure.',
+        );
+    }
+
+    public function test_missing_governance_decision_is_actionable_without_closing_business(): void
+    {
+        [$user, $business] = $this->fixture(
+            'f7-closure-missing-decision@example.test',
+            'F7 Closure Missing Decision Business',
+        );
+
+        $workflow = $this->app->make(ClosureWorkflow::class);
+
+        $case = $workflow->createCase(
+            $user,
+            $business,
+            'partners_approved_orderly_wind_down',
+            'Thailand company law and qualified local legal advice.',
+            'business_closure_approval',
+        );
+
+        self::assertNotNull($case);
+
+        foreach ([
+            ['asset', 'assets_protected'],
+            ['asset', 'asset_inventory_complete'],
+            ['liability', 'liability_inventory_complete'],
+        ] as [$type, $key]) {
+            self::assertTrue($workflow->recordRequirement(
+                $user,
+                $business,
+                (string) $case->getKey(),
+                1,
+                $type,
+                $key,
+                'met',
+                'Verified before Governance submission.',
+            ));
+        }
+
+        $submission = $workflow->submitGovernance(
+            $user,
+            $business,
+            (string) $case->getKey(),
+            1,
+        );
+
+        self::assertNotNull($submission);
+        $case->refresh();
+
+        self::assertSame(
+            ClosureCaseStatus::UnderGovernance,
+            $case->status,
+        );
+        self::assertSame(2, (int) $case->revision);
+
+        $session = [
+            EnsureCurrentBusinessContext::SESSION_KEY => (string) $business->getKey(),
+        ];
+
+        $this
+            ->actingAs($user)
+            ->withSession($session)
+            ->from('/changes/closure')
+            ->post(
+                '/changes/closure/'.$case->getKey().'/sync-decision',
+                ['expected_revision' => 2],
+            )
+            ->assertRedirect('/changes/closure')
+            ->assertSessionHasErrors([
+                'governance' => 'A Governance Decision for this frozen proposal must be decided before this action can continue.',
+            ]);
+
+        $case->refresh();
+
+        self::assertSame(
+            ClosureCaseStatus::UnderGovernance,
+            $case->status,
+        );
+        self::assertSame(2, (int) $case->revision);
+        self::assertSame(
+            WorkspaceStatus::Active,
+            $business->fresh()->workspace_status,
+        );
+        self::assertSame(
+            0,
+            DB::table('decisions')
+                ->where(
+                    'proposal_version_id',
+                    $submission['proposal_version_id'],
+                )
+                ->count(),
+        );
+        $this->assertDatabaseHas(
+            'closure_governance_submissions',
+            [
+                'business_id' => $business->getKey(),
+                'closure_case_id' => $case->getKey(),
+                'decision_id' => null,
+                'authorized_at' => null,
+            ],
         );
     }
 

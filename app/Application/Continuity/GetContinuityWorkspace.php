@@ -155,8 +155,18 @@ final class GetContinuityWorkspace
             ->orderBy('u.email')
             ->get(['m.id', 'u.email']);
 
+        $canViewOperations = $this->actorContext->membership(
+            $user,
+            $business,
+            CapabilityCatalog::OPERATIONS_VIEW,
+        ) !== null;
+
         $operationsVersionId = $this->effectiveOperationsVersion($business);
-        $roles = $operationsVersionId === null
+        $operationsPrerequisiteStatus = ! $canViewOperations
+            ? 'unknown'
+            : ($operationsVersionId === null ? 'missing' : 'met');
+
+        $roles = ! $canViewOperations || $operationsVersionId === null
             ? collect()
             : DB::table('operations_roles')
                 ->where('business_id', $business->getKey())
@@ -177,6 +187,12 @@ final class GetContinuityWorkspace
             'versions' => $versions,
             'memberships' => $memberships,
             'operations_roles' => $roles,
+            'prerequisites' => [
+                'operations_register' => [
+                    'status' => $operationsPrerequisiteStatus,
+                    'can_open_operations' => $canViewOperations,
+                ],
+            ],
             'attention' => [
                 'failed_tests' => $tests->where('result', 'failed')->count(),
                 'active_activations' => $activations->where('status', 'active')->count(),

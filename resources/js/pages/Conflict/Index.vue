@@ -477,14 +477,14 @@ const canEnterDirectDiscussion = computed(
                         @submit.prevent="directForm.post('/conflict/cases/' + selected.id + '/direct-discussions', { preserveScroll: true })"
                     >
                         <h3 class="font-semibold">{{ t('conflict.directDiscussion') }}</h3>
-                        <textarea v-model="directForm.issues_discussed" required class="min-h-20 w-full border border-slate-300 p-2" placeholder="Issues discussed" />
-                        <textarea v-model="directForm.party_position_summary" required class="min-h-20 w-full border border-slate-300 p-2" placeholder="Party positions" />
-                        <textarea v-model="directForm.proposed_solutions" required class="min-h-20 w-full border border-slate-300 p-2" placeholder="Proposed solutions" />
-                        <select v-model="directForm.outcome" class="min-h-10 w-full border border-slate-300 px-2">
+                        <label class="block text-sm font-medium text-slate-700">{{ t('conflict.direct.issues') }}<textarea v-model="directForm.issues_discussed" required class="mt-1 min-h-20 w-full border border-slate-300 p-2" placeholder="Summarize the issues discussed." /></label>
+                        <label class="block text-sm font-medium text-slate-700">{{ t('conflict.direct.positions') }}<textarea v-model="directForm.party_position_summary" required class="mt-1 min-h-20 w-full border border-slate-300 p-2" placeholder="Summarize each party's position." /></label>
+                        <label class="block text-sm font-medium text-slate-700">{{ t('conflict.direct.solutions') }}<textarea v-model="directForm.proposed_solutions" required class="mt-1 min-h-20 w-full border border-slate-300 p-2" placeholder="Record proposed solutions." /></label>
+                        <label class="block text-sm font-medium text-slate-700">{{ t('conflict.direct.outcome') }}<select v-model="directForm.outcome" class="mt-1 min-h-10 w-full border border-slate-300 px-2">
                             <option value="resolved">Resolved</option>
                             <option value="continue_mediation">Continue to mediation</option>
                             <option value="continue_formal_decision">Continue to formal decision</option>
-                        </select>
+                        </select></label>
                         <button type="submit" class="min-h-10 bg-slate-950 px-4 text-sm font-semibold text-white">Record Discussion</button>
                     </form>
 

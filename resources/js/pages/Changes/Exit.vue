@@ -340,13 +340,22 @@ const transitionAccess = (): void => {
     });
 };
 
+const revisionActionForm = useForm({
+    expected_revision: 1,
+});
+
 const revisionAction = (suffix: string): void => {
     const item = selectedCase.value;
     if (item === null) return;
 
-    useForm({ expected_revision: item.revision }).post(
+    revisionActionForm.clearErrors();
+    revisionActionForm.expected_revision = item.revision;
+    revisionActionForm.post(
         `/changes/exit/${item.id}/${suffix}`,
-        { preserveScroll: true },
+        {
+            preserveScroll: true,
+            onSuccess: () => revisionActionForm.clearErrors(),
+        },
     );
 };
 
@@ -757,6 +766,12 @@ watch(
                                     Withdraw
                                 </button>
                             </div>
+                            <p
+                                v-if="Object.keys(revisionActionForm.errors).length"
+                                class="mt-3 text-sm text-rose-700"
+                            >
+                                {{ Object.values(revisionActionForm.errors)[0] }}
+                            </p>
                         </div>
                     </div>
 
@@ -1131,53 +1146,71 @@ watch(
                             class="space-y-3 border-t border-slate-200 p-4"
                             @submit.prevent="recordRequirement"
                         >
-                            <select
-                                v-model="requirementForm.requirement_type"
-                                class="min-h-11 w-full rounded-md border-slate-300 text-sm"
-                            >
-                                <option value="ownership">Ownership</option>
-                                <option value="finance">Finance</option>
-                                <option value="handover">Handover</option>
-                                <option value="access">Access</option>
-                                <option value="operations">Operations</option>
-                                <option value="continuity">Continuity</option>
-                                <option value="post_exit">Post-exit</option>
-                                <option value="legal">Legal</option>
-                                <option value="governance">Governance</option>
-                                <option value="conflict">Conflict</option>
-                                <option value="other">Other</option>
-                            </select>
-                            <input
-                                v-model="requirementForm.requirement_key"
-                                required
-                                class="min-h-11 w-full rounded-md border-slate-300 text-sm"
-                                placeholder="Requirement key"
-                            />
-                            <select
-                                v-model="requirementForm.status"
-                                class="min-h-11 w-full rounded-md border-slate-300 text-sm"
-                            >
-                                <option value="pending">Pending</option>
-                                <option value="met">Met</option>
-                                <option value="blocked">Blocked</option>
-                                <option value="not_applicable">Not applicable</option>
-                            </select>
-                            <textarea
-                                v-model="requirementForm.detail"
-                                rows="2"
-                                placeholder="Requirement detail"
-                                class="w-full rounded-md border-slate-300 text-sm"
-                            />
-                            <input
-                                v-model="requirementForm.source_type"
-                                class="min-h-11 w-full rounded-md border-slate-300 text-sm"
-                                placeholder="Authorized source type (optional)"
-                            />
-                            <input
-                                v-model="requirementForm.source_id"
-                                class="min-h-11 w-full rounded-md border-slate-300 font-mono text-xs"
-                                placeholder="Source UUID (optional)"
-                            />
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">{{ t('exit.requirementType') }}</span>
+                                <select
+                                    v-model="requirementForm.requirement_type"
+                                    class="min-h-11 w-full rounded-md border-slate-300 text-sm"
+                                >
+                                    <option value="ownership">Ownership</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="handover">Handover</option>
+                                    <option value="access">Access</option>
+                                    <option value="operations">Operations</option>
+                                    <option value="continuity">Continuity</option>
+                                    <option value="post_exit">Post-exit</option>
+                                    <option value="legal">Legal</option>
+                                    <option value="governance">Governance</option>
+                                    <option value="conflict">Conflict</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </label>
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">{{ t('exit.requirementKey') }}</span>
+                                <input
+                                    v-model="requirementForm.requirement_key"
+                                    required
+                                    class="min-h-11 w-full rounded-md border-slate-300 text-sm"
+                                    placeholder="e.g. legal_documentation_complete"
+                                />
+                            </label>
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">{{ t('exit.requirementStatus') }}</span>
+                                <select
+                                    v-model="requirementForm.status"
+                                    class="min-h-11 w-full rounded-md border-slate-300 text-sm"
+                                >
+                                    <option value="pending">Pending</option>
+                                    <option value="met">Met</option>
+                                    <option value="blocked">Blocked</option>
+                                    <option value="not_applicable">Not applicable</option>
+                                </select>
+                            </label>
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">{{ t('exit.requirementDetail') }}</span>
+                                <textarea
+                                    v-model="requirementForm.detail"
+                                    rows="2"
+                                    class="w-full rounded-md border-slate-300 text-sm"
+                                    placeholder="Optional supporting context"
+                                />
+                            </label>
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">{{ t('exit.requirementSourceType') }}</span>
+                                <input
+                                    v-model="requirementForm.source_type"
+                                    class="min-h-11 w-full rounded-md border-slate-300 text-sm"
+                                    placeholder="e.g. formal_record"
+                                />
+                            </label>
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">{{ t('exit.requirementSourceId') }}</span>
+                                <input
+                                    v-model="requirementForm.source_id"
+                                    class="min-h-11 w-full rounded-md border-slate-300 font-mono text-xs"
+                                    placeholder="Authorized source record ID"
+                                />
+                            </label>
                             <button
                                 type="submit"
                                 class="min-h-10 rounded-md bg-slate-950 px-3 text-sm font-semibold text-white"
@@ -1281,29 +1314,38 @@ watch(
                             class="space-y-3 border-t border-slate-200 p-4"
                             @submit.prevent="linkFinancePayment"
                         >
-                            <input
-                                v-model="financeForm.finance_payment_id"
-                                required
-                                class="min-h-11 w-full rounded-md border-slate-300 font-mono text-xs"
-                                placeholder="Existing Finance Payment UUID"
-                            />
-                            <select
-                                v-model="financeForm.purpose"
-                                class="min-h-11 w-full rounded-md border-slate-300 text-sm"
-                            >
-                                <option value="deposit">Deposit</option>
-                                <option value="installment">Installment</option>
-                                <option value="final_settlement">Final settlement</option>
-                                <option value="loan_settlement">Loan settlement</option>
-                                <option value="other">Other</option>
-                            </select>
-                            <input
-                                v-model.number="financeForm.installment_sequence"
-                                type="number"
-                                min="1"
-                                class="min-h-11 w-full rounded-md border-slate-300 text-sm"
-                                placeholder="Installment sequence"
-                            />
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">{{ t('exit.financePaymentId') }}</span>
+                                <input
+                                    v-model="financeForm.finance_payment_id"
+                                    required
+                                    class="min-h-11 w-full rounded-md border-slate-300 font-mono text-xs"
+                                    placeholder="Authorized Finance payment record ID"
+                                />
+                            </label>
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">{{ t('exit.financePurpose') }}</span>
+                                <select
+                                    v-model="financeForm.purpose"
+                                    class="min-h-11 w-full rounded-md border-slate-300 text-sm"
+                                >
+                                    <option value="deposit">Deposit</option>
+                                    <option value="installment">Installment</option>
+                                    <option value="final_settlement">Final settlement</option>
+                                    <option value="loan_settlement">Loan settlement</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </label>
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">{{ t('exit.installmentSequence') }}</span>
+                                <input
+                                    v-model.number="financeForm.installment_sequence"
+                                    type="number"
+                                    min="1"
+                                    class="min-h-11 w-full rounded-md border-slate-300 text-sm"
+                                    placeholder="e.g. 1"
+                                />
+                            </label>
                             <button
                                 type="submit"
                                 class="min-h-10 rounded-md bg-slate-950 px-3 text-sm font-semibold text-white"

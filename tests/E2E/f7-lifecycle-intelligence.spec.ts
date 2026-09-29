@@ -168,7 +168,7 @@ test(
         );
 
         await eligibilityPanel
-            .getByPlaceholder('Review note')
+            .getByLabel('Review note', { exact: true })
             .fill('Same logical eligibility review.');
 
         await eligibilitySubmit.click();
@@ -185,7 +185,7 @@ test(
         }
 
         await eligibilityPanel
-            .getByPlaceholder('Review note')
+            .getByLabel('Review note', { exact: true })
             .fill('Same logical eligibility review.');
 
         await eligibilitySubmit.click();
@@ -229,7 +229,7 @@ test(
             .selectOption('contribution');
 
         await requirementForm
-            .getByPlaceholder('Requirement key')
+            .getByLabel('Requirement key', { exact: true })
             .fill('contribution_terms_resolved');
 
         await requirementForm
@@ -238,7 +238,7 @@ test(
             .selectOption('met');
 
         await requirementForm
-            .getByPlaceholder('Requirement note')
+            .getByLabel('Requirement note', { exact: true })
             .fill('Contribution terms resolved for browser UAT.');
 
         await requirementForm
@@ -266,6 +266,31 @@ test(
             page.getByText('terms ready', { exact: true }).first(),
         ).toBeVisible();
 
+        await page
+            .getByRole('button', {
+                name: 'Submit frozen proposal',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            page.getByText('under governance', { exact: true }).first(),
+        ).toBeVisible();
+
+        await page
+            .getByRole('button', {
+                name: 'Sync Governance decision',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            page.getByText(
+                'A Governance Decision for this frozen proposal must be decided before this action can continue.',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
         await openNav(
             page,
             'Exit & Buyout',
@@ -279,6 +304,49 @@ test(
             '/changes/closure',
             'Closure & Dissolution',
         );
+
+        const closureForm = page
+            .locator('form')
+            .filter({
+                has: page.getByLabel(
+                    'Intended legal closure',
+                    { exact: true },
+                ),
+            });
+
+        const intendedLegalClosure = closureForm.getByLabel(
+            'Intended legal closure',
+            { exact: true },
+        );
+
+        await expect(intendedLegalClosure).toHaveValue('');
+
+        await closureForm
+            .getByLabel('Closure trigger', { exact: true })
+            .fill('Browser optional-date regression');
+
+        await closureForm
+            .getByLabel(
+                'Jurisdiction / legal rule reference',
+                { exact: true },
+            )
+            .fill('Test-only jurisdiction reference');
+
+        await closureForm
+            .getByRole('button', {
+                name: 'Open case',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            page.getByText(
+                'Browser optional-date regression',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(intendedLegalClosure).toHaveValue('');
 
         await openNav(
             page,
@@ -332,6 +400,20 @@ test(
             '/reports',
             'Reports & Business Pack',
         );
+
+        await expect(
+            page.getByRole('button', {
+                name: 'Create Business Pack',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            page.getByText(
+                'This freezes the exact authorized source manifest before generation.',
+                { exact: true },
+            ),
+        ).toBeVisible();
 
         await openNav(
             page,

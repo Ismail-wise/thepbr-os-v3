@@ -7,6 +7,8 @@ namespace Tests\Feature\Risk;
 use App\Application\Access\ProvisionStandardAccessProfiles;
 use App\Application\Continuity\CreateRiskContinuityAction;
 use App\Application\Risk\RiskRegisterWorkflow;
+use App\Domain\Records\Enums\FormalRecordState;
+use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Infrastructure\Persistence\Eloquent\Access\Permission;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Governance\Action;
@@ -99,6 +101,92 @@ final class F6DRiskRegisterTest extends TestCase
 
         self::assertNotNull(
             FormalRecordVersion::query()->findOrFail($versionId)->frozen_at,
+        );
+    }
+
+    public function test_missing_governance_decision_is_actionable_without_effecting_risk_truth(): void
+    {
+        $context = $this->context();
+        $workflow = $this->app->make(RiskRegisterWorkflow::class);
+
+        $created = $workflow->createDraft(
+            $context['user'],
+            $context['business'],
+            $this->payload($context),
+            now()->subMinute(),
+        );
+
+        self::assertNotNull($created);
+        $versionId = $created['formal_record_version_id'];
+
+        self::assertNotNull($workflow->submitForGovernance(
+            $context['user'],
+            $context['business'],
+            $versionId,
+            1,
+        ));
+        self::assertTrue($workflow->advanceContentReview(
+            $context['user'],
+            $context['business'],
+            $versionId,
+            FormalRecordState::UnderReview,
+        ));
+        self::assertTrue($workflow->advanceContentReview(
+            $context['user'],
+            $context['business'],
+            $versionId,
+            FormalRecordState::Approved,
+        ));
+
+        $session = [
+            EnsureCurrentBusinessContext::SESSION_KEY => (string) $context['business']->getKey(),
+        ];
+
+        $this
+            ->actingAs($context['user'])
+            ->withSession($session)
+            ->from('/risk')
+            ->post('/risk/register/'.$versionId.'/sync-decision')
+            ->assertRedirect('/risk')
+            ->assertSessionHasErrors([
+                'risk' => 'A Governance Decision for this frozen proposal must be decided before this action can continue.',
+            ]);
+
+        self::assertSame(
+            FormalRecordState::Approved->value,
+            DB::table('record_version_state_transitions')
+                ->where('formal_record_version_id', $versionId)
+                ->orderByDesc('sequence')
+                ->value('to_state'),
+        );
+
+        $familyId = FormalRecordVersion::query()
+            ->findOrFail($versionId)
+            ->formal_record_family_id;
+
+        $this->assertDatabaseMissing('record_family_effective_heads', [
+            'business_id' => $context['business']->getKey(),
+            'formal_record_family_id' => $familyId,
+            'formal_record_version_id' => $versionId,
+        ]);
+
+        [$unauthorizedUser] = $this->member(
+            $context['business'],
+            'risk-sync-denied',
+        );
+
+        $this
+            ->actingAs($unauthorizedUser)
+            ->withSession($session)
+            ->post('/risk/register/'.$versionId.'/sync-decision')
+            ->assertNotFound();
+
+        self::assertSame(
+            FormalRecordState::Approved->value,
+            DB::table('record_version_state_transitions')
+                ->where('formal_record_version_id', $versionId)
+                ->orderByDesc('sequence')
+                ->value('to_state'),
         );
     }
 

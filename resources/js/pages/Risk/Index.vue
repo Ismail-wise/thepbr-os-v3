@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
 import { useI18n } from '../../i18n/useI18n';
 
@@ -37,6 +37,20 @@ const attentionTotal = computed(() => props.risk.attention.incidents + props.ris
 type PostData = NonNullable<Parameters<typeof router.post>[1]>;
 const post = (url: string, data: PostData = {}) => router.post(url, data, { preserveScroll: true });
 
+const governanceSync = useForm({});
+const governanceSyncVersionId = ref('');
+const syncGovernedDecision = (versionId: string): void => {
+    governanceSyncVersionId.value = versionId;
+    governanceSync.clearErrors();
+    governanceSync.post(
+        `/risk/register/${versionId}/sync-decision`,
+        {
+            preserveScroll: true,
+            onSuccess: () => governanceSync.clearErrors(),
+        },
+    );
+};
+
 const register = useForm({
     effective_from: today,
     review_due_at: '',
@@ -57,7 +71,7 @@ const register = useForm({
         warning_indicator: '',
         mitigation: '',
         response_plan: '',
-        review_date: today,
+        review_date: '',
         status: 'active',
         confidentiality: 'standard',
     }],
@@ -84,8 +98,8 @@ const register = useForm({
         confidentiality: string;
     }>,
 });
-const addRisk = () => register.risks.push({ category: 'operational', title: '', description: '', operations_role_id: firstRole, owner_membership_id: firstMember, likelihood: 3, impact: 3, warning_indicator: '', mitigation: '', response_plan: '', review_date: today, status: 'active', confidentiality: 'standard' });
-const addProtection = () => register.protections.push({ risk_index: register.risks.length ? 0 : null, protection_type: 'insurance', covered_subject: '', provider: '', policy_reference: '', coverage_amount_minor_units: null, currency: 'USD', deductible_minor_units: null, main_exclusions: '', premium_minor_units: null, start_date: today, renewal_date: '', owner_membership_id: firstMember, access_rule: '', protection_method: '', confidentiality_requirement: '', evidence_reference: '', review_date: today, status: 'active', confidentiality: 'standard' });
+const addRisk = () => register.risks.push({ category: 'operational', title: '', description: '', operations_role_id: firstRole, owner_membership_id: firstMember, likelihood: 3, impact: 3, warning_indicator: '', mitigation: '', response_plan: '', review_date: '', status: 'active', confidentiality: 'standard' });
+const addProtection = () => register.protections.push({ risk_index: register.risks.length ? 0 : null, protection_type: 'insurance', covered_subject: '', provider: '', policy_reference: '', coverage_amount_minor_units: null, currency: 'USD', deductible_minor_units: null, main_exclusions: '', premium_minor_units: null, start_date: '', renewal_date: '', owner_membership_id: firstMember, access_rule: '', protection_method: '', confidentiality_requirement: '', evidence_reference: '', review_date: '', status: 'active', confidentiality: 'standard' });
 
 const incident = useForm({ risk_item_id: '', incident_at: new Date().toISOString().slice(0, 16), incident_type: 'operational', description: '', business_impact: '', immediate_action: '', loss_amount_minor_units: null as number | null, currency: 'USD', confidentiality: 'standard' });
 const controlTest = useForm({ risk_item_id: '', risk_protection_record_id: '', control_name: '', scenario: '', owner_membership_id: firstMember, next_test_date: '', confidentiality: 'standard' });
@@ -164,7 +178,7 @@ const nextIncident = (row: IncidentRow): string | null => ({
                 <div class="mt-3 overflow-x-auto border border-slate-200">
                     <table class="min-w-full text-left text-sm">
                         <thead><tr class="border-b bg-slate-50"><th class="px-3 py-3">Version</th><th class="px-3 py-3">State</th><th class="px-3 py-3">Effective</th><th class="px-3 py-3">Context action</th></tr></thead>
-                        <tbody><tr v-for="version in risk.versions" :key="version.id" class="border-b border-slate-100"><td class="px-3 py-3 font-semibold">v{{ version.version_number }}</td><td class="px-3 py-3"><span class="border border-slate-300 px-2 py-1 text-xs">{{ version.state ?? 'Unknown' }}</span></td><td class="px-3 py-3 text-xs">{{ version.effective_from ?? '—' }}</td><td class="px-3 py-3"><div v-if="risk.permissions.manage" class="flex flex-wrap gap-2"><button v-if="version.state === 'draft'" class="text-xs font-semibold underline" @click="post('/risk/register/' + version.id + '/submit', { expected_revision: version.revision })">Submit</button><button v-if="version.state === 'ready_for_review'" class="text-xs font-semibold underline" @click="post('/risk/register/' + version.id + '/content-review', { target: 'under_review' })">Start review</button><button v-if="version.state === 'under_review'" class="text-xs font-semibold underline" @click="post('/risk/register/' + version.id + '/content-review', { target: 'approved' })">Approve content</button><button v-if="version.state === 'approved' || version.state === 'ready_for_effect'" class="text-xs font-semibold underline" @click="post('/risk/register/' + version.id + '/sync-decision')">Sync governed Decision</button></div></td></tr></tbody>
+                        <tbody><tr v-for="version in risk.versions" :key="version.id" class="border-b border-slate-100"><td class="px-3 py-3 font-semibold">v{{ version.version_number }}</td><td class="px-3 py-3"><span class="border border-slate-300 px-2 py-1 text-xs">{{ version.state ?? 'Unknown' }}</span></td><td class="px-3 py-3 text-xs">{{ version.effective_from ?? '—' }}</td><td class="px-3 py-3"><div v-if="risk.permissions.manage" class="flex flex-wrap gap-2"><button v-if="version.state === 'draft'" class="text-xs font-semibold underline" @click="post('/risk/register/' + version.id + '/submit', { expected_revision: version.revision })">Submit</button><button v-if="version.state === 'ready_for_review'" class="text-xs font-semibold underline" @click="post('/risk/register/' + version.id + '/content-review', { target: 'under_review' })">Start review</button><button v-if="version.state === 'under_review'" class="text-xs font-semibold underline" @click="post('/risk/register/' + version.id + '/content-review', { target: 'approved' })">Approve content</button><button v-if="version.state === 'approved' || version.state === 'ready_for_effect'" :disabled="governanceSync.processing" class="text-xs font-semibold underline disabled:opacity-50" @click="syncGovernedDecision(version.id)">Sync governed Decision</button></div><p v-if="governanceSyncVersionId === version.id && Object.keys(governanceSync.errors).length" class="mt-2 text-xs text-red-700">{{ Object.values(governanceSync.errors)[0] }}</p></td></tr></tbody>
                     </table>
                 </div>
             </section>
@@ -182,18 +196,18 @@ const nextIncident = (row: IncidentRow): string | null => ({
 
                     <div>
                         <div class="flex items-center justify-between"><h3 class="font-semibold">Risks</h3><button type="button" class="text-xs font-semibold underline" @click="addRisk">Add risk</button></div>
-                        <div v-for="(row, index) in register.risks" :key="index" class="mt-3 grid gap-2 border border-slate-200 p-3 md:grid-cols-2 xl:grid-cols-4">
-                            <select v-model="row.category" class="min-h-10 border border-slate-300 px-2"><option value="operational">Operational</option><option value="financial">Financial</option><option value="people_key_person">People / Key Person</option><option value="customer_liability">Customer / Liability</option><option value="technology_cyber">Technology / Cyber</option><option value="legal_regulatory">Legal / Regulatory</option><option value="ip_brand_confidentiality">IP / Brand / Confidentiality</option><option value="strategic_partnership">Strategic / Partnership</option></select>
-                            <input v-model="row.title" required class="min-h-10 border border-slate-300 px-2" placeholder="Risk title" />
-                            <select v-model="row.owner_membership_id" class="min-h-10 border border-slate-300 px-2"><option value="">No assigned owner</option><option v-for="m in risk.memberships" :key="m.id" :value="m.id">{{ m.email }}</option></select>
-                            <select v-model="row.operations_role_id" class="min-h-10 border border-slate-300 px-2"><option value="">No Operations role</option><option v-for="role in risk.operations_roles" :key="role.id" :value="role.id">{{ role.name }}</option></select>
-                            <textarea v-model="row.description" required class="min-h-20 border border-slate-300 p-2 xl:col-span-2" placeholder="Description" />
-                            <textarea v-model="row.mitigation" required class="min-h-20 border border-slate-300 p-2" placeholder="Mitigation" />
-                            <textarea v-model="row.response_plan" required class="min-h-20 border border-slate-300 p-2" placeholder="Response plan" />
+                        <div v-for="(row, index) in register.risks" :key="index" class="mt-3 grid gap-3 border border-slate-200 p-3 md:grid-cols-2 xl:grid-cols-4">
+                            <label class="text-sm font-medium text-slate-700">{{ t('risk.item.category') }}<select v-model="row.category" class="mt-1 min-h-10 w-full border border-slate-300 px-2"><option value="operational">Operational</option><option value="financial">Financial</option><option value="people_key_person">People / Key Person</option><option value="customer_liability">Customer / Liability</option><option value="technology_cyber">Technology / Cyber</option><option value="legal_regulatory">Legal / Regulatory</option><option value="ip_brand_confidentiality">IP / Brand / Confidentiality</option><option value="strategic_partnership">Strategic / Partnership</option></select></label>
+                            <label class="text-sm font-medium text-slate-700">{{ t('risk.item.title') }}<input v-model="row.title" required class="mt-1 min-h-10 w-full border border-slate-300 px-2" placeholder="e.g. Supplier concentration" /></label>
+                            <label class="text-sm font-medium text-slate-700">{{ t('risk.item.owner') }}<select v-model="row.owner_membership_id" class="mt-1 min-h-10 w-full border border-slate-300 px-2"><option value="">No assigned owner</option><option v-for="m in risk.memberships" :key="m.id" :value="m.id">{{ m.email }}</option></select></label>
+                            <label class="text-sm font-medium text-slate-700">{{ t('risk.item.operationsRole') }}<select v-model="row.operations_role_id" class="mt-1 min-h-10 w-full border border-slate-300 px-2"><option value="">No Operations role</option><option v-for="role in risk.operations_roles" :key="role.id" :value="role.id">{{ role.name }}</option></select></label>
+                            <label class="text-sm font-medium text-slate-700 xl:col-span-2">{{ t('risk.item.description') }}<textarea v-model="row.description" required class="mt-1 min-h-20 w-full border border-slate-300 p-2" placeholder="Describe the risk and exposure." /></label>
+                            <label class="text-sm font-medium text-slate-700">{{ t('risk.item.mitigation') }}<textarea v-model="row.mitigation" required class="mt-1 min-h-20 w-full border border-slate-300 p-2" placeholder="Current mitigation." /></label>
+                            <label class="text-sm font-medium text-slate-700">{{ t('risk.item.responsePlan') }}<textarea v-model="row.response_plan" required class="mt-1 min-h-20 w-full border border-slate-300 p-2" placeholder="Response if the risk materializes." /></label>
                             <label class="text-xs">Likelihood 1–5<input v-model.number="row.likelihood" type="number" min="1" max="5" class="mt-1 min-h-10 w-full border border-slate-300 px-2" /></label>
                             <label class="text-xs">Impact 1–5<input v-model.number="row.impact" type="number" min="1" max="5" class="mt-1 min-h-10 w-full border border-slate-300 px-2" /></label>
-                            <input v-model="row.warning_indicator" class="min-h-10 border border-slate-300 px-2" placeholder="Warning indicator" />
-                            <select v-model="row.confidentiality" class="min-h-10 border border-slate-300 px-2"><option value="standard">Standard</option><option value="restricted">Restricted</option></select>
+                            <label class="text-sm font-medium text-slate-700">{{ t('risk.item.warningIndicator') }}<input v-model="row.warning_indicator" class="mt-1 min-h-10 w-full border border-slate-300 px-2" placeholder="e.g. Delivery delays exceed 7 days" /></label>
+                            <label class="text-sm font-medium text-slate-700">{{ t('risk.item.confidentiality') }}<select v-model="row.confidentiality" class="mt-1 min-h-10 w-full border border-slate-300 px-2"><option value="standard">Standard</option><option value="restricted">Restricted</option></select></label>
                         </div>
                     </div>
 

@@ -18,6 +18,7 @@ use App\Application\Records\SubmitRecordVersionForReview;
 use App\Application\Records\TransitionFormalRecordVersion;
 use App\Domain\Access\CapabilityCatalog;
 use App\Domain\Access\ValueObjects\Capability;
+use App\Domain\Governance\Exceptions\MissingGovernanceDecision;
 use App\Domain\PartnerChanges\Enums\PartnerChangeEligibilityStatus;
 use App\Domain\PartnerChanges\Enums\PartnerChangeStatus;
 use App\Domain\PartnerChanges\Enums\PartnerChangeTransactionType;
@@ -1047,7 +1048,7 @@ final class PartnerChangeWorkflow
                 ->get();
 
             if ($decisions->count() !== 1) {
-                return null;
+                throw new MissingGovernanceDecision;
             }
 
             $decision = $decisions->first();

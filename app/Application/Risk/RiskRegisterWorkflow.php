@@ -19,6 +19,7 @@ use App\Domain\Access\CapabilityCatalog;
 use App\Domain\Access\ValueObjects\Capability;
 use App\Domain\Governance\Enums\DecisionOutcome;
 use App\Domain\Governance\Enums\DecisionStatus;
+use App\Domain\Governance\Exceptions\MissingGovernanceDecision;
 use App\Domain\Records\Enums\FormalRecordState;
 use App\Domain\Records\ValueObjects\RecordScope;
 use App\Domain\Risk\Services\RiskScorer;
@@ -307,6 +308,14 @@ final class RiskRegisterWorkflow
         string $formalRecordVersionId,
         string $decisionType = 'risk_register_approval',
     ): bool {
+        if ($this->actorContext->membership(
+            $user,
+            $business,
+            CapabilityCatalog::RISK_MANAGE,
+        ) === null) {
+            return false;
+        }
+
         if ($this->version($business, $formalRecordVersionId) === null) {
             return false;
         }
@@ -325,7 +334,7 @@ final class RiskRegisterWorkflow
             ->get();
 
         if ($decisions->count() !== 1) {
-            return false;
+            throw new MissingGovernanceDecision;
         }
 
         $decisionId = (string) $decisions->first()->getKey();

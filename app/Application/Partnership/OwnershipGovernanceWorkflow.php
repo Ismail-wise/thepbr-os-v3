@@ -14,6 +14,7 @@ use App\Application\Records\SubmitRecordVersionForReview;
 use App\Application\Records\TransitionFormalRecordVersion;
 use App\Domain\Access\CapabilityCatalog;
 use App\Domain\Access\ValueObjects\Capability;
+use App\Domain\Governance\Exceptions\MissingGovernanceDecision;
 use App\Domain\Partnership\Enums\OwnershipScenarioStatus;
 use App\Domain\Records\Enums\FormalRecordState;
 use App\Domain\Records\ValueObjects\RecordScope;
@@ -408,7 +409,7 @@ final class OwnershipGovernanceWorkflow
                 ->first();
 
             if ($decision === null) {
-                return false;
+                throw new MissingGovernanceDecision;
             }
 
             $scenario = DB::table('ownership_scenarios')

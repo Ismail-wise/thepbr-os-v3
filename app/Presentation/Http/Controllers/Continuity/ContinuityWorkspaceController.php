@@ -143,11 +143,16 @@ final class ContinuityWorkspaceController
     ): RedirectResponse {
         [$user, $business] = $this->context($request);
 
-        abort_unless($workflow->syncApprovedDecision(
-            $user,
-            $business,
-            $formalRecordVersion,
-        ), 404);
+        $ok = $this->validated(
+            fn () => $workflow->syncApprovedDecision(
+                $user,
+                $business,
+                $formalRecordVersion,
+            ),
+            'continuity',
+        );
+
+        abort_unless($ok, 404);
 
         return back();
     }

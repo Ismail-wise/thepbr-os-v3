@@ -52,6 +52,32 @@ const switchBusiness = async (page: Page) => {
     ).toBeVisible();
 };
 
+const setLanguageMode = async (
+    page: Page,
+    mode: 'en' | 'my' | 'mixed',
+) => {
+    await page.goto('/account/settings');
+
+    const settingsForm = page
+        .locator('form')
+        .filter({ has: page.locator('#language_mode') });
+
+    await settingsForm
+        .locator('#language_mode')
+        .selectOption(mode);
+
+    await settingsForm
+        .locator('button[type="submit"]')
+        .click();
+
+    await expect(
+        settingsForm.locator('#language_mode'),
+    ).toHaveValue(mode);
+
+    await page.goto('/rewards');
+    await expect(page).toHaveURL(/\/rewards$/);
+};
+
 test(
     'F6C Finance and Rewards command centers preserve authority and scenario boundaries',
     async ({ page }, testInfo) => {
@@ -155,5 +181,52 @@ test(
                 exact: false,
             }),
         ).toBeVisible();
+
+        const simulatorLabels = [
+            'Approved net profit (minor units)',
+            'Tax due (minor units)',
+            'Debt due (minor units)',
+            'Required reserve (minor units)',
+            'Reinvestment (minor units)',
+            'Adjustments (minor units)',
+        ];
+
+        for (const label of simulatorLabels) {
+            await expect(
+                page.getByText(label, { exact: true }),
+            ).toBeVisible();
+        }
+
+        await setLanguageMode(page, 'my');
+
+        for (const label of [
+            'အတည်ပြုပြီး အသားတင်အမြတ် (minor units)',
+            'ပေးရန်အခွန် (minor units)',
+            'ပေးရန်အကြွေး (minor units)',
+            'လိုအပ်သော reserve (minor units)',
+            'ပြန်လည်ရင်းနှီးမြှုပ်နှံမှု (minor units)',
+            'ချိန်ညှိမှုများ (minor units)',
+        ]) {
+            await expect(
+                page.getByText(label, { exact: true }),
+            ).toBeVisible();
+        }
+
+        await setLanguageMode(page, 'mixed');
+
+        for (const label of [
+            'Approved net profit · အသားတင်အမြတ် (minor units)',
+            'Tax due · ပေးရန်အခွန် (minor units)',
+            'Debt due · ပေးရန်အကြွေး (minor units)',
+            'Required reserve · လိုအပ်သော reserve (minor units)',
+            'Reinvestment · ပြန်လည်ရင်းနှီးမြှုပ်နှံမှု (minor units)',
+            'Adjustments · ချိန်ညှိမှုများ (minor units)',
+        ]) {
+            await expect(
+                page.getByText(label, { exact: true }),
+            ).toBeVisible();
+        }
+
+        await setLanguageMode(page, 'en');
     },
 );

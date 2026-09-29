@@ -23,6 +23,7 @@ use App\Domain\Exit\Enums\ExitCaseStatus;
 use App\Domain\Exit\Enums\ExitTrigger;
 use App\Domain\Exit\Enums\LeaverClassification;
 use App\Domain\Exit\Services\ExitCaseStateMachine;
+use App\Domain\Governance\Exceptions\MissingGovernanceDecision;
 use App\Domain\Members\Enums\MembershipAccessStatus;
 use App\Domain\Records\Enums\FormalRecordState;
 use App\Domain\Records\Exceptions\StaleRevision;
@@ -1351,7 +1352,7 @@ final class ExitCaseWorkflow
                 ->get();
 
             if ($decisions->count() !== 1) {
-                return null;
+                throw new MissingGovernanceDecision;
             }
 
             $decision = $decisions->first();
