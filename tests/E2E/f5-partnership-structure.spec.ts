@@ -151,30 +151,23 @@ test(
             await ddSummary.click();
         }
 
-        const ddPartner = ddWorkflow.getByLabel('Partner', {
-            exact: true,
-        });
-        const ddStatus = ddWorkflow.getByLabel('Status', {
-            exact: true,
-        });
-        const ddRisk = ddWorkflow.getByLabel('Risk', {
-            exact: true,
-        });
-        const ddRevision = ddWorkflow.getByLabel('Revision', {
-            exact: true,
-        });
-        const ddIdentity = ddWorkflow.getByLabel(
-            'Identity / legal information',
-            { exact: true },
-        );
-        const ddBackground = ddWorkflow.getByLabel(
-            'Background summary',
-            { exact: true },
-        );
-        const ddSubmit = ddWorkflow.getByRole('button', {
+        const ddForm = ddWorkflow.locator('form');
+        const ddSelects = ddForm.locator('select');
+        const ddTextareas = ddForm.locator('textarea');
+        const ddPartner = ddSelects.nth(0);
+        const ddStatus = ddSelects.nth(1);
+        const ddRisk = ddSelects.nth(2);
+        const ddRevision = ddForm.locator('input[type="number"]');
+        const ddIdentity = ddTextareas.nth(0);
+        const ddBackground = ddTextareas.nth(1);
+        const ddSubmit = ddForm.getByRole('button', {
             name: 'Due Diligence',
             exact: true,
         });
+
+        await expect(ddWorkflow).toHaveAttribute('open', '');
+        await expect(ddSelects).toHaveCount(3);
+        await expect(ddTextareas).toHaveCount(2);
 
         await ddPartner.selectOption({
             label: PARTNER,
