@@ -435,13 +435,15 @@ test(
 
         await expect(page).toHaveURL(/\/records\/documents\//);
 
-        const targetType = page.getByLabel('Target type', {
+        const targetType = page.getByRole('combobox', {
+            name: 'Target type',
             exact: true,
         });
 
         await targetType.selectOption('contribution');
 
-        const targetRecord = page.getByLabel('Target record', {
+        const targetRecord = page.getByRole('combobox', {
+            name: 'Target record',
             exact: true,
         });
 
