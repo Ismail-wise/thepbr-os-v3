@@ -146,8 +146,16 @@ test(
             ),
         ).toBeVisible();
 
+        const operationsPrerequisite = page.locator('section').filter({
+            has: page.getByText(
+                'A Current Effective Operations Register is required before you can prepare a Continuity Plan.',
+                { exact: true },
+            ),
+        });
+
+        await expect(operationsPrerequisite).toHaveCount(1);
         await expect(
-            page.getByRole('link', {
+            operationsPrerequisite.getByRole('link', {
                 name: 'Open Operations',
                 exact: true,
             }),
