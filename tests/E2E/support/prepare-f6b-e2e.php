@@ -132,18 +132,15 @@ $created = $workflow->createDraft(
             'name' => 'Operations Lead',
             'function_name' => 'Operations',
             'purpose' => 'Own operating delivery.',
-            'responsibilities' =>
-                'Plan, coordinate, report and close work.',
-            'operational_authority' =>
-                'Coordinate approved operating work only.',
+            'responsibilities' => 'Plan, coordinate, report and close work.',
+            'operational_authority' => 'Coordinate approved operating work only.',
             'reports_to_role_key' => null,
             'report_type' => 'Operating update',
             'reporting_frequency' => 'Weekly',
             'meeting_frequency' => 'Weekly',
             'review_frequency' => 'Quarterly',
             'assignments' => [[
-                'membership_id' =>
-                    (string) $membership->getKey(),
+                'membership_id' => (string) $membership->getKey(),
                 'assignment_type' => 'primary',
             ]],
         ]],
@@ -192,6 +189,6 @@ echo 'F6B_E2E_FIXTURE=PASS', PHP_EOL;
 echo 'F6B_E2E_EMAIL=', $email, PHP_EOL;
 echo 'F6B_E2E_BUSINESS=', $business->name, PHP_EOL;
 echo 'F6B_E2E_OPERATIONS_VERSION=',
-    $created['formal_record_version_id'],
-    PHP_EOL;
+$created['formal_record_version_id'],
+PHP_EOL;
 echo 'F6B_E2E_PASSWORD_OUTPUT=SUPPRESSED', PHP_EOL;
