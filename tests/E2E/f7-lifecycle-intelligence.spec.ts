@@ -127,11 +127,17 @@ test(
         await newCaseSummary.click();
 
         await newCasePanel
-            .getByLabel('Transaction type', { exact: true })
+            .getByRole('combobox', {
+                name: 'Transaction type',
+                exact: true,
+            })
             .selectOption('admission');
 
         await newCasePanel
-            .getByLabel('Buyer / Incoming Partner', { exact: true })
+            .getByRole('combobox', {
+                name: 'Buyer / Incoming Partner',
+                exact: true,
+            })
             .selectOption({
                 label: 'Lifecycle Local Partner · prospective',
             });
@@ -225,7 +231,10 @@ test(
         const requirementForm = requirementsPanel.locator('form');
 
         await requirementForm
-            .getByLabel('Requirement type', { exact: true })
+            .getByRole('combobox', {
+                name: 'Requirement type',
+                exact: true,
+            })
             .selectOption('contribution');
 
         await requirementForm
@@ -233,8 +242,10 @@ test(
             .fill('contribution_terms_resolved');
 
         await requirementForm
-            .locator('select')
-            .nth(1)
+            .getByRole('combobox', {
+                name: 'Requirement status',
+                exact: true,
+            })
             .selectOption('met');
 
         await requirementForm
