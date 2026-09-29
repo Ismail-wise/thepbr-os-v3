@@ -228,13 +228,13 @@ test(
         ).toBeVisible();
 
         await page
-            .getByPlaceholder('Issues discussed')
+            .getByLabel('Issues discussed', { exact: true })
             .fill('Browser discussion captured the exact issues.');
         await page
-            .getByPlaceholder('Party positions')
+            .getByLabel('Party positions', { exact: true })
             .fill('Browser discussion preserved the party position.');
         await page
-            .getByPlaceholder('Proposed solutions')
+            .getByLabel('Proposed solutions', { exact: true })
             .fill('Proceed to neutral mediation.');
 
         await page
