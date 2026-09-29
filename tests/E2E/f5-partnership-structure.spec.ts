@@ -342,7 +342,6 @@ test(
 
         const reviewContribution = reviewWorkflow.getByLabel(
             'Contribution',
-            { exact: true },
         );
         const reviewRevision = reviewWorkflow.getByLabel(
             'Revision',
