@@ -5,11 +5,13 @@ declare(strict_types=1);
 use App\Application\Businesses\CreateBusiness;
 use App\Application\Identity\ChangeAccountStatus;
 use App\Application\Identity\ProvisionAccount;
+use App\Application\Partnership\DueDiligenceWorkflow;
 use App\Application\Partnership\PartnerDirectory;
 use App\Domain\Businesses\Enums\BusinessOriginType;
 use App\Domain\Businesses\Enums\BusinessStage;
 use App\Domain\Identity\Enums\AccountStatus;
 use App\Domain\Identity\Enums\LanguageMode;
+use App\Domain\Partnership\Enums\DueDiligenceStatus;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Application;
@@ -149,6 +151,74 @@ $foreignPartner = $directory->create(
 if ($localPartner === null || $foreignPartner === null) {
     throw new RuntimeException(
         'F7 E2E fixture could not create deterministic Partners.',
+    );
+}
+
+$dd = $app->make(DueDiligenceWorkflow::class);
+$ddFields = [
+    'identity_legal_info' => 'Verified for deterministic F7 browser UAT.',
+    'background_summary' => 'Reviewed for deterministic F7 browser UAT.',
+    'business_experience' => 'Relevant experience reviewed.',
+    'financial_capacity' => 'Capacity reviewed.',
+    'reputation' => 'No material issue identified.',
+    'existing_business_interests' => 'None declared.',
+    'conflict_of_interest' => 'None identified.',
+    'time_commitment' => 'Confirmed.',
+    'legal_regulatory_check' => 'Clear.',
+    'notes' => 'F7 browser Partner Change prerequisite.',
+];
+
+$ddCase = $dd->save(
+    $owner,
+    $business,
+    (string) $localPartner['id'],
+    null,
+    0,
+    DueDiligenceStatus::Draft,
+    null,
+    $ddFields,
+);
+
+if ($ddCase === null) {
+    throw new RuntimeException(
+        'F7 E2E fixture could not create Due Diligence Draft.',
+    );
+}
+
+$ddCase = $dd->save(
+    $owner,
+    $business,
+    (string) $localPartner['id'],
+    (string) $ddCase['id'],
+    (int) $ddCase['revision'],
+    DueDiligenceStatus::InReview,
+    'moderate',
+    $ddFields,
+);
+
+if ($ddCase === null) {
+    throw new RuntimeException(
+        'F7 E2E fixture could not move Due Diligence to In Review.',
+    );
+}
+
+$ddCase = $dd->save(
+    $owner,
+    $business,
+    (string) $localPartner['id'],
+    (string) $ddCase['id'],
+    (int) $ddCase['revision'],
+    DueDiligenceStatus::Completed,
+    'moderate',
+    $ddFields,
+);
+
+if (
+    $ddCase === null
+    || ($ddCase['status'] ?? null) !== DueDiligenceStatus::Completed->value
+) {
+    throw new RuntimeException(
+        'F7 E2E fixture could not complete Due Diligence.',
     );
 }
 

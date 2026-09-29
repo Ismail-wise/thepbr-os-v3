@@ -161,6 +161,11 @@ const createCase = (): void => {
     });
 };
 
+const transitionForm = useForm({
+    expected_revision: 1,
+    target: '',
+});
+
 const transition = (target: string): void => {
     const item = selectedCase.value;
 
@@ -168,12 +173,16 @@ const transition = (target: string): void => {
         return;
     }
 
-    useForm({
-        expected_revision: item.revision,
-        target,
-    }).post(`/changes/partner-changes/${item.id}/transition`, {
-        preserveScroll: true,
-    });
+    transitionForm.clearErrors();
+    transitionForm.expected_revision = item.revision;
+    transitionForm.target = target;
+    transitionForm.post(
+        `/changes/partner-changes/${item.id}/transition`,
+        {
+            preserveScroll: true,
+            onSuccess: () => transitionForm.clearErrors(),
+        },
+    );
 };
 
 const nextActions = computed(() => {
@@ -247,7 +256,10 @@ const submitRequirement = (): void => {
     requirementForm.expected_revision = item.revision;
     requirementForm.post(
         `/changes/partner-changes/${item.id}/requirements`,
-        { preserveScroll: true },
+        {
+            preserveScroll: true,
+            onSuccess: () => transitionForm.clearErrors(),
+        },
     );
 };
 
@@ -612,7 +624,8 @@ const statusClass = (status: string): string => {
                                 v-for="action in nextActions"
                                 :key="action.target"
                                 type="button"
-                                class="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                                :disabled="transitionForm.processing"
+                                class="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
                                 @click="transition(action.target)"
                             >
                                 {{ action.label }}
@@ -654,6 +667,12 @@ const statusClass = (status: string): string => {
                                 Make effective
                             </button>
                         </div>
+                        <p
+                            v-if="Object.keys(transitionForm.errors).length"
+                            class="mt-3 text-sm text-rose-700"
+                        >
+                            {{ Object.values(transitionForm.errors)[0] }}
+                        </p>
                     </div>
 
                     <div v-if="selectedCase.governance_submission" class="border-t border-slate-200 p-4 text-sm">
@@ -711,7 +730,11 @@ const statusClass = (status: string): string => {
                                 </select>
                             </label>
                             <textarea v-model="eligibilityForm.detail" rows="2" placeholder="Review note" class="w-full rounded-md border-slate-300 text-sm" />
-                            <button type="submit" class="min-h-10 rounded-md bg-slate-950 px-3 text-sm font-semibold text-white">
+                            <button
+                                type="submit"
+                                :disabled="eligibilityForm.processing"
+                                class="min-h-10 rounded-md bg-slate-950 px-3 text-sm font-semibold text-white disabled:opacity-50"
+                            >
                                 Record eligibility
                             </button>
                         </form>

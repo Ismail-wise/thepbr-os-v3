@@ -225,6 +225,129 @@ final class F7PartnerChangeWorkflowTest extends TestCase
         );
     }
 
+    public function test_duplicate_eligibility_submission_is_idempotent_but_later_review_is_preserved(): void
+    {
+        [$user, $business] = $this->fixture(
+            'f7-eligibility-idempotency@example.test',
+            'F7 Eligibility Idempotency Business',
+        );
+
+        $partnerId = $this->createPartner(
+            $user,
+            $business,
+            'Eligibility Partner',
+        );
+
+        $workflow = $this->app->make(PartnerChangeWorkflow::class);
+
+        $case = $workflow->createCase(
+            $user,
+            $business,
+            PartnerChangeTransactionType::Admission,
+            $partnerId,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'partner_change_approval',
+            false,
+            null,
+        );
+
+        self::assertNotNull($case);
+
+        $case = $workflow->transition(
+            $user,
+            $business,
+            (string) $case->getKey(),
+            1,
+            PartnerChangeStatus::EligibilityReview,
+        );
+
+        self::assertNotNull($case);
+        self::assertSame(2, (int) $case->revision);
+
+        foreach ([1, 2] as $attempt) {
+            self::assertTrue(
+                $workflow->recordEligibility(
+                    $user,
+                    $business,
+                    (string) $case->getKey(),
+                    2,
+                    'buyer_eligible',
+                    PartnerChangeEligibilityStatus::Met,
+                    'Same logical eligibility review.',
+                ),
+                'Duplicate attempt '.$attempt.' must return safe success.',
+            );
+        }
+
+        self::assertSame(
+            1,
+            DB::table('partner_change_eligibility_checks')
+                ->where('business_id', $business->getKey())
+                ->where(
+                    'partner_change_case_id',
+                    $case->getKey(),
+                )
+                ->where('case_revision', 2)
+                ->where('check_key', 'buyer_eligible')
+                ->count(),
+        );
+
+        $case = $workflow->transition(
+            $user,
+            $business,
+            (string) $case->getKey(),
+            2,
+            PartnerChangeStatus::Blocked,
+        );
+
+        self::assertNotNull($case);
+        self::assertSame(3, (int) $case->revision);
+
+        $case = $workflow->transition(
+            $user,
+            $business,
+            (string) $case->getKey(),
+            3,
+            PartnerChangeStatus::EligibilityReview,
+        );
+
+        self::assertNotNull($case);
+        self::assertSame(4, (int) $case->revision);
+
+        self::assertTrue(
+            $workflow->recordEligibility(
+                $user,
+                $business,
+                (string) $case->getKey(),
+                4,
+                'buyer_eligible',
+                PartnerChangeEligibilityStatus::Met,
+                'Same logical eligibility review.',
+            ),
+        );
+
+        self::assertSame(
+            [2, 4],
+            DB::table('partner_change_eligibility_checks')
+                ->where('business_id', $business->getKey())
+                ->where(
+                    'partner_change_case_id',
+                    $case->getKey(),
+                )
+                ->where('check_key', 'buyer_eligible')
+                ->orderBy('case_revision')
+                ->pluck('case_revision')
+                ->map(static fn (mixed $revision): int => (int) $revision)
+                ->all(),
+        );
+    }
+
     public function test_stale_case_revision_is_rejected_without_silent_overwrite(): void
     {
         [$user, $business] = $this->fixture(

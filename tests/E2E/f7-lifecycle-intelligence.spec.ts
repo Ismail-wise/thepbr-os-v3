@@ -119,6 +119,153 @@ test(
             'Partner Changes',
         );
 
+        const newCaseSummary = page
+            .locator('summary')
+            .filter({ hasText: /^New Partner Change$/ });
+        const newCasePanel = newCaseSummary.locator('..');
+
+        await newCaseSummary.click();
+
+        await newCasePanel
+            .getByLabel('Transaction type', { exact: true })
+            .selectOption('admission');
+
+        await newCasePanel
+            .getByLabel('Buyer / Incoming Partner', { exact: true })
+            .selectOption({
+                label: 'Lifecycle Local Partner · prospective',
+            });
+
+        await newCasePanel
+            .getByRole('button', {
+                name: 'Create case',
+                exact: true,
+            })
+            .click();
+
+        await page
+            .getByRole('button', {
+                name: 'Start eligibility review',
+                exact: true,
+            })
+            .click();
+
+        const eligibilitySummary = page
+            .locator('summary')
+            .filter({ hasText: /^Eligibility$/ });
+        const eligibilityPanel = eligibilitySummary.locator('..');
+
+        if ((await eligibilityPanel.getAttribute('open')) === null) {
+            await eligibilitySummary.click();
+        }
+
+        const eligibilitySubmit = eligibilityPanel.getByRole(
+            'button',
+            {
+                name: 'Record eligibility',
+                exact: true,
+            },
+        );
+
+        await eligibilityPanel
+            .getByPlaceholder('Review note')
+            .fill('Same logical eligibility review.');
+
+        await eligibilitySubmit.click();
+
+        const eligibilityCount = page
+            .getByText('Eligibility records', { exact: true })
+            .locator('..')
+            .locator('dd');
+
+        await expect(eligibilityCount).toHaveText('1');
+
+        if ((await eligibilityPanel.getAttribute('open')) === null) {
+            await eligibilitySummary.click();
+        }
+
+        await eligibilityPanel
+            .getByPlaceholder('Review note')
+            .fill('Same logical eligibility review.');
+
+        await eligibilitySubmit.click();
+
+        await expect(eligibilityCount).toHaveText('1');
+
+        await page
+            .getByRole('button', {
+                name: 'Mark eligible',
+                exact: true,
+            })
+            .click();
+
+        const termsReady = page.getByRole('button', {
+            name: 'Terms ready',
+            exact: true,
+        });
+
+        await termsReady.click();
+
+        await expect(
+            page.getByText(
+                'Incoming Partner contribution terms must be resolved or explicitly marked not applicable.',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        const requirementsSummary = page
+            .locator('summary')
+            .filter({ hasText: /^Requirements$/ });
+        const requirementsPanel = requirementsSummary.locator('..');
+
+        if ((await requirementsPanel.getAttribute('open')) === null) {
+            await requirementsSummary.click();
+        }
+
+        const requirementForm = requirementsPanel.locator('form');
+
+        await requirementForm
+            .getByLabel('Requirement type', { exact: true })
+            .selectOption('contribution');
+
+        await requirementForm
+            .getByPlaceholder('Requirement key')
+            .fill('contribution_terms_resolved');
+
+        await requirementForm
+            .locator('select')
+            .nth(1)
+            .selectOption('met');
+
+        await requirementForm
+            .getByPlaceholder('Requirement note')
+            .fill('Contribution terms resolved for browser UAT.');
+
+        await requirementForm
+            .getByRole('button', {
+                name: 'Record requirement',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            page.getByText(
+                'Incoming Partner contribution terms must be resolved or explicitly marked not applicable.',
+                { exact: true },
+            ),
+        ).toHaveCount(0);
+
+        await page
+            .getByRole('button', {
+                name: 'Terms ready',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            page.getByText('terms ready', { exact: true }).first(),
+        ).toBeVisible();
+
         await openNav(
             page,
             'Exit & Buyout',

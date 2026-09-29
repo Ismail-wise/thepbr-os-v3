@@ -286,6 +286,60 @@ final class PartnerChangeWorkflow
                 );
             }
 
+            $normalizedDetail = $this->nullableText($detail);
+            $normalizedSourceType = $this->nullableText($sourceType);
+
+            $duplicate = DB::table(
+                'partner_change_eligibility_checks',
+            )
+                ->where(
+                    'business_id',
+                    $business->getKey(),
+                )
+                ->where(
+                    'partner_change_case_id',
+                    $caseId,
+                )
+                ->where(
+                    'case_revision',
+                    $expectedRevision,
+                )
+                ->where('check_key', $key)
+                ->where('result', $result->value)
+                ->where(
+                    'checked_by_membership_id',
+                    $membership->getKey(),
+                )
+                ->when(
+                    $normalizedDetail === null,
+                    fn ($query) => $query->whereNull('detail'),
+                    fn ($query) => $query->where(
+                        'detail',
+                        $normalizedDetail,
+                    ),
+                )
+                ->when(
+                    $normalizedSourceType === null,
+                    fn ($query) => $query->whereNull('source_type'),
+                    fn ($query) => $query->where(
+                        'source_type',
+                        $normalizedSourceType,
+                    ),
+                )
+                ->when(
+                    $sourceId === null,
+                    fn ($query) => $query->whereNull('source_id'),
+                    fn ($query) => $query->where(
+                        'source_id',
+                        $sourceId,
+                    ),
+                )
+                ->exists();
+
+            if ($duplicate) {
+                return true;
+            }
+
             DB::table('partner_change_eligibility_checks')->insert([
                 'id' => (string) Str::uuid7(),
                 'business_id' => $business->getKey(),
@@ -293,8 +347,8 @@ final class PartnerChangeWorkflow
                 'case_revision' => $expectedRevision,
                 'check_key' => $key,
                 'result' => $result->value,
-                'detail' => $this->nullableText($detail),
-                'source_type' => $this->nullableText($sourceType),
+                'detail' => $normalizedDetail,
+                'source_type' => $normalizedSourceType,
                 'source_id' => $sourceId,
                 'checked_by_membership_id' => $membership->getKey(),
                 'checked_at' => now(),
