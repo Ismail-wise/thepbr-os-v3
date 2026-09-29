@@ -27,6 +27,8 @@ final class PbrAiAssistant
         'sign',
         'admit_partner',
         'change_ownership',
+        'create_governance_authority',
+        'change_governance_authority',
         'issue_payment',
         'revoke_business_rights',
         'archive_business',

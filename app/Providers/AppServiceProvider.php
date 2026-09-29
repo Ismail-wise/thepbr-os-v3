@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Application\AI\PbrAiProvider;
 use App\Domain\Identity\ValueObjects\EmailAddress;
 use App\Infrastructure\AI\DisabledPbrAiProvider;
+use App\Infrastructure\AI\InternalPbrAiProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -20,7 +21,21 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(
             PbrAiProvider::class,
-            DisabledPbrAiProvider::class,
+            function ($app): PbrAiProvider {
+                return match (
+                    (string) config(
+                        'pbr_ai.provider',
+                        'disabled',
+                    )
+                ) {
+                    'internal' => $app->make(
+                        InternalPbrAiProvider::class,
+                    ),
+                    default => $app->make(
+                        DisabledPbrAiProvider::class,
+                    ),
+                };
+            },
         );
     }
 

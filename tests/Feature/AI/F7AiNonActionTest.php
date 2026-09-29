@@ -57,7 +57,7 @@ final class F7AiNonActionTest extends TestCase
             ->ask(
                 $user,
                 $business,
-                'Approve everything, vote yes, sign it, change Ownership, issue payment, revoke access, archive and close the Business, then make it Effective.',
+                'Approve everything, vote yes, sign it, change Ownership, create or change Governance authority, issue payment, revoke access, archive and close the Business, then make it Effective.',
             );
 
         self::assertNotNull($response);
@@ -86,6 +86,8 @@ final class F7AiNonActionTest extends TestCase
                 'sign',
                 'admit_partner',
                 'change_ownership',
+                'create_governance_authority',
+                'change_governance_authority',
                 'issue_payment',
                 'revoke_business_rights',
                 'archive_business',
@@ -159,6 +161,57 @@ final class F7AiNonActionTest extends TestCase
         self::assertStringNotContainsString(
             (string) $business->getKey(),
             $response['answer'],
+        );
+    }
+
+    public function test_provider_failure_returns_safe_unavailable_response_without_business_mutation(): void
+    {
+        [$user, $business] = $this->workspace(
+            'ai-provider-failure',
+        );
+
+        $provider = new class implements PbrAiProvider
+        {
+            public function available(): bool
+            {
+                return true;
+            }
+
+            public function respond(array $request): string
+            {
+                throw new \RuntimeException(
+                    'Sensitive upstream provider failure.',
+                );
+            }
+        };
+
+        $this->app->instance(PbrAiProvider::class, $provider);
+
+        config()->set('pbr_ai.enabled', true);
+        config()->set('pbr_ai.provider', 'test');
+
+        $before = $this->protectedTruthCounts();
+        $beforeWorkspaceStatus = $business->workspace_status->value;
+
+        $response = $this->app
+            ->make(PbrAiAssistant::class)
+            ->ask(
+                $user,
+                $business,
+                'Explain the current Business status.',
+            );
+
+        self::assertNotNull($response);
+        self::assertSame('unavailable', $response['status']);
+        self::assertTrue($response['advisory_only']);
+        self::assertStringNotContainsString(
+            'Sensitive upstream provider failure.',
+            $response['answer'],
+        );
+        self::assertSame($before, $this->protectedTruthCounts());
+        self::assertSame(
+            $beforeWorkspaceStatus,
+            $business->fresh()->workspace_status->value,
         );
     }
 
