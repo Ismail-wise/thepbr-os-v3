@@ -227,7 +227,6 @@ DB::table('document_versions')->insert([
     'effective_from' => null,
     'supersedes_document_version_id' => null,
     'created_at' => $now,
-    'updated_at' => $now,
 ]);
 
 foreach (['view', 'manage'] as $right) {
