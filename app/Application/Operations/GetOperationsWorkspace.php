@@ -195,7 +195,38 @@ final class GetOperationsWorkspace
                 'v.revision',
                 'v.frozen_at',
                 'v.effective_from',
-            ]);
+            ])
+            ->map(
+                static function (object $version) use (
+                    $business,
+                ): array {
+                    $latestState = DB::table(
+                        'record_version_state_transitions',
+                    )
+                        ->where(
+                            'business_id',
+                            $business->getKey(),
+                        )
+                        ->where(
+                            'formal_record_version_id',
+                            $version->id,
+                        )
+                        ->orderByDesc('sequence')
+                        ->value('to_state');
+
+                    return [
+                        'id' => (string) $version->id,
+                        'version_number' => (int) $version->version_number,
+                        'revision' => (int) $version->revision,
+                        'frozen_at' => $version->frozen_at,
+                        'effective_from' => $version->effective_from,
+                        'state' => $latestState === null
+                            ? null
+                            : (string) $latestState,
+                    ];
+                },
+            )
+            ->values();
 
         return [
             'business' => [

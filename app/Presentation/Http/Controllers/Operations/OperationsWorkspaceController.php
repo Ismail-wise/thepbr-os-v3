@@ -14,6 +14,7 @@ use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use Carbon\CarbonImmutable;
+use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -111,7 +112,7 @@ final class OperationsWorkspaceController
                 $effectiveFrom,
                 $reviewDueAt,
             );
-        } catch (InvalidArgumentException|RuntimeException $exception) {
+        } catch (DomainException|InvalidArgumentException|RuntimeException $exception) {
             throw ValidationException::withMessages([
                 'operations' => $exception->getMessage(),
             ]);
@@ -139,7 +140,7 @@ final class OperationsWorkspaceController
                 $formalRecordVersion,
                 (int) $data['expected_revision'],
             );
-        } catch (InvalidArgumentException|RuntimeException $exception) {
+        } catch (DomainException|InvalidArgumentException|RuntimeException $exception) {
             throw ValidationException::withMessages([
                 'operations' => $exception->getMessage(),
             ]);
@@ -171,7 +172,7 @@ final class OperationsWorkspaceController
                 $formalRecordVersion,
                 FormalRecordState::from($data['target']),
             );
-        } catch (InvalidArgumentException|RuntimeException $exception) {
+        } catch (DomainException|InvalidArgumentException|RuntimeException $exception) {
             throw ValidationException::withMessages([
                 'operations' => $exception->getMessage(),
             ]);

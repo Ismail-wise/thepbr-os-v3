@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { computed, reactive } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
 import { useI18n } from '../../i18n/useI18n';
 
@@ -54,6 +54,7 @@ type VersionRow = {
     revision: number;
     frozen_at: string | null;
     effective_from: string | null;
+    state: string | null;
 };
 
 const props = defineProps<{
@@ -146,6 +147,24 @@ const actionForm = useForm({
 });
 
 const blockedReasons = reactive<Record<string, string>>({});
+
+const contentReview = useForm({
+    target: 'under_review',
+});
+const contentReviewVersionId = ref('');
+
+const advanceContentReview = (
+    versionId: string,
+    target: 'under_review' | 'approved' | 'changes_requested',
+) => {
+    contentReviewVersionId.value = versionId;
+    contentReview.clearErrors();
+    contentReview.target = target;
+    contentReview.post(
+        `/operations/register/${versionId}/content-review`,
+        { preserveScroll: true },
+    );
+};
 
 const roles = computed(() => props.operations.current?.roles ?? []);
 const assignmentsFor = (roleId: string) =>
@@ -322,7 +341,100 @@ const formError = (errors: object, key: string) =>
                     <table class="min-w-full text-left text-sm">
                         <thead><tr class="border-b border-slate-300 text-slate-600"><th class="px-3 py-3">Version</th><th class="px-3 py-3">State</th><th class="px-3 py-3">Controls</th></tr></thead>
                         <tbody>
-                            <tr v-for="v in operations.versions" :key="v.id" class="border-b border-slate-200"><td class="px-3 py-3 font-semibold">v{{ v.version_number }}</td><td class="px-3 py-3">{{ v.frozen_at ? 'Frozen' : 'Draft' }}</td><td class="px-3 py-3"><div v-if="operations.permissions.manage" class="flex gap-2"><button v-if="!v.frozen_at" type="button" class="min-h-9 border border-slate-300 px-3 text-xs font-semibold" @click="post('/operations/register/' + v.id + '/submit', { expected_revision: v.revision })">Freeze + Proposal</button><template v-else><button type="button" class="min-h-9 border border-slate-300 px-3 text-xs font-semibold" @click="post('/operations/register/' + v.id + '/content-review', { target: 'under_review' })">Under Review</button><button type="button" class="min-h-9 bg-slate-900 px-3 text-xs font-semibold text-white" @click="post('/operations/register/' + v.id + '/content-review', { target: 'approved' })">Content Approved</button></template></div></td></tr>
+                            <tr
+                                v-for="v in operations.versions"
+                                :key="v.id"
+                                class="border-b border-slate-200 align-top"
+                            >
+                                <td class="px-3 py-3 font-semibold">
+                                    v{{ v.version_number }}
+                                </td>
+                                <td class="px-3 py-3">
+                                    {{ v.state ?? (v.frozen_at ? 'frozen' : 'draft') }}
+                                </td>
+                                <td class="px-3 py-3">
+                                    <div
+                                        v-if="operations.permissions.manage"
+                                        class="flex flex-wrap gap-2"
+                                    >
+                                        <button
+                                            v-if="v.state === 'draft' && !v.frozen_at"
+                                            type="button"
+                                            class="min-h-9 border border-slate-300 px-3 text-xs font-semibold"
+                                            @click="
+                                                post(
+                                                    '/operations/register/' + v.id + '/submit',
+                                                    { expected_revision: v.revision },
+                                                )
+                                            "
+                                        >
+                                            Freeze + Proposal
+                                        </button>
+
+                                        <button
+                                            v-if="v.state === 'ready_for_review'"
+                                            type="button"
+                                            :disabled="contentReview.processing"
+                                            class="min-h-9 border border-slate-300 px-3 text-xs font-semibold disabled:opacity-50"
+                                            @click="
+                                                advanceContentReview(
+                                                    v.id,
+                                                    'under_review',
+                                                )
+                                            "
+                                        >
+                                            Under Review
+                                        </button>
+
+                                        <template v-if="v.state === 'under_review'">
+                                            <button
+                                                type="button"
+                                                :disabled="contentReview.processing"
+                                                class="min-h-9 bg-slate-900 px-3 text-xs font-semibold text-white disabled:opacity-50"
+                                                @click="
+                                                    advanceContentReview(
+                                                        v.id,
+                                                        'approved',
+                                                    )
+                                                "
+                                            >
+                                                Content Approved
+                                            </button>
+                                            <button
+                                                type="button"
+                                                :disabled="contentReview.processing"
+                                                class="min-h-9 border border-slate-300 px-3 text-xs font-semibold disabled:opacity-50"
+                                                @click="
+                                                    advanceContentReview(
+                                                        v.id,
+                                                        'changes_requested',
+                                                    )
+                                                "
+                                            >
+                                                Request Changes
+                                            </button>
+                                        </template>
+                                    </div>
+
+                                    <p
+                                        v-if="
+                                            contentReviewVersionId === v.id
+                                            && formError(
+                                                contentReview.errors,
+                                                'operations',
+                                            )
+                                        "
+                                        class="mt-2 text-sm text-red-700"
+                                    >
+                                        {{
+                                            formError(
+                                                contentReview.errors,
+                                                'operations',
+                                            )
+                                        }}
+                                    </p>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
