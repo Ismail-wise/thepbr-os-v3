@@ -7,6 +7,7 @@ namespace App\Application\Partnership;
 use App\Domain\Access\CapabilityCatalog;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
+use Carbon\CarbonImmutable;
 use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -128,38 +129,101 @@ final class PartnerDynamicsReference
             );
         }
 
-        $id = (string) Str::uuid7();
+        $completedAt = CarbonImmutable::instance($completedAt)->utc();
 
-        DB::table(
-            'partner_dynamics_assessment_references',
-        )->insert([
-            'id' => $id,
-            'business_id' => $business->getKey(),
-            'partner_id' => $partnerId,
-            'source_system' => 'partner_dynamics',
-            'source_assessment_id' => $sourceAssessmentId,
-            'source_url' => $sourceUrl,
-            'assessment_version' => $assessmentVersion,
-            'primary_profile' => $primaryProfile,
-            'secondary_profile' => $secondaryProfile,
-            'completed_at' => $completedAt,
-            'referenced_by_membership_id' => $membership->getKey(),
-            'created_at' => now(),
-        ]);
-
-        $this->occurrence->record(
+        return DB::transaction(function () use (
             $user,
             $business,
-            'partnership.partner_dynamics.referenced',
-            'partner_dynamics_reference',
-            $id,
-            [
-                'partner_id' => $partnerId,
-                'primary_profile' => $primaryProfile,
-                'assessment_version' => $assessmentVersion,
-            ],
-        );
+            $partnerId,
+            $sourceAssessmentId,
+            $sourceUrl,
+            $assessmentVersion,
+            $primaryProfile,
+            $secondaryProfile,
+            $completedAt,
+            $membership,
+        ): string {
+            $id = (string) Str::uuid7();
 
-        return $id;
+            $inserted = DB::table(
+                'partner_dynamics_assessment_references',
+            )->insertOrIgnore([
+                'id' => $id,
+                'business_id' => $business->getKey(),
+                'partner_id' => $partnerId,
+                'source_system' => 'partner_dynamics',
+                'source_assessment_id' => $sourceAssessmentId,
+                'source_url' => $sourceUrl,
+                'assessment_version' => $assessmentVersion,
+                'primary_profile' => $primaryProfile,
+                'secondary_profile' => $secondaryProfile,
+                'completed_at' => $completedAt,
+                'referenced_by_membership_id' => $membership->getKey(),
+                'created_at' => now(),
+            ]);
+
+            if ($inserted === 0) {
+                $existing = DB::table(
+                    'partner_dynamics_assessment_references',
+                )
+                    ->where('business_id', $business->getKey())
+                    ->where('source_system', 'partner_dynamics')
+                    ->where(
+                        'source_assessment_id',
+                        $sourceAssessmentId,
+                    )
+                    ->first();
+
+                if ($existing === null) {
+                    throw new InvalidArgumentException(
+                        'PartnerDynamics reference could not be recorded.',
+                    );
+                }
+
+                $sameReference =
+                    (string) $existing->partner_id === $partnerId
+                    && $this->nullableText($existing->source_url) === $sourceUrl
+                    && (string) $existing->assessment_version === $assessmentVersion
+                    && (string) $existing->primary_profile === $primaryProfile
+                    && $this->nullableText($existing->secondary_profile) === $secondaryProfile
+                    && CarbonImmutable::parse(
+                        (string) $existing->completed_at,
+                    )->utc()->equalTo($completedAt);
+
+                if (! $sameReference) {
+                    throw new InvalidArgumentException(
+                        'This PartnerDynamics source assessment is already referenced with different details.',
+                    );
+                }
+
+                return (string) $existing->id;
+            }
+
+            $this->occurrence->record(
+                $user,
+                $business,
+                'partnership.partner_dynamics.referenced',
+                'partner_dynamics_reference',
+                $id,
+                [
+                    'partner_id' => $partnerId,
+                    'primary_profile' => $primaryProfile,
+                    'assessment_version' => $assessmentVersion,
+                ],
+            );
+
+            return $id;
+        });
+    }
+
+    private function nullableText(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
     }
 }

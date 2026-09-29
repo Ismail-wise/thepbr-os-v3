@@ -29,6 +29,7 @@ use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -349,6 +350,217 @@ final class DocumentVaultTest extends TestCase
         $this->assertNotNull($evidence->refresh()->verified_at);
     }
 
+    public function test_contribution_evidence_target_selector_is_authorized_and_links_exact_record(): void
+    {
+        $this->withoutVite();
+
+        [$user, $businessA, $membershipA] = $this->context();
+
+        $this->allowSystem($businessA, $membershipA, 'records.view');
+        $this->allowSystem($businessA, $membershipA, 'records.manage');
+        $this->allowSystem(
+            $businessA,
+            $membershipA,
+            'contributions.manage',
+        );
+
+        $document = $this->document(
+            $businessA,
+            $membershipA,
+            'Contribution Evidence',
+        );
+
+        $this->allowDocument(
+            $businessA,
+            $membershipA,
+            $document,
+            DocumentAccessRight::View,
+        );
+        $this->allowDocument(
+            $businessA,
+            $membershipA,
+            $document,
+            DocumentAccessRight::Manage,
+        );
+
+        $version = $this->version(
+            $businessA,
+            $membershipA,
+            $document,
+            1,
+        );
+
+        $partnerA = (string) Str::uuid7();
+        $contributionA = (string) Str::uuid7();
+
+        DB::table('partners')->insert([
+            'id' => $partnerA,
+            'business_id' => $businessA->getKey(),
+            'display_name' => 'Authorized Partner',
+            'legal_name' => null,
+            'email' => null,
+            'status' => 'prospective',
+            'notes' => null,
+            'revision' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('contributions')->insert([
+            'id' => $contributionA,
+            'business_id' => $businessA->getKey(),
+            'partner_id' => $partnerA,
+            'contribution_type' => 'cash',
+            'status' => 'reviewed',
+            'currency' => 'USD',
+            'description' => 'Authorized contribution',
+            'proposed_value' => '1000.00',
+            'reviewed_value' => '900.00',
+            'approved_value' => null,
+            'accepted_value' => null,
+            'valuation_method' => 'UAT review',
+            'conditions' => null,
+            'committed_date' => null,
+            'due_date' => null,
+            'approval_decision_id' => null,
+            'acceptance_decision_id' => null,
+            'revision' => 2,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        [, $businessB, $membershipB] = $this->context();
+        $partnerB = (string) Str::uuid7();
+        $contributionB = (string) Str::uuid7();
+
+        DB::table('partners')->insert([
+            'id' => $partnerB,
+            'business_id' => $businessB->getKey(),
+            'display_name' => 'Foreign Partner',
+            'legal_name' => null,
+            'email' => null,
+            'status' => 'prospective',
+            'notes' => null,
+            'revision' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('contributions')->insert([
+            'id' => $contributionB,
+            'business_id' => $businessB->getKey(),
+            'partner_id' => $partnerB,
+            'contribution_type' => 'cash',
+            'status' => 'proposed',
+            'currency' => 'USD',
+            'description' => 'Foreign contribution',
+            'proposed_value' => '500.00',
+            'reviewed_value' => null,
+            'approved_value' => null,
+            'accepted_value' => null,
+            'valuation_method' => null,
+            'conditions' => null,
+            'committed_date' => null,
+            'due_date' => null,
+            'approval_decision_id' => null,
+            'acceptance_decision_id' => null,
+            'revision' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this
+            ->actingAs($user)
+            ->withSession([
+                EnsureCurrentBusinessContext::SESSION_KEY => $businessA->getKey(),
+            ])
+            ->get('/records/documents/'.$document->getKey())
+            ->assertOk()
+            ->assertInertia(
+                fn ($page) => $page
+                    ->where(
+                        'evidenceTargetOptions.contribution.0.id',
+                        $contributionA,
+                    )
+                    ->where(
+                        'evidenceTargetOptions.contribution.0.label',
+                        'Authorized contribution · Authorized Partner · cash · reviewed',
+                    )
+                    ->missing(
+                        'evidenceTargetOptions.contribution.1',
+                    ),
+            );
+
+        $evidence = Evidence::query()->create([
+            'business_id' => $businessA->getKey(),
+            'document_version_id' => $version->getKey(),
+            'confidentiality' => 'standard',
+            'source_date' => '2026-09-29',
+            'submitted_by_membership_id' => $membershipA->getKey(),
+        ]);
+
+        $this
+            ->actingAs($user)
+            ->withSession([
+                EnsureCurrentBusinessContext::SESSION_KEY => $businessA->getKey(),
+            ])
+            ->post(
+                '/records/evidence/'.$evidence->getKey().'/links',
+                [
+                    'target_type' => 'contribution',
+                    'target_id' => $contributionB,
+                ],
+            )
+            ->assertNotFound();
+
+        $this->assertDatabaseMissing('evidence_links', [
+            'business_id' => $businessA->getKey(),
+            'target_type' => 'contribution',
+            'target_id' => $contributionB,
+        ]);
+
+        $this
+            ->actingAs($user)
+            ->withSession([
+                EnsureCurrentBusinessContext::SESSION_KEY => $businessA->getKey(),
+            ])
+            ->post(
+                '/records/evidence/'.$evidence->getKey().'/links',
+                [
+                    'target_type' => 'contribution',
+                    'target_id' => $contributionA,
+                ],
+            )
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('evidence_links', [
+            'business_id' => $businessA->getKey(),
+            'evidence_id' => $evidence->getKey(),
+            'target_type' => 'contribution',
+            'target_id' => $contributionA,
+        ]);
+
+        $this->assertDatabaseHas('contributions', [
+            'id' => $contributionA,
+            'business_id' => $businessA->getKey(),
+            'status' => 'reviewed',
+            'proposed_value' => '1000.00',
+            'reviewed_value' => '900.00',
+            'approved_value' => null,
+            'accepted_value' => null,
+            'revision' => 3,
+        ]);
+
+        self::assertSame(
+            0,
+            DB::table('evidence_links')
+                ->where('target_id', $contributionB)
+                ->count(),
+        );
+
+        unset($membershipB);
+    }
+
     public function test_product_surface_does_not_expose_storage_internals(): void
     {
         $paths = [
@@ -429,7 +641,7 @@ final class DocumentVaultTest extends TestCase
         Membership $membership,
         string $key,
     ): void {
-        $permission = Permission::query()->create([
+        $permission = Permission::query()->firstOrCreate([
             'key' => $key,
         ]);
 

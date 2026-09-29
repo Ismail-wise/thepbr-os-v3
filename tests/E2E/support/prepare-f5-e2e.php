@@ -19,6 +19,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 $basePath = dirname(__DIR__, 3);
 
@@ -184,6 +185,77 @@ if ($contribution === null) {
         'F5 Contribution fixture creation failed.',
     );
 }
+
+$membershipId = DB::table('memberships')
+    ->where('user_id', $user->getKey())
+    ->where('business_id', $business->getKey())
+    ->where('access_status', 'active')
+    ->value('id');
+
+if (! is_string($membershipId) || $membershipId === '') {
+    throw new RuntimeException(
+        'F5 active Membership fixture lookup failed.',
+    );
+}
+
+$documentId = (string) Str::uuid7();
+$versionId = (string) Str::uuid7();
+$evidenceId = (string) Str::uuid7();
+$now = now();
+
+DB::table('documents')->insert([
+    'id' => $documentId,
+    'business_id' => $business->getKey(),
+    'title' => 'F5 Contribution Evidence',
+    'category' => 'partners_ownership',
+    'created_by_membership_id' => $membershipId,
+    'created_at' => $now,
+    'updated_at' => $now,
+]);
+
+DB::table('document_versions')->insert([
+    'id' => $versionId,
+    'business_id' => $business->getKey(),
+    'document_id' => $documentId,
+    'version_number' => 1,
+    'original_filename' => 'f5-contribution-evidence.pdf',
+    'storage_key' => 'e2e/f5-contribution-evidence.pdf',
+    'size_bytes' => 64,
+    'mime_type' => 'application/pdf',
+    'content_sha256' => hash('sha256', 'f5-e2e-evidence'),
+    'uploaded_by_membership_id' => $membershipId,
+    'effective_from' => null,
+    'supersedes_document_version_id' => null,
+    'created_at' => $now,
+    'updated_at' => $now,
+]);
+
+foreach (['view', 'manage'] as $right) {
+    DB::table('document_access_grants')->insert([
+        'id' => (string) Str::uuid7(),
+        'business_id' => $business->getKey(),
+        'membership_id' => $membershipId,
+        'document_id' => $documentId,
+        'right' => $right,
+        'effect' => 'allow',
+        'created_at' => $now,
+    ]);
+}
+
+DB::table('evidence')->insert([
+    'id' => $evidenceId,
+    'business_id' => $business->getKey(),
+    'document_version_id' => $versionId,
+    'confidentiality' => 'standard',
+    'source_date' => '2026-09-29',
+    'submitted_by_membership_id' => $membershipId,
+    'verified_at' => null,
+    'verified_by_membership_id' => null,
+    'verification_method' => null,
+    'verification_note' => null,
+    'created_at' => $now,
+    'updated_at' => $now,
+]);
 
 echo 'F5_E2E_FIXTURE=PASS', PHP_EOL;
 echo 'F5_E2E_EMAIL=', $email, PHP_EOL;

@@ -34,7 +34,10 @@ type Contribution = {
     description: string;
     status: string;
     revision: number;
+    proposed_value: string;
+    reviewed_value: string | null;
     approved_value: string | null;
+    valuation_method: string | null;
 };
 
 type Scenario = {
@@ -248,6 +251,44 @@ const review = useForm({
     valuation_method: '',
     note: '',
 });
+
+const selectedReviewContribution = computed(
+    () =>
+        props.partnership.contributions.find(
+            (row) => row.id === review.contribution_id,
+        ) ?? null,
+);
+
+const hydrateContributionReview = (
+    current: Contribution | null,
+): void => {
+    if (current === null) {
+        review.expected_revision = 1;
+        review.reviewed_value = '';
+        review.valuation_method = '';
+
+        return;
+    }
+
+    review.clearErrors();
+    review.expected_revision = current.revision;
+    review.reviewed_value = current.reviewed_value ?? '';
+    review.valuation_method = current.valuation_method ?? '';
+};
+
+watch(
+    [
+        () => review.contribution_id,
+        () => selectedReviewContribution.value?.revision ?? null,
+        () => selectedReviewContribution.value?.status ?? null,
+        () => selectedReviewContribution.value?.reviewed_value ?? null,
+        () => selectedReviewContribution.value?.valuation_method ?? null,
+    ],
+    () => {
+        hydrateContributionReview(selectedReviewContribution.value);
+    },
+    { immediate: true },
+);
 
 const contributionGovernance = useForm({
     contribution_id: '',
@@ -741,7 +782,8 @@ const submitOwnershipEffect = () => {
 
                     <button
                         type="submit"
-                        class="min-h-11 bg-slate-950 px-4 text-sm font-semibold text-white md:w-max"
+                        :disabled="dynamics.processing"
+                        class="min-h-11 bg-slate-950 px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 md:w-max"
                     >
                         {{ t('partnership.partnerDynamics') }}
                     </button>
@@ -1013,7 +1055,8 @@ const submitOwnershipEffect = () => {
                             v-model.number="review.expected_revision"
                             type="number"
                             min="1"
-                            class="mt-1 min-h-11 w-full border border-slate-300 px-3"
+                            readonly
+                            class="mt-1 min-h-11 w-full border border-slate-300 bg-slate-50 px-3 text-slate-700"
                         />
                     </label>
 
@@ -1036,6 +1079,16 @@ const submitOwnershipEffect = () => {
                     </label>
 
                     <p
+                        v-if="selectedReviewContribution"
+                        class="text-sm text-slate-600 md:col-span-2 xl:col-span-4"
+                    >
+                        Current status:
+                        <strong>{{ selectedReviewContribution.status }}</strong>
+                        · revision
+                        <strong>{{ selectedReviewContribution.revision }}</strong>
+                    </p>
+
+                    <p
                         v-if="errorText(review)"
                         class="text-sm text-red-700 md:col-span-2 xl:col-span-4"
                     >
@@ -1044,7 +1097,11 @@ const submitOwnershipEffect = () => {
 
                     <button
                         type="submit"
-                        class="min-h-11 bg-slate-950 px-4 text-sm font-semibold text-white md:w-max"
+                        :disabled="
+                            review.processing
+                            || selectedReviewContribution?.status !== 'proposed'
+                        "
+                        class="min-h-11 bg-slate-950 px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 md:w-max"
                     >
                         {{ t('partnership.reviewContribution') }}
                     </button>

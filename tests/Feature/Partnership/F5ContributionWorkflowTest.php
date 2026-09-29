@@ -14,6 +14,7 @@ use App\Domain\Businesses\Enums\BusinessStage;
 use App\Domain\Identity\Enums\AccountStatus;
 use App\Domain\Partnership\Enums\ContributionType;
 use App\Domain\Partnership\ValueObjects\ContributionValue;
+use App\Domain\Records\Exceptions\StaleRevision;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use DateTimeImmutable;
 use Illuminate\Database\QueryException;
@@ -338,6 +339,136 @@ final class F5ContributionWorkflowTest extends TestCase
             'id' => $contribution['id'],
             'revision' => 2,
         ]);
+    }
+
+    public function test_contribution_review_rejects_stale_and_foreign_business_ids_without_mutation(): void
+    {
+        $user = $this->activeUser(
+            'f5-review-concurrency@example.test',
+        );
+
+        $create = $this->app->make(
+            CreateBusiness::class,
+        );
+
+        $businessA = $create->handle(
+            $user,
+            'F5 Review Business A',
+            BusinessOriginType::StartedThroughPbr,
+            BusinessStage::Planning,
+            'USD',
+        );
+
+        $businessB = $create->handle(
+            $user,
+            'F5 Review Business B',
+            BusinessOriginType::StartedThroughPbr,
+            BusinessStage::Planning,
+            'USD',
+        );
+
+        $partnerA = $this->app
+            ->make(PartnerDirectory::class)
+            ->create(
+                $user,
+                $businessA,
+                'Review Partner A',
+                null,
+                null,
+                null,
+            );
+
+        self::assertNotNull($partnerA);
+
+        $workflow = $this->app->make(
+            ContributionWorkflow::class,
+        );
+
+        $contribution = $workflow->create(
+            $user,
+            $businessA,
+            $partnerA['id'],
+            ContributionType::Cash,
+            'USD',
+            'Review concurrency contribution',
+            new ContributionValue('1000.00'),
+            null,
+            null,
+            null,
+            [
+                'amount_committed' => '1000.00',
+            ],
+        );
+
+        self::assertNotNull($contribution);
+
+        self::assertTrue(
+            $workflow->review(
+                $user,
+                $businessA,
+                $contribution['id'],
+                1,
+                new ContributionValue('900.00'),
+                'Independent review basis',
+                'Reviewed once.',
+            ),
+        );
+
+        $this->assertDatabaseHas('contributions', [
+            'id' => $contribution['id'],
+            'business_id' => $businessA->getKey(),
+            'status' => 'reviewed',
+            'reviewed_value' => '900.00',
+            'valuation_method' => 'Independent review basis',
+            'revision' => 2,
+        ]);
+
+        try {
+            $workflow->review(
+                $user,
+                $businessA,
+                $contribution['id'],
+                1,
+                new ContributionValue('800.00'),
+                'Stale review attempt',
+            );
+
+            self::fail(
+                'Stale Contribution review revision must be rejected.',
+            );
+        } catch (StaleRevision $exception) {
+            self::assertSame(1, $exception->expectedRevision);
+            self::assertSame(2, $exception->actualRevision);
+        }
+
+        self::assertNull(
+            $workflow->review(
+                $user,
+                $businessB,
+                $contribution['id'],
+                1,
+                new ContributionValue('700.00'),
+                'Foreign Business attempt',
+            ),
+        );
+
+        $this->assertDatabaseHas('contributions', [
+            'id' => $contribution['id'],
+            'business_id' => $businessA->getKey(),
+            'status' => 'reviewed',
+            'reviewed_value' => '900.00',
+            'valuation_method' => 'Independent review basis',
+            'revision' => 2,
+        ]);
+
+        self::assertSame(
+            1,
+            DB::table('contribution_status_transitions')
+                ->where('business_id', $businessA->getKey())
+                ->where('contribution_id', $contribution['id'])
+                ->where('to_status', 'reviewed')
+                ->count(),
+        );
     }
 
     public function test_contribution_evidence_target_requires_contribution_manage_capability(): void

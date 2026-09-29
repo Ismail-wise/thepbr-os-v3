@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link, useForm } from '@inertiajs/vue3';
+import { watch } from 'vue';
 import { useI18n } from '../../../i18n/useI18n';
 import AuthenticatedLayout from '../../../layouts/AuthenticatedLayout.vue';
 
@@ -23,6 +24,11 @@ type VersionRow = {
     supersedesVersionNumber: number | null;
 };
 
+type EvidenceTargetOption = {
+    id: string;
+    label: string;
+};
+
 type EvidenceRow = {
     id: string;
     documentVersionId: string;
@@ -42,6 +48,7 @@ const props = defineProps<{
     versions: VersionRow[];
     evidence: EvidenceRow[];
     evidenceTargetTypes: string[];
+    evidenceTargetOptions: Record<string, EvidenceTargetOption[]>;
     canManage: boolean;
 }>();
 
@@ -62,6 +69,14 @@ const linkForm = useForm({
     target_type: props.evidenceTargetTypes[0] ?? '',
     target_id: '',
 });
+
+watch(
+    () => linkForm.target_type,
+    () => {
+        linkForm.target_id = '';
+        linkForm.clearErrors();
+    },
+);
 
 const verifyForm = useForm({
     evidence_id: props.evidence.find((item) => !item.verified)?.id ?? '',
@@ -464,42 +479,76 @@ const verifyEvidence = (): void => {
                         </h2>
 
                         <form class="mt-4 space-y-4" @submit.prevent="linkEvidence">
-                            <select
-                                v-model="linkForm.evidence_id"
-                                required
-                                class="min-h-11 w-full border border-slate-300 bg-white px-3"
-                            >
-                                <option
-                                    v-for="item in evidence"
-                                    :key="item.id"
-                                    :value="item.id"
+                            <label class="block text-sm font-medium text-slate-700">
+                                {{ t('documents.evidenceRecord') }}
+                                <select
+                                    v-model="linkForm.evidence_id"
+                                    required
+                                    class="mt-1 min-h-11 w-full border border-slate-300 bg-white px-3"
                                 >
-                                    {{ t('documents.version') }}
-                                    {{ item.versionNumber ?? '—' }}
-                                </option>
-                            </select>
+                                    <option
+                                        v-for="item in evidence"
+                                        :key="item.id"
+                                        :value="item.id"
+                                    >
+                                        {{ t('documents.version') }}
+                                        {{ item.versionNumber ?? '—' }}
+                                    </option>
+                                </select>
+                            </label>
 
-                            <select
-                                v-model="linkForm.target_type"
-                                required
-                                class="min-h-11 w-full border border-slate-300 bg-white px-3"
-                            >
-                                <option
-                                    v-for="targetType in evidenceTargetTypes"
-                                    :key="targetType"
-                                    :value="targetType"
+                            <label class="block text-sm font-medium text-slate-700">
+                                {{ t('documents.targetType') }}
+                                <select
+                                    v-model="linkForm.target_type"
+                                    required
+                                    class="mt-1 min-h-11 w-full border border-slate-300 bg-white px-3"
                                 >
-                                    {{ humanize(targetType) }}
-                                </option>
-                            </select>
+                                    <option
+                                        v-for="targetType in evidenceTargetTypes"
+                                        :key="targetType"
+                                        :value="targetType"
+                                    >
+                                        {{ humanize(targetType) }}
+                                    </option>
+                                </select>
+                            </label>
 
-                            <input
-                                v-model="linkForm.target_id"
-                                type="text"
-                                required
-                                :placeholder="t('documents.targetId')"
-                                class="min-h-11 w-full border border-slate-300 bg-white px-3"
-                            />
+                            <label
+                                v-if="linkForm.target_type === 'contribution'"
+                                class="block text-sm font-medium text-slate-700"
+                            >
+                                {{ t('documents.targetRecord') }}
+                                <select
+                                    v-model="linkForm.target_id"
+                                    required
+                                    class="mt-1 min-h-11 w-full border border-slate-300 bg-white px-3"
+                                >
+                                    <option value="" disabled>
+                                        {{ t('documents.selectTarget') }}
+                                    </option>
+                                    <option
+                                        v-for="option in evidenceTargetOptions.contribution ?? []"
+                                        :key="option.id"
+                                        :value="option.id"
+                                    >
+                                        {{ option.label }}
+                                    </option>
+                                </select>
+                            </label>
+
+                            <label
+                                v-else
+                                class="block text-sm font-medium text-slate-700"
+                            >
+                                {{ t('documents.targetId') }}
+                                <input
+                                    v-model="linkForm.target_id"
+                                    type="text"
+                                    required
+                                    class="mt-1 min-h-11 w-full border border-slate-300 bg-white px-3"
+                                />
+                            </label>
 
                             <button
                                 type="submit"

@@ -11,6 +11,7 @@ use App\Application\Documents\ListAuthorizedDocuments;
 use App\Application\Documents\UploadDocument;
 use App\Application\Documents\UploadDocumentVersion;
 use App\Application\Evidence\EvidenceTargetRegistry;
+use App\Application\Evidence\ListAuthorizedEvidenceTargets;
 use App\Domain\Documents\Enums\DocumentAccessRight;
 use App\Domain\Documents\Enums\DocumentCategory;
 use App\Http\Middleware\EnsureCurrentBusinessContext;
@@ -38,6 +39,7 @@ final class DocumentVaultController
         private readonly DownloadDocumentVersion $downloadDocumentVersion,
         private readonly AuthorizeDocumentAccess $authorization,
         private readonly EvidenceTargetRegistry $evidenceTargets,
+        private readonly ListAuthorizedEvidenceTargets $authorizedEvidenceTargets,
     ) {}
 
     public function index(Request $request): Response
@@ -254,6 +256,12 @@ final class DocumentVaultController
             'evidence' => $evidenceRows,
             'evidenceTargetTypes' => $canManage
                 ? $this->evidenceTargets->supportedTypes()
+                : [],
+            'evidenceTargetOptions' => $canManage
+                ? $this->authorizedEvidenceTargets->execute(
+                    $user,
+                    $currentBusiness,
+                )
                 : [],
             'canManage' => $canManage,
         ]);

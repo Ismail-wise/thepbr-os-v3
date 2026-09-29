@@ -329,6 +329,170 @@ test(
             ),
         ).toBeVisible();
 
+        const reviewSummary = workflow
+            .locator('summary')
+            .filter({
+                hasText: /^Review Contribution$/,
+            });
+        const reviewWorkflow = reviewSummary.locator('..');
+
+        if ((await reviewWorkflow.getAttribute('open')) === null) {
+            await reviewSummary.click();
+        }
+
+        const reviewContribution = reviewWorkflow.getByLabel(
+            'Contribution',
+            { exact: true },
+        );
+        const reviewRevision = reviewWorkflow.getByLabel(
+            'Revision',
+            { exact: true },
+        );
+        const reviewedValue = reviewWorkflow.getByLabel(
+            'Reviewed value',
+            { exact: true },
+        );
+        const valuationMethod = reviewWorkflow.getByLabel(
+            'Valuation method',
+            { exact: true },
+        );
+        const reviewButton = reviewWorkflow.getByRole('button', {
+            name: 'Review Contribution',
+            exact: true,
+        });
+
+        await reviewContribution.selectOption({
+            label: 'Prepared cash contribution · proposed',
+        });
+
+        await expect(reviewRevision).toHaveValue('1');
+        await expect(reviewRevision).toHaveAttribute('readonly', '');
+        await expect(
+            reviewWorkflow.getByText(/Current status:\s*proposed/i),
+        ).toBeVisible();
+
+        await reviewedValue.fill('4900.00');
+        await valuationMethod.fill('Browser review basis');
+
+        const reviewRequestPromise = page.waitForRequest(
+            (request) =>
+                request.method() === 'PUT'
+                && /\/partnership\/contributions\/[^/]+\/review$/.test(
+                    new URL(request.url()).pathname,
+                ),
+        );
+
+        await reviewButton.click();
+
+        const reviewRequest = await reviewRequestPromise;
+        const reviewPayload = reviewRequest.postDataJSON() as {
+            expected_revision: number;
+            reviewed_value: string;
+            valuation_method: string;
+        };
+
+        expect(reviewPayload.expected_revision).toBe(1);
+        expect(reviewPayload.reviewed_value).toBe('4900.00');
+        expect(reviewPayload.valuation_method).toBe(
+            'Browser review basis',
+        );
+
+        await expect(reviewRevision).toHaveValue('2');
+        await expect(reviewedValue).toHaveValue('4900.00');
+        await expect(valuationMethod).toHaveValue(
+            'Browser review basis',
+        );
+        await expect(
+            reviewWorkflow.getByText(/Current status:\s*reviewed/i),
+        ).toBeVisible();
+        await expect(reviewButton).toBeDisabled();
+
+        await page
+            .getByRole('navigation', {
+                name: 'Workspace navigation',
+            })
+            .getByRole('link', {
+                name: 'Document Vault',
+                exact: true,
+            })
+            .click();
+
+        await expect(page).toHaveURL(/\/records\/documents$/);
+
+        const evidenceDocumentRow = page
+            .getByRole('row')
+            .filter({
+                has: page.getByText('F5 Contribution Evidence', {
+                    exact: true,
+                }),
+            });
+
+        await evidenceDocumentRow
+            .getByRole('link', {
+                name: 'Open',
+                exact: true,
+            })
+            .click();
+
+        await expect(page).toHaveURL(/\/records\/documents\//);
+
+        const targetType = page.getByLabel('Target type', {
+            exact: true,
+        });
+
+        await targetType.selectOption('contribution');
+
+        const targetRecord = page.getByLabel('Target record', {
+            exact: true,
+        });
+
+        await expect(targetRecord).toHaveJSProperty(
+            'tagName',
+            'SELECT',
+        );
+
+        await targetRecord.selectOption({
+            label: 'Prepared cash contribution · Prepared Partner · cash · reviewed',
+        });
+
+        const evidenceLinkRequestPromise = page.waitForRequest(
+            (request) =>
+                request.method() === 'POST'
+                && /\/records\/evidence\/[^/]+\/links$/.test(
+                    new URL(request.url()).pathname,
+                ),
+        );
+
+        await page
+            .getByRole('button', {
+                name: 'Link',
+                exact: true,
+            })
+            .click();
+
+        const evidenceLinkRequest = await evidenceLinkRequestPromise;
+        const evidenceLinkPayload = evidenceLinkRequest.postDataJSON() as {
+            target_type: string;
+            target_id: string;
+        };
+
+        expect(evidenceLinkPayload.target_type).toBe('contribution');
+        expect(evidenceLinkPayload.target_id).toMatch(
+            /^[0-9a-f-]{36}$/i,
+        );
+
+        await page
+            .getByRole('navigation', {
+                name: 'Workspace navigation',
+            })
+            .getByRole('link', {
+                name: 'Partners & Ownership',
+                exact: true,
+            })
+            .click();
+
+        await expect(page).toHaveURL(/\/partnership$/);
+
         await page
             .getByRole('button', {
                 name: 'Ownership',
