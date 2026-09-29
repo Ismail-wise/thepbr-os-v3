@@ -26,6 +26,7 @@ final class EstablishInitialFormationAuthority
     public function __construct(
         private readonly AuthorizeBusinessCapability $authorizeBusinessCapability,
         private readonly ResolveMembershipCapabilities $membershipCapabilities,
+        private readonly RecordGovernanceOccurrence $occurrence,
     ) {}
 
     public function execute(
@@ -58,6 +59,7 @@ final class EstablishInitialFormationAuthority
         }
 
         return DB::transaction(function () use (
+            $user,
             $currentBusiness,
             $formalRecordVersionId,
             $membership,
@@ -124,15 +126,18 @@ final class EstablishInitialFormationAuthority
                         'record_family_effective_heads.business_id',
                         $currentBusiness->getKey(),
                     )
-                    ->where(
+                    ->whereIn(
                         'authority_family.record_type',
-                        'formation_authority_policy',
+                        [
+                            'formation_authority_policy',
+                            'governance_charter',
+                        ],
                     )
                     ->exists();
 
             if ($effectiveAuthorityExists) {
                 throw new RuntimeException(
-                    'Initial Formation Authority cannot be established after Current Effective Formation Authority exists.',
+                    'Initial Formation Authority cannot be established after Current Effective Governance authority exists.',
                 );
             }
 
@@ -237,13 +242,29 @@ final class EstablishInitialFormationAuthority
                 }
             }
 
-            return FormationAuthorityEstablishment::query()->create([
-                'business_id' => $currentBusiness->getKey(),
-                'formal_record_version_id' => $version->getKey(),
-                'established_by_membership_id' => $membership->getKey(),
-                'establishment_hash' => $version->content_hash,
-                'established_at' => now(),
-            ]);
+            $establishment = FormationAuthorityEstablishment::query()
+                ->create([
+                    'business_id' => $currentBusiness->getKey(),
+                    'formal_record_version_id' => $version->getKey(),
+                    'established_by_membership_id' => $membership->getKey(),
+                    'establishment_hash' => $version->content_hash,
+                    'established_at' => now(),
+                ]);
+
+            $this->occurrence->record(
+                $user,
+                $currentBusiness,
+                'governance.formation_authority.established',
+                'formation_authority_establishment',
+                (string) $establishment->getKey(),
+                [
+                    'formal_record_version_id' => (string) $version->getKey(),
+                    'establishment_hash' => (string) $version->content_hash,
+                ],
+                (string) $version->getKey(),
+            );
+
+            return $establishment;
         });
     }
 }

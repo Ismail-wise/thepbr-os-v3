@@ -33,6 +33,18 @@ final class GetGovernanceRulesWorkspace
             CapabilityCatalog::GOVERNANCE_RECORDS_MANAGE,
         ) !== null;
 
+        $canBootstrapFormationAuthority =
+            $this->actorContext->membership(
+                $user,
+                $business,
+                CapabilityCatalog::FORMATION_AUTHORITY_BOOTSTRAP,
+            ) !== null
+            && $this->actorContext->membership(
+                $user,
+                $business,
+                CapabilityCatalog::RECORDS_MANAGE,
+            ) !== null;
+
         $source = $this->authority->currentSource($business);
         $currentCharter = null;
 
@@ -115,6 +127,85 @@ final class GetGovernanceRulesWorkspace
                 'version.content_hash',
             ]);
 
+        $formationAuthorityPolicyVersions = collect();
+
+        if ($canBootstrapFormationAuthority) {
+            $formationAuthorityPolicyVersions = DB::table(
+                'formal_record_versions as version',
+            )
+                ->join(
+                    'formal_record_families as family',
+                    function ($join): void {
+                        $join
+                            ->on(
+                                'family.id',
+                                '=',
+                                'version.formal_record_family_id',
+                            )
+                            ->on(
+                                'family.business_id',
+                                '=',
+                                'version.business_id',
+                            );
+                    },
+                )
+                ->where(
+                    'version.business_id',
+                    $business->getKey(),
+                )
+                ->where(
+                    'family.record_type',
+                    'formation_authority_policy',
+                )
+                ->orderByDesc('version.version_number')
+                ->get([
+                    'version.id',
+                    'version.version_number',
+                    'version.revision',
+                    'version.frozen_at',
+                    'version.effective_from',
+                    'version.content_hash',
+                ])
+                ->map(
+                    static function (object $version) use (
+                        $business,
+                    ): array {
+                        $latestState = DB::table(
+                            'record_version_state_transitions',
+                        )
+                            ->where(
+                                'business_id',
+                                $business->getKey(),
+                            )
+                            ->where(
+                                'formal_record_version_id',
+                                $version->id,
+                            )
+                            ->orderByDesc('sequence')
+                            ->value('to_state');
+
+                        return [
+                            'id' => (string) $version->id,
+                            'version_number' => (int) $version->version_number,
+                            'revision' => (int) $version->revision,
+                            'frozen_at' => $version->frozen_at,
+                            'effective_from' => $version->effective_from,
+                            'content_hash' => (string) $version->content_hash,
+                            'state' => $latestState === null
+                                ? null
+                                : (string) $latestState,
+                        ];
+                    },
+                )
+                ->values();
+        }
+
+        $formationAuthorityEstablished = DB::table(
+            'formation_authority_establishments',
+        )
+            ->where('business_id', $business->getKey())
+            ->exists();
+
         $changes = DB::table(
             'governance_authority_change_submissions as change',
         )
@@ -182,6 +273,11 @@ final class GetGovernanceRulesWorkspace
             ],
             'permissions' => [
                 'manage' => $canManage,
+                'bootstrap_formation_authority' => $canBootstrapFormationAuthority,
+            ],
+            'formation_authority' => [
+                'established' => $formationAuthorityEstablished,
+                'versions' => $formationAuthorityPolicyVersions,
             ],
             'current_source' => $source === null
                 ? null

@@ -38,6 +38,11 @@ type VersionRow = {
     frozen_at: string | null;
     effective_from: string | null;
 };
+
+type FormationAuthorityVersion = VersionRow & {
+    content_hash: string;
+    state: string | null;
+};
 type AuthorityChange = {
     id: string;
     subject_type: string;
@@ -53,7 +58,14 @@ type AuthorityChange = {
 const props = defineProps<{
     governanceRules: {
         business: { id: string; name: string };
-        permissions: { manage: boolean };
+        permissions: {
+            manage: boolean;
+            bootstrap_formation_authority: boolean;
+        };
+        formation_authority: {
+            established: boolean;
+            versions: FormationAuthorityVersion[];
+        };
         current_source: null | {
             kind: string;
             formal_record_version_id: string;
@@ -86,6 +98,57 @@ const actor = (owner = false) => ({
     can_vote: false,
     can_sign: false,
 });
+
+const formationAuthorityActor = () => ({
+    membership_id: firstMembership,
+    capacity: 'Formation Decision Participant',
+    can_approve: true,
+    can_vote: false,
+    can_sign: false,
+});
+
+const formationAuthorityRule = () => ({
+    decision_type: 'general_management',
+    decision_method: 'approval',
+    required_approvals: 1,
+    required_votes: 0,
+    quorum_count: 1,
+    signature_required: false,
+    reserved_matter: false,
+    amount_min: '',
+    amount_max: '',
+    actors: [formationAuthorityActor()],
+});
+
+const formationAuthority = useForm({
+    effective_from: new Date().toISOString().slice(0, 10),
+    rules: [formationAuthorityRule()],
+});
+
+const formationFreeze = useForm({
+    expected_revision: 1,
+});
+
+const formationEstablish = useForm({});
+
+const freezeFormationAuthority = (
+    version: FormationAuthorityVersion,
+) => {
+    formationFreeze.expected_revision = version.revision;
+    formationFreeze.post(
+        `/governance/rules/formation-authority/${version.id}/freeze`,
+        { preserveScroll: true },
+    );
+};
+
+const establishFormationAuthority = (
+    version: FormationAuthorityVersion,
+) => {
+    formationEstablish.post(
+        `/governance/rules/formation-authority/${version.id}/establish`,
+        { preserveScroll: true },
+    );
+};
 
 const rule = () => ({
     decision_type: 'general_management',
@@ -151,6 +214,10 @@ const post = (url: string, data: PostData = {}) =>
 const formError = (errors: object, key: string) =>
     (errors as Record<string, string | undefined>)[key];
 
+const firstFormError = (errors: object) =>
+    Object.values(errors as Record<string, string | undefined>)
+        .find((value) => value !== undefined);
+
 const actorsFor = (ruleId: string) =>
     props.governanceRules.current_charter?.actors.filter(
         (row) => row.governance_charter_rule_id === ruleId,
@@ -203,6 +270,336 @@ const formatDate = (value: string | null | undefined) =>
                     System Permission only opens this workspace. It never creates approval, voting or signing authority.
                     Current Effective Governance Charter replaces Temporary Formation Authority.
                 </p>
+            </section>
+
+            <section
+                v-if="governanceRules.permissions.bootstrap_formation_authority"
+                class="mt-6 border border-slate-200 bg-white"
+            >
+                <div class="border-b border-slate-200 p-5">
+                    <h2 class="text-lg font-bold text-slate-950">
+                        Temporary Formation Authority
+                    </h2>
+                    <p class="mt-1 max-w-4xl text-sm leading-6 text-slate-600">
+                        Use an explicit frozen Formation Authority Policy before an Effective Governance Charter exists. System access alone never grants approval, voting or signing authority.
+                    </p>
+                </div>
+
+                <div
+                    v-if="governanceRules.current_source?.kind === 'governance_charter'"
+                    class="p-5 text-sm text-slate-700"
+                >
+                    Current Effective Governance is already in force. The temporary bootstrap path is retired.
+                </div>
+
+                <div
+                    v-else-if="governanceRules.formation_authority.established"
+                    class="p-5 text-sm text-slate-700"
+                >
+                    Temporary Formation Authority is established from its exact frozen policy version. Replace it only through the normal Effective Governance workflow.
+                </div>
+
+                <div v-else class="p-5">
+                    <details
+                        v-if="governanceRules.formation_authority.versions.length === 0"
+                        class="border border-slate-200"
+                    >
+                        <summary class="cursor-pointer px-4 py-3 font-semibold">
+                            Prepare Formation Authority Policy
+                        </summary>
+
+                        <form
+                            class="space-y-5 border-t border-slate-200 p-4"
+                            @submit.prevent="
+                                formationAuthority.post(
+                                    '/governance/rules/formation-authority',
+                                    { preserveScroll: true },
+                                )
+                            "
+                        >
+                            <label class="block text-sm font-medium">
+                                Effective from
+                                <input
+                                    v-model="formationAuthority.effective_from"
+                                    type="date"
+                                    required
+                                    class="mt-1 min-h-11 w-full max-w-sm border border-slate-300 px-3"
+                                />
+                            </label>
+
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between gap-3">
+                                    <h3 class="font-semibold">
+                                        Temporary Decision / Authority Rules
+                                    </h3>
+                                    <button
+                                        type="button"
+                                        class="min-h-10 border border-slate-300 px-3 text-sm font-semibold"
+                                        @click="
+                                            formationAuthority.rules.push(
+                                                formationAuthorityRule(),
+                                            )
+                                        "
+                                    >
+                                        Add rule
+                                    </button>
+                                </div>
+
+                                <article
+                                    v-for="(r, ri) in formationAuthority.rules"
+                                    :key="ri"
+                                    class="border border-slate-200 bg-slate-50 p-4"
+                                >
+                                    <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                                        <label class="text-sm font-medium">
+                                            Decision type
+                                            <input
+                                                v-model="r.decision_type"
+                                                required
+                                                class="mt-1 min-h-10 w-full border border-slate-300 px-2"
+                                            />
+                                        </label>
+
+                                        <label class="text-sm font-medium">
+                                            Decision method
+                                            <select
+                                                v-model="r.decision_method"
+                                                class="mt-1 min-h-10 w-full border border-slate-300 px-2"
+                                            >
+                                                <option value="approval">Approval</option>
+                                                <option value="vote">Vote</option>
+                                                <option value="approval_and_vote">Approval + Vote</option>
+                                            </select>
+                                        </label>
+
+                                        <label class="text-sm font-medium">
+                                            Required approvals
+                                            <input
+                                                v-model.number="r.required_approvals"
+                                                type="number"
+                                                min="0"
+                                                class="mt-1 min-h-10 w-full border border-slate-300 px-2"
+                                            />
+                                        </label>
+
+                                        <label class="text-sm font-medium">
+                                            Required votes
+                                            <input
+                                                v-model.number="r.required_votes"
+                                                type="number"
+                                                min="0"
+                                                class="mt-1 min-h-10 w-full border border-slate-300 px-2"
+                                            />
+                                        </label>
+
+                                        <label class="text-sm font-medium">
+                                            Quorum
+                                            <input
+                                                v-model.number="r.quorum_count"
+                                                type="number"
+                                                min="1"
+                                                class="mt-1 min-h-10 w-full border border-slate-300 px-2"
+                                            />
+                                        </label>
+
+                                        <label class="text-sm font-medium">
+                                            Amount minimum
+                                            <input
+                                                v-model="r.amount_min"
+                                                inputmode="decimal"
+                                                class="mt-1 min-h-10 w-full border border-slate-300 px-2"
+                                            />
+                                        </label>
+
+                                        <label class="text-sm font-medium">
+                                            Amount maximum
+                                            <input
+                                                v-model="r.amount_max"
+                                                inputmode="decimal"
+                                                class="mt-1 min-h-10 w-full border border-slate-300 px-2"
+                                            />
+                                        </label>
+                                    </div>
+
+                                    <div class="mt-3 flex flex-wrap gap-5 text-sm">
+                                        <label>
+                                            <input v-model="r.reserved_matter" type="checkbox" />
+                                            Reserved matter
+                                        </label>
+                                        <label>
+                                            <input v-model="r.signature_required" type="checkbox" />
+                                            Signature required
+                                        </label>
+                                    </div>
+
+                                    <div class="mt-4 space-y-3">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                                Explicit eligible actors
+                                            </p>
+                                            <button
+                                                type="button"
+                                                class="text-xs font-semibold underline"
+                                                @click="r.actors.push(formationAuthorityActor())"
+                                            >
+                                                Add actor
+                                            </button>
+                                        </div>
+
+                                        <div
+                                            v-for="(a, ai) in r.actors"
+                                            :key="ai"
+                                            class="grid gap-3 border-l-2 border-slate-300 pl-3 md:grid-cols-2 xl:grid-cols-4"
+                                        >
+                                            <label class="text-sm font-medium">
+                                                Membership
+                                                <select
+                                                    v-model="a.membership_id"
+                                                    class="mt-1 min-h-10 w-full border border-slate-300 px-2"
+                                                >
+                                                    <option
+                                                        v-for="m in governanceRules.memberships"
+                                                        :key="m.id"
+                                                        :value="m.id"
+                                                    >
+                                                        {{ m.email }}
+                                                    </option>
+                                                </select>
+                                            </label>
+
+                                            <label class="text-sm font-medium">
+                                                Capacity
+                                                <input
+                                                    v-model="a.capacity"
+                                                    required
+                                                    class="mt-1 min-h-10 w-full border border-slate-300 px-2"
+                                                />
+                                            </label>
+
+                                            <div class="flex flex-wrap items-end gap-4 pb-2 text-sm">
+                                                <label>
+                                                    <input v-model="a.can_approve" type="checkbox" />
+                                                    Approve
+                                                </label>
+                                                <label>
+                                                    <input v-model="a.can_vote" type="checkbox" />
+                                                    Vote
+                                                </label>
+                                                <label>
+                                                    <input v-model="a.can_sign" type="checkbox" />
+                                                    Sign
+                                                </label>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                class="self-end text-left text-xs font-semibold text-red-700"
+                                                @click="
+                                                    r.actors.length > 1
+                                                    && r.actors.splice(ai, 1)
+                                                "
+                                            >
+                                                Remove actor
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        class="mt-4 text-xs font-semibold text-red-700"
+                                        @click="
+                                            formationAuthority.rules.length > 1
+                                            && formationAuthority.rules.splice(ri, 1)
+                                        "
+                                    >
+                                        Remove rule
+                                    </button>
+                                </article>
+                            </div>
+
+                            <p
+                                v-if="firstFormError(formationAuthority.errors)"
+                                class="text-sm text-red-700"
+                            >
+                                {{ firstFormError(formationAuthority.errors) }}
+                            </p>
+
+                            <button
+                                type="submit"
+                                :disabled="formationAuthority.processing"
+                                class="min-h-11 bg-slate-950 px-4 text-sm font-semibold text-white disabled:opacity-50"
+                            >
+                                Create Formation Authority Policy Draft
+                            </button>
+                        </form>
+                    </details>
+
+                    <div
+                        v-if="governanceRules.formation_authority.versions.length > 0"
+                        class="overflow-x-auto"
+                    >
+                        <table class="min-w-full border-collapse text-left text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-300 text-slate-600">
+                                    <th class="px-3 py-3">Version</th>
+                                    <th class="px-3 py-3">Effective from</th>
+                                    <th class="px-3 py-3">State</th>
+                                    <th class="px-3 py-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="v in governanceRules.formation_authority.versions"
+                                    :key="v.id"
+                                    class="border-b border-slate-200"
+                                >
+                                    <td class="px-3 py-3 font-semibold">
+                                        v{{ v.version_number }}
+                                    </td>
+                                    <td class="px-3 py-3">
+                                        {{ formatDate(v.effective_from) }}
+                                    </td>
+                                    <td class="px-3 py-3">
+                                        {{ v.state ?? '—' }}
+                                    </td>
+                                    <td class="px-3 py-3">
+                                        <button
+                                            v-if="v.state === 'draft'"
+                                            type="button"
+                                            :disabled="formationFreeze.processing"
+                                            class="min-h-9 border border-slate-300 px-3 text-xs font-semibold disabled:opacity-50"
+                                            @click="freezeFormationAuthority(v)"
+                                        >
+                                            Freeze for Formation Authority
+                                        </button>
+                                        <button
+                                            v-else-if="v.state === 'ready_for_review'"
+                                            type="button"
+                                            :disabled="formationEstablish.processing"
+                                            class="min-h-9 bg-slate-950 px-3 text-xs font-semibold text-white disabled:opacity-50"
+                                            @click="establishFormationAuthority(v)"
+                                        >
+                                            Establish Temporary Formation Authority
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p
+                        v-if="firstFormError(formationFreeze.errors)"
+                        class="mt-3 text-sm text-red-700"
+                    >
+                        {{ firstFormError(formationFreeze.errors) }}
+                    </p>
+                    <p
+                        v-if="firstFormError(formationEstablish.errors)"
+                        class="mt-3 text-sm text-red-700"
+                    >
+                        {{ firstFormError(formationEstablish.errors) }}
+                    </p>
+                </div>
             </section>
 
             <section class="mt-6">

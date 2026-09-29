@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Presentation\Http\Controllers\Governance;
 
+use App\Application\Governance\EstablishInitialFormationAuthority;
+use App\Application\Governance\FormationAuthorityPolicyWorkflow;
 use App\Application\Governance\GetGovernanceRulesWorkspace;
 use App\Application\Governance\GovernanceAuthorityChangeWorkflow;
 use App\Application\Governance\GovernanceCharterWorkflow;
@@ -12,6 +14,7 @@ use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use Carbon\CarbonImmutable;
+use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -37,6 +40,98 @@ final class GovernanceRulesController
         return Inertia::render('Governance/Rules', [
             'governanceRules' => $payload,
         ]);
+    }
+
+    public function createFormationAuthorityPolicy(
+        Request $request,
+        FormationAuthorityPolicyWorkflow $workflow,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $data = $request->validate([
+            'effective_from' => ['required', 'date'],
+            'rules' => ['required', 'array', 'min:1', 'max:100'],
+            'rules.*.decision_type' => ['required', 'string', 'max:160'],
+            'rules.*.decision_method' => ['required', Rule::in([
+                'approval',
+                'vote',
+                'approval_and_vote',
+            ])],
+            'rules.*.required_approvals' => ['required', 'integer', 'min:0', 'max:999'],
+            'rules.*.required_votes' => ['required', 'integer', 'min:0', 'max:999'],
+            'rules.*.quorum_count' => ['required', 'integer', 'min:1', 'max:999'],
+            'rules.*.signature_required' => ['required', 'boolean'],
+            'rules.*.reserved_matter' => ['required', 'boolean'],
+            'rules.*.amount_min' => ['nullable', 'numeric', 'min:0'],
+            'rules.*.amount_max' => ['nullable', 'numeric', 'min:0'],
+            'rules.*.actors' => ['required', 'array', 'min:1', 'max:100'],
+            'rules.*.actors.*.membership_id' => ['required', 'uuid'],
+            'rules.*.actors.*.capacity' => ['required', 'string', 'max:120'],
+            'rules.*.actors.*.can_approve' => ['required', 'boolean'],
+            'rules.*.actors.*.can_vote' => ['required', 'boolean'],
+            'rules.*.actors.*.can_sign' => ['required', 'boolean'],
+        ]);
+
+        $created = $this->validated(
+            fn () => $workflow->createDraft(
+                $user,
+                $business,
+                $data['rules'],
+                CarbonImmutable::parse($data['effective_from']),
+            ),
+            'formation_authority',
+        );
+
+        abort_if($created === null, 404);
+
+        return back();
+    }
+
+    public function freezeFormationAuthorityPolicy(
+        Request $request,
+        string $formalRecordVersion,
+        FormationAuthorityPolicyWorkflow $workflow,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $data = $request->validate([
+            'expected_revision' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $frozen = $this->validated(
+            fn () => $workflow->freezeForBootstrap(
+                $user,
+                $business,
+                $formalRecordVersion,
+                (int) $data['expected_revision'],
+            ),
+            'formation_authority',
+        );
+
+        abort_if($frozen === null, 404);
+
+        return back();
+    }
+
+    public function establishFormationAuthority(
+        Request $request,
+        string $formalRecordVersion,
+        EstablishInitialFormationAuthority $establish,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $established = $this->validated(
+            fn () => $establish->execute(
+                $user,
+                $business,
+                $formalRecordVersion,
+            ),
+            'formation_authority',
+        );
+
+        abort_if($established === null, 404);
+
+        return back();
     }
 
     public function createDraft(
@@ -322,7 +417,7 @@ final class GovernanceRulesController
     {
         try {
             return $callback();
-        } catch (InvalidArgumentException|RuntimeException $exception) {
+        } catch (DomainException|InvalidArgumentException|RuntimeException $exception) {
             throw ValidationException::withMessages([
                 $field => $exception->getMessage(),
             ]);

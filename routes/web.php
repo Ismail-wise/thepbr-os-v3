@@ -619,6 +619,21 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
             )->name('governance.rules.index');
 
             Route::post(
+                '/governance/rules/formation-authority',
+                [GovernanceRulesController::class, 'createFormationAuthorityPolicy'],
+            )->name('governance.rules.formation-authority.store');
+
+            Route::post(
+                '/governance/rules/formation-authority/{formalRecordVersion}/freeze',
+                [GovernanceRulesController::class, 'freezeFormationAuthorityPolicy'],
+            )->name('governance.rules.formation-authority.freeze');
+
+            Route::post(
+                '/governance/rules/formation-authority/{formalRecordVersion}/establish',
+                [GovernanceRulesController::class, 'establishFormationAuthority'],
+            )->name('governance.rules.formation-authority.establish');
+
+            Route::post(
                 '/governance/rules/charter',
                 [GovernanceRulesController::class, 'createDraft'],
             )->name('governance.rules.charter.store');
