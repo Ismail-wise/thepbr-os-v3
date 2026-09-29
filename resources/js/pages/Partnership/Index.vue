@@ -54,6 +54,7 @@ type Contribution = {
     reviewed_value: string | null;
     approved_value: string | null;
     accepted_value: string | null;
+    valuation_method: string | null;
     revision: number;
 };
 
