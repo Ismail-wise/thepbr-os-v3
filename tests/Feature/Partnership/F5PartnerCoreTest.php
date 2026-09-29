@@ -12,6 +12,7 @@ use App\Domain\Businesses\Enums\BusinessOriginType;
 use App\Domain\Businesses\Enums\BusinessStage;
 use App\Domain\Identity\Enums\AccountStatus;
 use App\Domain\Partnership\Enums\DueDiligenceStatus;
+use App\Domain\Records\Exceptions\StaleRevision;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use DateTimeImmutable;
 use Illuminate\Database\QueryException;
@@ -165,7 +166,7 @@ final class F5PartnerCoreTest extends TestCase
 
         $fields = $this->ddFields();
 
-        $case = $workflow->save(
+        $draft = $workflow->save(
             $user,
             $business,
             $partner['id'],
@@ -176,34 +177,89 @@ final class F5PartnerCoreTest extends TestCase
             $fields,
         );
 
-        $case = $workflow->save(
+        self::assertNotNull($draft);
+        self::assertSame('draft', $draft['status']);
+        self::assertSame(1, $draft['revision']);
+
+        $this->assertDatabaseHas(
+            'partner_due_diligence_cases',
+            [
+                'id' => $draft['id'],
+                'business_id' => $business->getKey(),
+                'partner_id' => $partner['id'],
+                'status' => 'draft',
+                'revision' => 1,
+            ],
+        );
+
+        $inReview = $workflow->save(
             $user,
             $business,
             $partner['id'],
-            $case['id'],
+            $draft['id'],
             1,
             DueDiligenceStatus::InReview,
             'moderate',
             $fields,
         );
 
-        $case = $workflow->save(
+        self::assertNotNull($inReview);
+        self::assertSame($draft['id'], $inReview['id']);
+        self::assertSame('in_review', $inReview['status']);
+        self::assertSame(2, $inReview['revision']);
+
+        try {
+            $workflow->save(
+                $user,
+                $business,
+                $partner['id'],
+                $inReview['id'],
+                2,
+                DueDiligenceStatus::Completed,
+                null,
+                $fields,
+            );
+
+            self::fail(
+                'Completed Due Diligence must require a risk rating.',
+            );
+        } catch (\InvalidArgumentException $exception) {
+            self::assertStringContainsString(
+                'requires a risk rating',
+                $exception->getMessage(),
+            );
+        }
+
+        $this->assertDatabaseHas(
+            'partner_due_diligence_cases',
+            [
+                'id' => $inReview['id'],
+                'status' => 'in_review',
+                'risk_rating' => 'moderate',
+                'revision' => 2,
+            ],
+        );
+
+        $completed = $workflow->save(
             $user,
             $business,
             $partner['id'],
-            $case['id'],
+            $inReview['id'],
             2,
             DueDiligenceStatus::Completed,
             'moderate',
             $fields,
         );
 
-        self::assertSame('completed', $case['status']);
+        self::assertNotNull($completed);
+        self::assertSame($draft['id'], $completed['id']);
+        self::assertSame('completed', $completed['status']);
+        self::assertSame(3, $completed['revision']);
 
         $this->expectException(QueryException::class);
 
         DB::table('partner_due_diligence_cases')
-            ->where('id', $case['id'])
+            ->where('id', $completed['id'])
             ->update([
                 'notes' => 'Silent rewrite attempt.',
                 'revision' => 4,
@@ -273,6 +329,198 @@ final class F5PartnerCoreTest extends TestCase
         );
 
         self::assertNull($missing);
+    }
+
+    public function test_due_diligence_rejects_stale_revision_without_mutation(): void
+    {
+        $user = $this->activeUser(
+            'f5-dd-stale@example.test',
+        );
+
+        $business = $this->app
+            ->make(CreateBusiness::class)
+            ->handle(
+                $user,
+                'F5 DD Stale',
+                BusinessOriginType::StartedThroughPbr,
+                BusinessStage::Planning,
+                'USD',
+            );
+
+        $partner = $this->app
+            ->make(PartnerDirectory::class)
+            ->create(
+                $user,
+                $business,
+                'DD Stale Partner',
+                null,
+                null,
+                null,
+            );
+
+        $workflow = $this->app->make(
+            DueDiligenceWorkflow::class,
+        );
+
+        $draft = $workflow->save(
+            $user,
+            $business,
+            $partner['id'],
+            null,
+            0,
+            DueDiligenceStatus::Draft,
+            null,
+            $this->ddFields(),
+        );
+
+        self::assertNotNull($draft);
+
+        try {
+            $workflow->save(
+                $user,
+                $business,
+                $partner['id'],
+                $draft['id'],
+                0,
+                DueDiligenceStatus::InReview,
+                'moderate',
+                $this->ddFields(),
+            );
+
+            self::fail(
+                'A stale Due Diligence revision must be rejected.',
+            );
+        } catch (StaleRevision $exception) {
+            self::assertSame(
+                0,
+                $exception->expectedRevision,
+            );
+            self::assertSame(
+                1,
+                $exception->actualRevision,
+            );
+        }
+
+        $this->assertDatabaseHas(
+            'partner_due_diligence_cases',
+            [
+                'id' => $draft['id'],
+                'business_id' => $business->getKey(),
+                'status' => 'draft',
+                'revision' => 1,
+            ],
+        );
+    }
+
+    public function test_due_diligence_case_identity_is_business_scoped(): void
+    {
+        $user = $this->activeUser(
+            'f5-dd-isolation@example.test',
+        );
+
+        $createBusiness = $this->app->make(
+            CreateBusiness::class,
+        );
+
+        $businessA = $createBusiness->handle(
+            $user,
+            'F5 DD Business A',
+            BusinessOriginType::StartedThroughPbr,
+            BusinessStage::Planning,
+            'USD',
+        );
+
+        $businessB = $createBusiness->handle(
+            $user,
+            'F5 DD Business B',
+            BusinessOriginType::StartedThroughPbr,
+            BusinessStage::Planning,
+            'USD',
+        );
+
+        $directory = $this->app->make(
+            PartnerDirectory::class,
+        );
+
+        $partnerA = $directory->create(
+            $user,
+            $businessA,
+            'DD Business A Partner',
+            null,
+            null,
+            null,
+        );
+
+        $partnerB = $directory->create(
+            $user,
+            $businessB,
+            'DD Business B Partner',
+            null,
+            null,
+            null,
+        );
+
+        $workflow = $this->app->make(
+            DueDiligenceWorkflow::class,
+        );
+
+        $caseA = $workflow->save(
+            $user,
+            $businessA,
+            $partnerA['id'],
+            null,
+            0,
+            DueDiligenceStatus::Draft,
+            null,
+            $this->ddFields(),
+        );
+
+        self::assertNotNull($caseA);
+
+        $crossBusinessCase = $workflow->save(
+            $user,
+            $businessB,
+            $partnerB['id'],
+            $caseA['id'],
+            1,
+            DueDiligenceStatus::InReview,
+            'moderate',
+            $this->ddFields(),
+        );
+
+        self::assertNull($crossBusinessCase);
+
+        $crossBusinessPartner = $workflow->save(
+            $user,
+            $businessA,
+            $partnerB['id'],
+            null,
+            0,
+            DueDiligenceStatus::Draft,
+            null,
+            $this->ddFields(),
+        );
+
+        self::assertNull($crossBusinessPartner);
+
+        $this->assertDatabaseHas(
+            'partner_due_diligence_cases',
+            [
+                'id' => $caseA['id'],
+                'business_id' => $businessA->getKey(),
+                'partner_id' => $partnerA['id'],
+                'status' => 'draft',
+                'revision' => 1,
+            ],
+        );
+
+        $this->assertDatabaseMissing(
+            'partner_due_diligence_cases',
+            [
+                'id' => $caseA['id'],
+                'business_id' => $businessB->getKey(),
+            ],
+        );
     }
 
     public function test_partner_dynamics_is_reference_only_and_does_not_create_rights(): void

@@ -6,7 +6,6 @@ use App\Application\Businesses\CreateBusiness;
 use App\Application\Identity\ChangeAccountStatus;
 use App\Application\Identity\ProvisionAccount;
 use App\Application\Partnership\ContributionWorkflow;
-use App\Application\Partnership\DueDiligenceWorkflow;
 use App\Application\Partnership\PartnerDirectory;
 use App\Application\Partnership\PartnerDynamicsReference;
 use App\Domain\Businesses\Enums\BusinessOriginType;
@@ -14,7 +13,6 @@ use App\Domain\Businesses\Enums\BusinessStage;
 use App\Domain\Identity\Enums\AccountStatus;
 use App\Domain\Identity\Enums\LanguageMode;
 use App\Domain\Partnership\Enums\ContributionType;
-use App\Domain\Partnership\Enums\DueDiligenceStatus;
 use App\Domain\Partnership\ValueObjects\ContributionValue;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use Carbon\CarbonImmutable;
@@ -140,65 +138,6 @@ if ($partner === null) {
 }
 
 $partnerId = (string) $partner['id'];
-
-$ddFields = [
-    'identity_legal_info' => 'Identity prepared for UAT.',
-    'background_summary' => 'Background prepared for UAT.',
-    'business_experience' => 'SME operating experience.',
-    'financial_capacity' => 'Prepared review state.',
-    'reputation' => 'Prepared review state.',
-    'existing_business_interests' => null,
-    'conflict_of_interest' => 'No known conflict in fixture.',
-    'time_commitment' => 'Available for agreed commitment.',
-    'legal_regulatory_check' => 'Pending final human review.',
-    'notes' => 'Prepared deterministic DD.',
-];
-
-$ddDraft = $app
-    ->make(DueDiligenceWorkflow::class)
-    ->save(
-        $user,
-        $business,
-        $partnerId,
-        null,
-        0,
-        DueDiligenceStatus::Draft,
-        null,
-        $ddFields,
-    );
-
-if (
-    $ddDraft === null
-    || ($ddDraft['status'] ?? null) !== DueDiligenceStatus::Draft->value
-    || (int) ($ddDraft['revision'] ?? 0) !== 1
-) {
-    throw new RuntimeException(
-        'F5 Due Diligence Draft fixture creation failed.',
-    );
-}
-
-$dd = $app
-    ->make(DueDiligenceWorkflow::class)
-    ->save(
-        $user,
-        $business,
-        $partnerId,
-        (string) $ddDraft['id'],
-        (int) $ddDraft['revision'],
-        DueDiligenceStatus::InReview,
-        'moderate',
-        $ddFields,
-    );
-
-if (
-    $dd === null
-    || ($dd['status'] ?? null) !== DueDiligenceStatus::InReview->value
-    || (int) ($dd['revision'] ?? 0) !== 2
-) {
-    throw new RuntimeException(
-        'F5 Due Diligence In Review fixture transition failed.',
-    );
-}
 
 $pd = $app
     ->make(PartnerDynamicsReference::class)

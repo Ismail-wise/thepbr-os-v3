@@ -1,12 +1,30 @@
 <script setup lang="ts">
 import { Link, useForm } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { useI18n } from '../i18n/useI18n';
 
 type Partner = {
     id: string;
     display_name: string;
     revision: number;
+};
+
+type DueDiligence = {
+    id: string;
+    partner_id: string;
+    status: string;
+    risk_rating: string | null;
+    revision: number;
+    identity_legal_info: string | null;
+    background_summary: string | null;
+    business_experience: string | null;
+    financial_capacity: string | null;
+    reputation: string | null;
+    existing_business_interests: string | null;
+    conflict_of_interest: string | null;
+    time_commitment: string | null;
+    legal_regulatory_check: string | null;
+    notes: string | null;
 };
 
 type Contribution = {
@@ -53,6 +71,7 @@ const props = defineProps<{
     partnership: {
         permissions: Record<string, boolean>;
         partners: Partner[];
+        due_diligence: DueDiligence[];
         contributions: Contribution[];
         contribution_submissions: Submission[];
         ownership_scenarios: Scenario[];
@@ -67,6 +86,18 @@ const { t } = useI18n();
 const partnerOptions = computed(() => props.partnership.partners);
 const contributionOptions = computed(() => props.partnership.contributions);
 const scenarioOptions = computed(() => props.partnership.ownership_scenarios);
+
+const latestDueDiligence = computed(() => {
+    const map = new Map<string, DueDiligence>();
+
+    for (const row of props.partnership.due_diligence) {
+        if (!map.has(row.partner_id)) {
+            map.set(row.partner_id, row);
+        }
+    }
+
+    return map;
+});
 
 const invite = useForm({
     partner_id: '',
@@ -91,6 +122,75 @@ const dd = useForm({
     legal_regulatory_check: '',
     notes: '',
 });
+
+const clearDueDiligenceCase = () => {
+    dd.case_id = '';
+    dd.expected_revision = 0;
+    dd.status = 'draft';
+    dd.risk_rating = '';
+    dd.identity_legal_info = '';
+    dd.background_summary = '';
+    dd.business_experience = '';
+    dd.financial_capacity = '';
+    dd.reputation = '';
+    dd.existing_business_interests = '';
+    dd.conflict_of_interest = '';
+    dd.time_commitment = '';
+    dd.legal_regulatory_check = '';
+    dd.notes = '';
+};
+
+const hydrateDueDiligenceCase = (
+    current: DueDiligence | null,
+) => {
+    dd.clearErrors();
+
+    if (
+        current === null
+        || current.status === 'completed'
+        || current.status === 'blocked'
+    ) {
+        clearDueDiligenceCase();
+
+        return;
+    }
+
+    dd.case_id = current.id;
+    dd.expected_revision = current.revision;
+    dd.status = current.status;
+    dd.risk_rating = current.risk_rating ?? '';
+    dd.identity_legal_info = current.identity_legal_info ?? '';
+    dd.background_summary = current.background_summary ?? '';
+    dd.business_experience = current.business_experience ?? '';
+    dd.financial_capacity = current.financial_capacity ?? '';
+    dd.reputation = current.reputation ?? '';
+    dd.existing_business_interests =
+        current.existing_business_interests ?? '';
+    dd.conflict_of_interest = current.conflict_of_interest ?? '';
+    dd.time_commitment = current.time_commitment ?? '';
+    dd.legal_regulatory_check =
+        current.legal_regulatory_check ?? '';
+    dd.notes = current.notes ?? '';
+};
+
+const selectedDueDiligence = computed(
+    () => latestDueDiligence.value.get(dd.partner_id) ?? null,
+);
+
+watch(
+    [() => dd.partner_id, selectedDueDiligence],
+    ([partnerId, current]) => {
+        if (!partnerId) {
+            dd.clearErrors();
+            clearDueDiligenceCase();
+
+            return;
+        }
+
+        hydrateDueDiligenceCase(current);
+    },
+    { immediate: true },
+);
 
 const dynamics = useForm({
     partner_id: '',
@@ -527,7 +627,8 @@ const submitOwnershipEffect = () => {
                             type="number"
                             min="0"
                             required
-                            class="mt-1 min-h-11 w-full border border-slate-300 px-3"
+                            readonly
+                            class="mt-1 min-h-11 w-full border border-slate-300 bg-slate-50 px-3 text-slate-700"
                         />
                     </label>
 

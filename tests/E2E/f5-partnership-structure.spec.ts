@@ -105,9 +105,6 @@ test(
                 }),
             })
             .filter({
-                hasText: 'in_review',
-            })
-            .filter({
                 hasText: 'visionary',
             });
 
@@ -120,7 +117,7 @@ test(
         ).toBeVisible();
 
         await expect(
-            partnerRow.getByText('in_review', {
+            partnerRow.getByText('Not started', {
                 exact: true,
             }),
         ).toBeVisible();
@@ -136,6 +133,193 @@ test(
                 'PartnerDynamics is a reference for partnership understanding. It never automatically determines equity, governance authority or system permissions.',
                 { exact: true },
             ),
+        ).toBeVisible();
+
+        const workflow = page.getByRole('region', {
+            name: 'Workflow Actions',
+        });
+
+        const ddSummary = workflow
+            .locator('summary')
+            .filter({
+                hasText: /^Due Diligence$/,
+            });
+
+        const ddWorkflow = ddSummary.locator('..');
+
+        if ((await ddWorkflow.getAttribute('open')) === null) {
+            await ddSummary.click();
+        }
+
+        const ddPartner = ddWorkflow.getByLabel('Partner', {
+            exact: true,
+        });
+        const ddStatus = ddWorkflow.getByLabel('Status', {
+            exact: true,
+        });
+        const ddRisk = ddWorkflow.getByLabel('Risk', {
+            exact: true,
+        });
+        const ddRevision = ddWorkflow.getByLabel('Revision', {
+            exact: true,
+        });
+        const ddIdentity = ddWorkflow.getByLabel(
+            'Identity / legal information',
+            { exact: true },
+        );
+        const ddBackground = ddWorkflow.getByLabel(
+            'Background summary',
+            { exact: true },
+        );
+        const ddSubmit = ddWorkflow.getByRole('button', {
+            name: 'Due Diligence',
+            exact: true,
+        });
+
+        await ddPartner.selectOption({
+            label: PARTNER,
+        });
+
+        await expect(ddStatus).toHaveValue('draft');
+        await expect(ddRevision).toHaveValue('0');
+        await expect(ddRevision).toHaveAttribute('readonly', '');
+
+        await ddIdentity.fill('Browser identity evidence');
+        await ddBackground.fill('Browser background evidence');
+
+        const draftRequestPromise = page.waitForRequest(
+            (request) =>
+                request.method() === 'PUT'
+                && /\/partnership\/partners\/[^/]+\/due-diligence$/.test(
+                    new URL(request.url()).pathname,
+                ),
+        );
+
+        await ddSubmit.click();
+
+        const draftRequest = await draftRequestPromise;
+        const draftPayload = draftRequest.postDataJSON() as {
+            case_id?: string | null;
+            expected_revision: number;
+            status: string;
+        };
+
+        expect(draftPayload.case_id ?? '').toBe('');
+        expect(draftPayload.expected_revision).toBe(0);
+        expect(draftPayload.status).toBe('draft');
+
+        await expect(
+            partnerRow.getByText('draft', {
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await page.reload();
+
+        if ((await ddWorkflow.getAttribute('open')) === null) {
+            await ddSummary.click();
+        }
+
+        await ddPartner.selectOption({
+            label: PARTNER,
+        });
+
+        await expect(ddRevision).toHaveValue('1');
+        await expect(ddStatus).toHaveValue('draft');
+        await expect(ddIdentity).toHaveValue('Browser identity evidence');
+        await expect(ddBackground).toHaveValue(
+            'Browser background evidence',
+        );
+
+        await ddStatus.selectOption('in_review');
+        await ddRisk.selectOption('moderate');
+
+        const inReviewRequestPromise = page.waitForRequest(
+            (request) =>
+                request.method() === 'PUT'
+                && /\/partnership\/partners\/[^/]+\/due-diligence$/.test(
+                    new URL(request.url()).pathname,
+                ),
+        );
+
+        await ddSubmit.click();
+
+        const inReviewRequest = await inReviewRequestPromise;
+        const inReviewPayload = inReviewRequest.postDataJSON() as {
+            case_id: string;
+            expected_revision: number;
+            status: string;
+            risk_rating: string;
+        };
+
+        expect(inReviewPayload.case_id).toMatch(
+            /^[0-9a-f-]{36}$/i,
+        );
+        expect(inReviewPayload.expected_revision).toBe(1);
+        expect(inReviewPayload.status).toBe('in_review');
+        expect(inReviewPayload.risk_rating).toBe('moderate');
+
+        const dueDiligenceCaseId = inReviewPayload.case_id;
+
+        await expect(
+            partnerRow.getByText('in_review', {
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await page.reload();
+
+        if ((await ddWorkflow.getAttribute('open')) === null) {
+            await ddSummary.click();
+        }
+
+        await ddPartner.selectOption({
+            label: PARTNER,
+        });
+
+        await expect(ddRevision).toHaveValue('2');
+        await expect(ddStatus).toHaveValue('in_review');
+        await expect(ddRisk).toHaveValue('moderate');
+        await expect(ddIdentity).toHaveValue('Browser identity evidence');
+        await expect(ddBackground).toHaveValue(
+            'Browser background evidence',
+        );
+
+        await ddStatus.selectOption('completed');
+
+        const completedRequestPromise = page.waitForRequest(
+            (request) =>
+                request.method() === 'PUT'
+                && /\/partnership\/partners\/[^/]+\/due-diligence$/.test(
+                    new URL(request.url()).pathname,
+                ),
+        );
+
+        await ddSubmit.click();
+
+        const completedRequest = await completedRequestPromise;
+        const completedPayload = completedRequest.postDataJSON() as {
+            case_id: string;
+            expected_revision: number;
+            status: string;
+            risk_rating: string;
+        };
+
+        expect(completedPayload.case_id).toBe(dueDiligenceCaseId);
+        expect(completedPayload.expected_revision).toBe(2);
+        expect(completedPayload.status).toBe('completed');
+        expect(completedPayload.risk_rating).toBe('moderate');
+
+        await expect(
+            partnerRow.getByText('completed', {
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            partnerRow.getByText('Risk: moderate', {
+                exact: true,
+            }),
         ).toBeVisible();
 
         await page
@@ -172,10 +356,6 @@ test(
                 { exact: true },
             ),
         ).toBeVisible();
-
-        const workflow = page.getByRole('region', {
-            name: 'Workflow Actions',
-        });
 
         const contributionSummary = workflow
             .locator('summary')

@@ -20,6 +20,16 @@ type DueDiligence = {
     status: string;
     risk_rating: string | null;
     revision: number;
+    identity_legal_info: string | null;
+    background_summary: string | null;
+    business_experience: string | null;
+    financial_capacity: string | null;
+    reputation: string | null;
+    existing_business_interests: string | null;
+    conflict_of_interest: string | null;
+    time_commitment: string | null;
+    legal_regulatory_check: string | null;
+    notes: string | null;
 };
 
 type PartnerDynamics = {
