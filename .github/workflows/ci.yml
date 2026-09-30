@@ -361,13 +361,38 @@ jobs:
             exit 1
           fi
 
-          listener_lines="$(
-            ss -H -ltnp 2>/dev/null |
-              grep -F "pid=${minio_pid}," || true
-          )"
+          listener_lines=""
+          listener_ready=0
 
-          if [[ -z "$listener_lines" ]]; then
-            echo "MinIO CI listener inventory is empty." >&2
+          for attempt in $(seq 1 30); do
+            if ! kill -0 "$minio_pid" 2>/dev/null; then
+              echo "MinIO CI service exited while waiting for listeners." >&2
+              cat "$minio_log" || true
+              exit 1
+            fi
+
+            listener_lines="$(
+              ss -H -ltnp 2>/dev/null |
+                grep -F "pid=${minio_pid}," || true
+            )"
+
+            if [[ -n "$listener_lines" ]] &&
+              printf '%s\n' "$listener_lines" |
+                awk '$4 == "127.0.0.1:9010" { found=1 } END { exit(found ? 0 : 1) }' &&
+              printf '%s\n' "$listener_lines" |
+                awk '$4 == "127.0.0.1:9011" { found=1 } END { exit(found ? 0 : 1) }'
+            then
+              listener_ready=1
+              break
+            fi
+
+            sleep 1
+          done
+
+          if [[ "$listener_ready" != "1" ]]; then
+            echo "MinIO CI required listeners did not become ready." >&2
+            printf '%s\n' "$listener_lines"
+            cat "$minio_log" || true
             exit 1
           fi
 
