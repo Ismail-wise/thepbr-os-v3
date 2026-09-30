@@ -351,10 +351,12 @@ test(
             .click();
 
         await expect(
-            page.getByText(
-                'Browser optional-date regression',
-                { exact: true },
-            ),
+            page
+                .getByRole('main')
+                .getByText(
+                    'Browser optional-date regression',
+                    { exact: true },
+                ),
         ).toBeVisible();
 
         await expect(intendedLegalClosure).toHaveValue('');
