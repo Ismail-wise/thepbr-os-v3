@@ -182,6 +182,24 @@ test(
             }),
         ).toBeVisible();
 
+        const rewardPolicy = page
+            .locator('details')
+            .filter({
+                has: page.getByText(
+                    'Create Reward Policy Draft / Amendment',
+                    { exact: true },
+                ),
+            });
+
+        await rewardPolicy.locator('summary').click();
+
+        await expect(
+            rewardPolicy.getByLabel(
+                'Target cash buffer (minor units)',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
         const simulatorLabels = [
             'Approved net profit (minor units)',
             'Tax due (minor units)',
@@ -199,6 +217,13 @@ test(
 
         await setLanguageMode(page, 'my');
 
+        await expect(
+            rewardPolicy.getByLabel(
+                'ရည်မှန်းထားသော Cash buffer (minor units)',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
         for (const label of [
             'အတည်ပြုပြီး အသားတင်အမြတ် (minor units)',
             'ပေးရန်အခွန် (minor units)',
@@ -213,6 +238,13 @@ test(
         }
 
         await setLanguageMode(page, 'mixed');
+
+        await expect(
+            rewardPolicy.getByLabel(
+                'Target cash buffer · ရည်မှန်းထားသော Cash buffer (minor units)',
+                { exact: true },
+            ),
+        ).toBeVisible();
 
         for (const label of [
             'Approved net profit · အသားတင်အမြတ် (minor units)',
