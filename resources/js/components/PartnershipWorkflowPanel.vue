@@ -423,9 +423,18 @@ const submitContributionGovernance = () => {
 const submitContributionReview = () => {
     if (!contributionReview.submission_id) return;
 
+    const requestedTarget = contributionReview.target;
+
     contributionReview.post(
         `/partnership/contribution-submissions/${contributionReview.submission_id}/content-review`,
-        { preserveScroll: true },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                if (requestedTarget === 'under_review') {
+                    contributionReview.target = 'approved';
+                }
+            },
+        },
     );
 };
 

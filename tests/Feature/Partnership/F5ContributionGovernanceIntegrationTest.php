@@ -18,6 +18,7 @@ use App\Domain\Governance\Enums\DecisionMethod;
 use App\Domain\Governance\ValueObjects\DecisionType;
 use App\Domain\Partnership\Enums\ContributionType;
 use App\Domain\Partnership\ValueObjects\ContributionValue;
+use App\Domain\Records\Enums\FormalRecordState;
 use App\Infrastructure\Persistence\Eloquent\Access\AccessPolicy;
 use App\Infrastructure\Persistence\Eloquent\Access\Permission;
 use App\Infrastructure\Persistence\Eloquent\Access\PermissionGrant;
@@ -243,6 +244,90 @@ final class F5ContributionGovernanceIntegrationTest extends TestCase
             DB::table('contribution_governance_submissions')
                 ->where('id', $submission['id'])
                 ->value('content_hash'),
+        );
+    }
+
+    public function test_duplicate_contribution_content_review_returns_validation_error_without_appending_history(): void
+    {
+        [$user, $business, $membership] =
+            $this->governanceContext('duplicate-content-review');
+
+        $contributionId = $this->reviewedContributionWithEvidence(
+            $user,
+            $business,
+            $membership,
+            'Duplicate content review Contribution',
+        );
+
+        $workflow = $this->app->make(
+            ContributionWorkflow::class,
+        );
+
+        $submission = $workflow->submitGovernance(
+            $user,
+            $business,
+            $contributionId,
+            'approval',
+        );
+
+        self::assertNotNull($submission);
+
+        self::assertTrue(
+            $workflow->advanceContentReview(
+                $user,
+                $business,
+                $submission['id'],
+                FormalRecordState::UnderReview,
+            ),
+        );
+
+        $transitionsBefore = DB::table(
+            'record_version_state_transitions',
+        )
+            ->where(
+                'formal_record_version_id',
+                $submission['formal_record_version_id'],
+            )
+            ->count();
+
+        $this
+            ->actingAs($user)
+            ->withSession([
+                'current_business_id' => $business->getKey(),
+            ])
+            ->from('/partnership')
+            ->post(
+                '/partnership/contribution-submissions/'
+                    .$submission['id']
+                    .'/content-review',
+                [
+                    'target' => 'under_review',
+                ],
+            )
+            ->assertRedirect('/partnership')
+            ->assertSessionHasErrors(
+                'contribution_governance',
+            );
+
+        self::assertSame(
+            $transitionsBefore,
+            DB::table('record_version_state_transitions')
+                ->where(
+                    'formal_record_version_id',
+                    $submission['formal_record_version_id'],
+                )
+                ->count(),
+        );
+
+        self::assertSame(
+            'under_review',
+            DB::table('record_version_state_transitions')
+                ->where(
+                    'formal_record_version_id',
+                    $submission['formal_record_version_id'],
+                )
+                ->orderByDesc('sequence')
+                ->value('to_state'),
         );
     }
 

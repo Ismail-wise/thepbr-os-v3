@@ -10,6 +10,7 @@ use App\Application\Partnership\OwnershipWorkflow;
 use App\Domain\Partnership\Enums\ContributionType;
 use App\Domain\Partnership\ValueObjects\ContributionValue;
 use App\Domain\Records\Enums\FormalRecordState;
+use App\Domain\Records\Exceptions\InvalidWorkflowTransition;
 use App\Domain\Records\Exceptions\StaleRevision;
 use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
@@ -694,7 +695,7 @@ final class PartnershipWorkflowController
     ): mixed {
         try {
             return $callback();
-        } catch (StaleRevision|InvalidArgumentException $exception) {
+        } catch (StaleRevision|InvalidWorkflowTransition|InvalidArgumentException $exception) {
             throw ValidationException::withMessages([
                 $field => $exception->getMessage(),
             ]);
