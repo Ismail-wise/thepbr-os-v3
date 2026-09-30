@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import OptionalTemporalInput from '../../components/OptionalTemporalInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
@@ -547,7 +548,7 @@ const statusClass = (status: string): string => {
 
                         <label class="space-y-1 text-sm">
                             <span class="font-medium text-slate-700">{{ t('partnerChanges.effectiveFrom') }}</span>
-                            <input v-model="createForm.effective_from" type="datetime-local" class="min-h-11 w-full rounded-md border-slate-300 text-sm" />
+                            <OptionalTemporalInput v-model="createForm.effective_from" type="datetime-local" class="min-h-11 w-full rounded-md border-slate-300 text-sm" />
                         </label>
 
                         <template v-if="isOwnershipChange">

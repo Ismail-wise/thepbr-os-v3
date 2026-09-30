@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import OptionalTemporalInput from '../../components/OptionalTemporalInput.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
 import { useI18n } from '../../i18n/useI18n';
@@ -672,7 +673,7 @@ const formatDate = (value: string | null | undefined) =>
                             <input v-model="charter.effective_from" type="date" required class="mt-1 min-h-11 w-full border border-slate-300 px-3" />
                         </label>
                         <label class="text-sm font-medium">Review due
-                            <input v-model="charter.review_due_at" type="date" class="mt-1 min-h-11 w-full border border-slate-300 px-3" />
+                            <OptionalTemporalInput v-model="charter.review_due_at" type="date" class="mt-1 min-h-11 w-full border border-slate-300 px-3" />
                         </label>
                         <label class="text-sm font-medium">Governance owner
                             <select v-model="charter.governance_owner_membership_id" class="mt-1 min-h-11 w-full border border-slate-300 px-3">
@@ -816,7 +817,7 @@ const formatDate = (value: string | null | undefined) =>
                         <select v-model="delegation.delegate_membership_id" class="min-h-11 border border-slate-300 px-3"><option v-for="m in governanceRules.memberships" :key="m.id" :value="m.id">Delegate · {{ m.email }}</option></select>
                         <input v-model="delegation.decision_type" required class="min-h-11 border border-slate-300 px-3" placeholder="Exact decision type" />
                         <textarea v-model="delegation.scope" required class="border border-slate-300 p-3" placeholder="Scope" />
-                        <div class="grid gap-3 sm:grid-cols-2"><input v-model="delegation.effective_from" type="datetime-local" class="min-h-11 border border-slate-300 px-3" /><input v-model="delegation.expires_at" type="datetime-local" class="min-h-11 border border-slate-300 px-3" /></div>
+                        <div class="grid gap-3 sm:grid-cols-2"><OptionalTemporalInput v-model="delegation.effective_from" type="datetime-local" class="min-h-11 border border-slate-300 px-3" /><OptionalTemporalInput v-model="delegation.expires_at" type="datetime-local" class="min-h-11 border border-slate-300 px-3" /></div>
                     </div>
                     <p v-if="formError(delegation.errors, 'delegation')" class="mt-2 text-sm text-red-700">{{ formError(delegation.errors, 'delegation') }}</p>
                     <button type="submit" class="mt-4 min-h-11 bg-slate-950 px-4 text-sm font-semibold text-white">Freeze Delegation Proposal</button>
@@ -832,7 +833,7 @@ const formatDate = (value: string | null | undefined) =>
                         <textarea v-model="emergency.scope" required class="border border-slate-300 p-3" placeholder="Scope" />
                         <textarea v-model="emergency.reason" required class="border border-slate-300 p-3" placeholder="Reason" />
                         <div class="flex gap-4 text-sm"><label><input v-model="emergency.can_approve" type="checkbox" /> Approve</label><label><input v-model="emergency.can_vote" type="checkbox" /> Vote</label><label><input v-model="emergency.can_sign" type="checkbox" /> Sign</label></div>
-                        <div class="grid gap-3 sm:grid-cols-2"><input v-model="emergency.effective_from" type="datetime-local" class="min-h-11 border border-slate-300 px-3" /><input v-model="emergency.expires_at" type="datetime-local" required class="min-h-11 border border-slate-300 px-3" /></div>
+                        <div class="grid gap-3 sm:grid-cols-2"><OptionalTemporalInput v-model="emergency.effective_from" type="datetime-local" class="min-h-11 border border-slate-300 px-3" /><input v-model="emergency.expires_at" type="datetime-local" required class="min-h-11 border border-slate-300 px-3" /></div>
                     </div>
                     <p v-if="formError(emergency.errors, 'emergency_authority')" class="mt-2 text-sm text-red-700">{{ formError(emergency.errors, 'emergency_authority') }}</p>
                     <button type="submit" class="mt-4 min-h-11 bg-slate-950 px-4 text-sm font-semibold text-white">Freeze Emergency Proposal</button>

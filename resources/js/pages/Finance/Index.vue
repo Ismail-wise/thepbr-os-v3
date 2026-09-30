@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import OptionalTemporalInput from '../../components/OptionalTemporalInput.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, reactive } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
@@ -166,7 +167,7 @@ const pendingCount = computed(() => props.finance.payments.filter((row) => !['co
                         <label class="text-sm font-medium">Finance Owner<select v-model="policy.finance_owner_membership_id" class="mt-1 min-h-11 w-full border border-slate-300 px-3"><option v-for="m in finance.memberships" :key="m.id" :value="m.id">{{ m.email }}</option></select></label>
                         <label class="text-sm font-medium">Control Owner<select v-model="policy.control_owner_membership_id" class="mt-1 min-h-11 w-full border border-slate-300 px-3"><option v-for="m in finance.memberships" :key="m.id" :value="m.id">{{ m.email }}</option></select></label>
                         <label class="text-sm font-medium">Bookkeeping Owner<select v-model="policy.bookkeeping_owner_membership_id" class="mt-1 min-h-11 w-full border border-slate-300 px-3"><option v-for="m in finance.memberships" :key="m.id" :value="m.id">{{ m.email }}</option></select></label>
-                        <label class="text-sm font-medium">Review due<input v-model="policy.review_due_at" type="date" class="mt-1 min-h-11 w-full border border-slate-300 px-3" /></label>
+                        <label class="text-sm font-medium">Review due<OptionalTemporalInput v-model="policy.review_due_at" type="date" class="mt-1 min-h-11 w-full border border-slate-300 px-3" /></label>
                     </div>
                     <div class="grid gap-3 lg:grid-cols-2"><textarea v-model="policy.cash_handling_rules" class="min-h-24 border border-slate-300 p-3 text-sm" placeholder="Cash handling rules" /><textarea v-model="policy.monthly_closing_rules" class="min-h-24 border border-slate-300 p-3 text-sm" placeholder="Monthly closing rules" /><textarea v-model="policy.tax_coordination_rules" class="min-h-24 border border-slate-300 p-3 text-sm" placeholder="Tax coordination rules" /><textarea v-model="policy.audit_review_rules" class="min-h-24 border border-slate-300 p-3 text-sm" placeholder="Audit/review rules" /></div>
 

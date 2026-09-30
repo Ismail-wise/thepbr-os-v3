@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import OptionalTemporalInput from '../../components/OptionalTemporalInput.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, reactive } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
@@ -120,7 +121,7 @@ const formError = (errors: object, key: string) =>
                         <input v-model="schedule.scheduled_at" type="datetime-local" required class="mt-1 min-h-11 w-full border border-slate-300 px-3" />
                     </label>
                     <label class="text-sm font-medium">Notice sent at
-                        <input v-model="schedule.notice_sent_at" type="datetime-local" class="mt-1 min-h-11 w-full border border-slate-300 px-3" />
+                        <OptionalTemporalInput v-model="schedule.notice_sent_at" type="datetime-local" class="mt-1 min-h-11 w-full border border-slate-300 px-3" />
                     </label>
                     <label class="text-sm font-medium">Quorum required
                         <input v-model.number="schedule.quorum_required" type="number" min="1" required class="mt-1 min-h-11 w-full border border-slate-300 px-3" />

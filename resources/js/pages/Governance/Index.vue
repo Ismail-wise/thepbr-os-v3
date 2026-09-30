@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { router, usePage } from '@inertiajs/vue3';
+import OptionalTemporalInput from '../../components/OptionalTemporalInput.vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, reactive } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
 
@@ -218,6 +219,7 @@ const copy = {
             'System access does not create governance authority. Approval, voting and signing remain bound to the captured authority and exact participant.',
         attention: 'Needs Your Attention',
         authority: 'Authority',
+        rulesAuthority: 'Rules & Authority',
         decisions: 'Decision Register',
         signatures: 'Signature Requests',
         actions: 'Actions',
@@ -285,6 +287,7 @@ const copy = {
             'System အသုံးပြုခွင့်ရှိတာနဲ့ အုပ်ချုပ်ဆုံးဖြတ်ပိုင်ခွင့် မရပါ။ Approve, Vote, Sign လုပ်ခွင့်တွေက သိမ်းဆည်းထားတဲ့ Authority Snapshot နဲ့ သက်ဆိုင်ရာ participant ကိုပဲ အခြေခံပါတယ်။',
         attention: 'သင့်အာရုံစိုက်ရန်လိုသည်',
         authority: 'ဆုံးဖြတ်ပိုင်ခွင့်',
+        rulesAuthority: 'စည်းမျဉ်းနှင့် ဆုံးဖြတ်ပိုင်ခွင့်',
         decisions: 'ဆုံးဖြတ်ချက် မှတ်တမ်း',
         signatures: 'လက်မှတ်တောင်းခံမှုများ',
         actions: 'လုပ်ဆောင်ရန်များ',
@@ -352,6 +355,7 @@ const copy = {
             'System access ≠ Governance authority. Approve, Vote, Sign လုပ်ခွင့်က captured Authority Snapshot နဲ့ exact participant ကိုပဲ အခြေခံပါတယ်။',
         attention: 'Needs Your Attention · သင့်အာရုံစိုက်ရန်',
         authority: 'Authority · ဆုံးဖြတ်ပိုင်ခွင့်',
+        rulesAuthority: 'Rules & Authority · စည်းမျဉ်း/ဆုံးဖြတ်ပိုင်ခွင့်',
         decisions: 'Decision Register · ဆုံးဖြတ်ချက်မှတ်တမ်း',
         signatures: 'Signature Requests · လက်မှတ်တောင်းခံမှု',
         actions: 'Actions · လုပ်ဆောင်ရန်',
@@ -522,11 +526,20 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                         </p>
                     </div>
 
-                    <span
-                        class="inline-flex min-h-8 items-center border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800"
-                    >
-                        {{ authorityLabel }}
-                    </span>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <Link
+                            href="/governance/rules"
+                            class="inline-flex min-h-8 items-center border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+                        >
+                            {{ c.rulesAuthority }}
+                        </Link>
+
+                        <span
+                            class="inline-flex min-h-8 items-center border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800"
+                        >
+                            {{ authorityLabel }}
+                        </span>
+                    </div>
                 </div>
 
                 <p
@@ -1128,7 +1141,7 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                             class="min-h-10 border border-slate-300 px-3 text-xs"
                                             :placeholder="c.actionTitle"
                                         />
-                                        <input
+                                        <OptionalTemporalInput
                                             v-model="actionDueDates[decision.id]"
                                             type="date"
                                             class="min-h-10 border border-slate-300 px-3 text-xs"

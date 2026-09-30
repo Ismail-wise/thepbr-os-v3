@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import OptionalTemporalInput from '../../components/OptionalTemporalInput.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
@@ -268,7 +269,7 @@ const formError = (errors: object, key: string) =>
                 <form class="space-y-6 border-t border-slate-200 p-5" @submit.prevent="draft.post('/operations/register', { preserveScroll: true })">
                     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                         <label class="text-sm font-medium">Effective from<input v-model="draft.effective_from" type="date" required class="mt-1 min-h-11 w-full border border-slate-300 px-3" /></label>
-                        <label class="text-sm font-medium">Review due<input v-model="draft.review_due_at" type="date" class="mt-1 min-h-11 w-full border border-slate-300 px-3" /></label>
+                        <label class="text-sm font-medium">Review due<OptionalTemporalInput v-model="draft.review_due_at" type="date" class="mt-1 min-h-11 w-full border border-slate-300 px-3" /></label>
                         <label class="text-sm font-medium">Organization<input v-model="draft.organization_name" required class="mt-1 min-h-11 w-full border border-slate-300 px-3" /></label>
                         <label class="text-sm font-medium">Notes<input v-model="draft.notes" class="mt-1 min-h-11 w-full border border-slate-300 px-3" /></label>
                     </div>
@@ -446,7 +447,7 @@ const formError = (errors: object, key: string) =>
                     <label class="text-sm font-medium text-slate-700">{{ t('operations.actionRole') }}<select v-model="actionForm.operations_role_id" class="mt-1 min-h-11 w-full border border-slate-300 px-3"><option v-for="r in roles" :key="r.id" :value="r.id">{{ r.name }}</option></select></label>
                     <label class="text-sm font-medium text-slate-700">{{ t('operations.actionAssignee') }}<select v-model="actionForm.assigned_membership_id" class="mt-1 min-h-11 w-full border border-slate-300 px-3"><option v-for="m in operations.memberships" :key="m.id" :value="m.id">{{ m.email }}</option></select></label>
                     <label class="text-sm font-medium text-slate-700">{{ t('operations.actionTitle') }}<input v-model="actionForm.title" required class="mt-1 min-h-11 w-full border border-slate-300 px-3" placeholder="e.g. Confirm supplier contingency" /></label>
-                    <label class="text-sm font-medium text-slate-700">{{ t('operations.actionDue') }}<input v-model="actionForm.due_at" type="datetime-local" class="mt-1 min-h-11 w-full border border-slate-300 px-3" /></label>
+                    <label class="text-sm font-medium text-slate-700">{{ t('operations.actionDue') }}<OptionalTemporalInput v-model="actionForm.due_at" type="datetime-local" class="mt-1 min-h-11 w-full border border-slate-300 px-3" /></label>
                     <button type="submit" class="min-h-11 bg-slate-950 px-4 text-sm font-semibold text-white xl:self-end">Create Action</button>
                 </form>
                 <div class="mt-4 overflow-x-auto">

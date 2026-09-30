@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import OptionalTemporalInput from '../../components/OptionalTemporalInput.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
@@ -473,7 +474,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
 
                         <label class="block text-xs font-medium text-slate-700">
                             {{ t('closure.intendedLegalClosureAt') }}
-                            <input
+                            <OptionalTemporalInput
                                 v-model="createForm.intended_legal_closure_at"
                                 type="datetime-local"
                                 class="mt-1 w-full rounded-lg border-slate-300 text-sm"

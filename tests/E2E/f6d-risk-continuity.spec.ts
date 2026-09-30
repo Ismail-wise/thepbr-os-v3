@@ -69,6 +69,35 @@ test(
 
         await navigation
             .getByRole('link', {
+                name: 'Governance',
+                exact: true,
+            })
+            .click();
+
+        await expect(page).toHaveURL(/\/governance$/);
+
+        const governanceRulesLink = page.getByRole('link', {
+            name: 'Rules & Authority',
+            exact: true,
+        });
+
+        await expect(governanceRulesLink).toBeVisible();
+
+        await governanceRulesLink.click();
+
+        await expect(page).toHaveURL(
+            /\/governance\/rules$/,
+        );
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'Governance Rules & Authority',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await navigation
+            .getByRole('link', {
                 name: 'Risk & Protection',
                 exact: true,
             })
@@ -103,6 +132,35 @@ test(
             });
 
         await riskDraft.locator('summary').click();
+
+        const riskReviewDue = riskDraft.getByLabel(
+            'Review due',
+            { exact: true },
+        );
+
+        await expect(riskReviewDue).toHaveValue('');
+
+        await riskReviewDue.evaluate((node) => {
+            const input = node as HTMLInputElement;
+
+            input.value = '2026-09-30';
+
+            window.dispatchEvent(
+                new Event('pageshow'),
+            );
+        });
+
+        await expect(riskReviewDue).toHaveValue('');
+
+        await riskReviewDue.fill('2026-12-30');
+
+        await expect(riskReviewDue).toHaveValue(
+            '2026-12-30',
+        );
+
+        await riskReviewDue.press('Backspace');
+
+        await expect(riskReviewDue).toHaveValue('');
 
         await expect(
             riskDraft.getByText(

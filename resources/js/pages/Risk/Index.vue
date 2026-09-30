@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import OptionalTemporalInput from '../../components/OptionalTemporalInput.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
@@ -188,7 +189,7 @@ const nextIncident = (row: IncidentRow): string | null => ({
                 <form class="space-y-6 border-t border-slate-200 p-5" @submit.prevent="register.post('/risk/register', { preserveScroll: true })">
                     <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                         <label class="text-sm font-medium">Effective from<input v-model="register.effective_from" type="date" required class="mt-1 min-h-11 w-full border border-slate-300 px-3" /></label>
-                        <label class="text-sm font-medium">Review due<input v-model="register.review_due_at" type="date" class="mt-1 min-h-11 w-full border border-slate-300 px-3" /></label>
+                        <label class="text-sm font-medium">Review due<OptionalTemporalInput v-model="register.review_due_at" type="date" class="mt-1 min-h-11 w-full border border-slate-300 px-3" /></label>
                         <label class="text-sm font-medium">Risk owner<select v-model="register.risk_owner_membership_id" required class="mt-1 min-h-11 w-full border border-slate-300 px-3"><option v-for="m in risk.memberships" :key="m.id" :value="m.id">{{ m.email }}</option></select></label>
                         <label class="text-sm font-medium">Review frequency<input v-model="register.review_frequency" required class="mt-1 min-h-11 w-full border border-slate-300 px-3" /></label>
                     </div>
@@ -256,7 +257,7 @@ const nextIncident = (row: IncidentRow): string | null => ({
                     <select v-model="actionForm.operations_role_id" class="min-h-10 border border-slate-300 px-2"><option v-for="role in risk.operations_roles" :key="role.id" :value="role.id">{{ role.name }}</option></select>
                     <select v-model="actionForm.assigned_membership_id" class="min-h-10 border border-slate-300 px-2"><option v-for="m in risk.memberships" :key="m.id" :value="m.id">{{ m.email }}</option></select>
                     <input v-model="actionForm.title" required class="min-h-10 border border-slate-300 px-2 md:col-span-2" placeholder="Action title" />
-                    <input v-model="actionForm.due_at" type="datetime-local" class="min-h-10 border border-slate-300 px-2" />
+                    <OptionalTemporalInput v-model="actionForm.due_at" type="datetime-local" class="min-h-10 border border-slate-300 px-2" />
                     <button type="submit" class="min-h-10 bg-slate-950 px-4 text-sm font-semibold text-white">Create Action</button>
                 </form>
             </details>

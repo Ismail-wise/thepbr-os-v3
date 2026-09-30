@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import OptionalTemporalInput from '../../components/OptionalTemporalInput.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
@@ -702,7 +703,7 @@ const canEnterDirectDiscussion = computed(
 
                         <label class="text-sm font-medium">
                             {{ t('conflict.reviewDue') }}
-                            <input
+                            <OptionalTemporalInput
                                 v-model="policyForm.review_due_at"
                                 type="date"
                                 class="mt-1 min-h-11 w-full border border-slate-300 px-3"
@@ -1120,7 +1121,7 @@ const canEnterDirectDiscussion = computed(
                     </label>
                     <label class="text-sm font-medium">
                         {{ t('conflict.reviewDue') }}
-                        <input v-model="caseForm.review_due_at" type="date" class="mt-1 min-h-11 w-full border border-slate-300 px-3" />
+                        <OptionalTemporalInput v-model="caseForm.review_due_at" type="date" class="mt-1 min-h-11 w-full border border-slate-300 px-3" />
                     </label>
                     <div class="md:col-span-2">
                         <p class="text-xs text-slate-600">

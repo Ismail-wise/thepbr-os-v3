@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import OptionalTemporalInput from '../../components/OptionalTemporalInput.vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
@@ -850,7 +851,7 @@ const sectionButton = (key: typeof active.value) =>
                                     <option value="in_progress">in_progress</option>
                                     <option value="completed">completed</option>
                                 </select>
-                                <input v-model="validation.occurred_on" type="date" class="min-h-11 border border-slate-300 px-3">
+                                <OptionalTemporalInput v-model="validation.occurred_on" type="date" class="min-h-11 border border-slate-300 px-3" />
                                 <textarea v-model="validation.result_summary" class="min-h-24 border border-slate-300 p-3" :placeholder="c.result" />
                                 <button v-if="formation.permissions.can_manage_formation" class="min-h-11 border border-slate-950 px-4 text-sm font-semibold">{{ c.add }}</button>
                             </form>
@@ -917,7 +918,7 @@ const sectionButton = (key: typeof active.value) =>
                     <div class="mt-6 grid gap-8 xl:grid-cols-2">
                         <form class="space-y-3" @submit.prevent="saveExistingProfile">
                             <h3 class="font-semibold">{{ c.profile }}</h3>
-                            <input v-model="existingProfile.operating_since" type="date" class="min-h-11 w-full border border-slate-300 px-3">
+                            <OptionalTemporalInput v-model="existingProfile.operating_since" type="date" class="min-h-11 w-full border border-slate-300 px-3" />
                             <textarea v-model="existingProfile.summary" class="min-h-24 w-full border border-slate-300 p-3" :placeholder="c.summary" />
                             <textarea v-model="existingProfile.notes" class="min-h-20 w-full border border-slate-300 p-3" :placeholder="c.notes" />
                             <button v-if="formation.permissions.can_manage_formation" class="min-h-11 border border-slate-950 px-4 text-sm font-semibold">{{ c.save }}</button>
