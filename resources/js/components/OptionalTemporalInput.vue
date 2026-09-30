@@ -80,16 +80,10 @@ const clearWithKeyboard = (event: KeyboardEvent): void => {
         return;
     }
 
-    const element = event.currentTarget as HTMLInputElement;
-
-    if (element.value === '') {
-        return;
-    }
-
     event.preventDefault();
 
     emit('update:modelValue', '');
-    void nextTick(syncDom);
+    scheduleSync();
 };
 
 const onPageShow = (): void => {
@@ -124,8 +118,9 @@ watch(
         :type="type"
         :value="modelValue ?? ''"
         autocomplete="off"
-        @focus="syncDom"
-        @pointerdown="syncDom"
+        @focus="scheduleSync"
+        @pointerdown="scheduleSync"
+        @click="scheduleSync"
         @input="updateModel"
         @change="updateModel"
         @keydown="clearWithKeyboard"

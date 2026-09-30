@@ -152,11 +152,39 @@ test(
 
         await expect(riskReviewDue).toHaveValue('');
 
+        await riskReviewDue.evaluate((node) => {
+            const input = node as HTMLInputElement;
+
+            input.addEventListener(
+                'focus',
+                () => {
+                    input.value = '2026-10-01';
+                },
+                { once: true },
+            );
+        });
+
+        await riskReviewDue.focus();
+
+        await expect(riskReviewDue).toHaveValue('');
+
         await riskReviewDue.fill('2026-12-30');
 
         await expect(riskReviewDue).toHaveValue(
             '2026-12-30',
         );
+
+        await riskReviewDue.evaluate((node) => {
+            const input = node as HTMLInputElement;
+
+            input.addEventListener(
+                'keydown',
+                () => {
+                    input.value = '2026-10-01';
+                },
+                { once: true },
+            );
+        });
 
         await riskReviewDue.press('Backspace');
 
