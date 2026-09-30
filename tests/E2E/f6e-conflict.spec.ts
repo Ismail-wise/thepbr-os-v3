@@ -1,3 +1,5 @@
+[Reading 366 lines from start (total: 366 lines, 0 remaining)]
+
 import { execFileSync } from 'node:child_process';
 import { expect, test, type Page } from '@playwright/test';
 
@@ -138,9 +140,10 @@ test(
         ).toHaveValue('');
 
         await expect(
-            conflictPolicy.getByLabel('Formal decision type', {
-                exact: true,
-            }),
+            conflictPolicy
+                .locator('label')
+                .filter({ hasText: /^Formal decision type/ })
+                .locator('select'),
         ).toBeVisible();
 
         await conflictPolicy.locator('summary').click();
@@ -363,3 +366,5 @@ test(
         ).toHaveCount(0);
     },
 );
+
+[executed on device: training-vps (df81643c-98f5-4c6a-989a-f986f983d81a)]
