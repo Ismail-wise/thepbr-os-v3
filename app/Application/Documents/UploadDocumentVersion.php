@@ -128,8 +128,9 @@ final class UploadDocumentVersion
                         ? 1
                         : ((int) $latest->version_number + 1);
 
-                    DocumentVersion::query()->create([
-                        'id' => $documentVersionId,
+                    $documentVersion = new DocumentVersion();
+
+                    $documentVersion->fill([
                         'business_id' => $businessId,
                         'document_id' => $documentId,
                         'version_number' => $nextVersionNumber,
@@ -142,6 +143,13 @@ final class UploadDocumentVersion
                         'effective_from' => null,
                         'supersedes_document_version_id' => $latest?->getKey(),
                     ]);
+
+                    $documentVersion->setAttribute(
+                        $documentVersion->getKeyName(),
+                        $documentVersionId,
+                    );
+
+                    $documentVersion->save();
 
                     $this->appendAudit(
                         $user,

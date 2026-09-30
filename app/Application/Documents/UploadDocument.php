@@ -116,16 +116,25 @@ final class UploadDocument
                         return false;
                     }
 
-                    $document = Document::query()->create([
-                        'id' => $documentId,
+                    $document = new Document();
+
+                    $document->fill([
                         'business_id' => $businessId,
                         'title' => $title,
                         'category' => $category,
                         'created_by_membership_id' => $membership->getKey(),
                     ]);
 
-                    DocumentVersion::query()->create([
-                        'id' => $documentVersionId,
+                    $document->setAttribute(
+                        $document->getKeyName(),
+                        $documentId,
+                    );
+
+                    $document->save();
+
+                    $documentVersion = new DocumentVersion();
+
+                    $documentVersion->fill([
                         'business_id' => $businessId,
                         'document_id' => $document->getKey(),
                         'version_number' => 1,
@@ -138,6 +147,13 @@ final class UploadDocument
                         'effective_from' => null,
                         'supersedes_document_version_id' => null,
                     ]);
+
+                    $documentVersion->setAttribute(
+                        $documentVersion->getKeyName(),
+                        $documentVersionId,
+                    );
+
+                    $documentVersion->save();
 
                     foreach (
                         [

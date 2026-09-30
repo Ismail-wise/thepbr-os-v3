@@ -219,6 +219,96 @@ final class DocumentVaultTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_document_upload_preserves_one_canonical_identity_across_persistence_redirect_and_storage(): void
+    {
+        Storage::fake('business_documents');
+
+        [$user, $business, $membership] = $this->context();
+
+        $this->allowSystem(
+            $business,
+            $membership,
+            'records.manage',
+        );
+
+        $this->allowSystem(
+            $business,
+            $membership,
+            'records.view',
+        );
+
+        $uploadResponse = $this->actingAs($user)
+            ->withSession([
+                EnsureCurrentBusinessContext::SESSION_KEY => $business->getKey(),
+            ])
+            ->post('/records/documents', [
+                'title' => 'Canonical Identity Agreement',
+                'category' => DocumentCategory::AgreementsContracts->value,
+                'file' => $this->pdf('canonical-v1.pdf'),
+            ]);
+
+        $document = Document::query()
+            ->where('business_id', $business->getKey())
+            ->where('title', 'Canonical Identity Agreement')
+            ->sole();
+
+        $versionOne = DocumentVersion::query()
+            ->where('business_id', $business->getKey())
+            ->where('document_id', $document->getKey())
+            ->where('version_number', 1)
+            ->sole();
+
+        $uploadResponse->assertRedirect(
+            '/records/documents/'.$document->getKey(),
+        );
+
+        $this->assertStringContainsString(
+            '/documents/'
+                .$document->getKey()
+                .'/versions/'
+                .$versionOne->getKey()
+                .'/',
+            (string) $versionOne->storage_key,
+        );
+
+        $versionResponse = $this->actingAs($user)
+            ->withSession([
+                EnsureCurrentBusinessContext::SESSION_KEY => $business->getKey(),
+            ])
+            ->post(
+                '/records/documents/'
+                    .$document->getKey()
+                    .'/versions',
+                [
+                    'file' => $this->pdf('canonical-v2.pdf'),
+                ],
+            );
+
+        $versionTwo = DocumentVersion::query()
+            ->where('business_id', $business->getKey())
+            ->where('document_id', $document->getKey())
+            ->where('version_number', 2)
+            ->sole();
+
+        $versionResponse->assertRedirect(
+            '/records/documents/'.$document->getKey(),
+        );
+
+        $this->assertStringContainsString(
+            '/documents/'
+                .$document->getKey()
+                .'/versions/'
+                .$versionTwo->getKey()
+                .'/',
+            (string) $versionTwo->storage_key,
+        );
+
+        $this->assertSame(
+            (string) $versionOne->getKey(),
+            (string) $versionTwo->supersedes_document_version_id,
+        );
+    }
+
     public function test_authorized_surface_uploads_versions_downloads_and_creates_evidence(): void
     {
         Storage::fake('business_documents');
