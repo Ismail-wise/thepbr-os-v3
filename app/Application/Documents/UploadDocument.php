@@ -116,7 +116,7 @@ final class UploadDocument
                         return false;
                     }
 
-                    $document = new Document();
+                    $document = new Document;
 
                     $document->fill([
                         'business_id' => $businessId,
@@ -132,7 +132,7 @@ final class UploadDocument
 
                     $document->save();
 
-                    $documentVersion = new DocumentVersion();
+                    $documentVersion = new DocumentVersion;
 
                     $documentVersion->fill([
                         'business_id' => $businessId,

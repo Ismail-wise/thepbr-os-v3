@@ -128,7 +128,7 @@ final class UploadDocumentVersion
                         ? 1
                         : ((int) $latest->version_number + 1);
 
-                    $documentVersion = new DocumentVersion();
+                    $documentVersion = new DocumentVersion;
 
                     $documentVersion->fill([
                         'business_id' => $businessId,
