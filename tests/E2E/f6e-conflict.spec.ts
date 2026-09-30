@@ -52,12 +52,7 @@ const signIn = async (page: Page, email: string) => {
 };
 
 const switchBusiness = async (page: Page) => {
-    const switcher = page
-        .locator('aside')
-        .getByRole('combobox', {
-            name: 'Select current Business',
-            exact: true,
-        });
+    const switcher = page.locator('#business-switcher-desktop');
 
     await switcher.selectOption({ label: BUSINESS });
 
@@ -123,6 +118,32 @@ test(
         await expect(
             page.getByText('v1 · Effective', { exact: true }),
         ).toBeVisible();
+
+        const conflictPolicy = page
+            .locator('details')
+            .filter({
+                has: page.getByText(
+                    'Create Conflict Resolution Procedure Draft / Amendment',
+                    { exact: true },
+                ),
+            });
+
+        await expect(conflictPolicy).toBeVisible();
+        await conflictPolicy.locator('summary').click();
+
+        await expect(
+            conflictPolicy.getByLabel('Review due', {
+                exact: true,
+            }),
+        ).toHaveValue('');
+
+        await expect(
+            conflictPolicy.getByLabel('Formal decision type', {
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await conflictPolicy.locator('summary').click();
 
         await expect(
             page.getByTestId('conflict-visible-count'),

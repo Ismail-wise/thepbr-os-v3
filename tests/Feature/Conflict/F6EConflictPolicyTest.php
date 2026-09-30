@@ -7,7 +7,10 @@ namespace Tests\Feature\Conflict;
 use App\Application\Access\ProvisionStandardAccessProfiles;
 use App\Application\Conflict\ConflictCaseWorkflow;
 use App\Application\Conflict\ConflictPolicyWorkflow;
+use App\Application\Conflict\GetConflictWorkspace;
 use App\Domain\Access\Enums\PermissionEffect;
+use App\Domain\Records\Enums\FormalRecordState;
+use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Infrastructure\Persistence\Eloquent\Access\Permission;
 use App\Infrastructure\Persistence\Eloquent\Access\PermissionGrant;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
@@ -592,5 +595,128 @@ final class F6EConflictPolicyTest extends F6EConflictTestCase
             $payload,
             now()->subMinute(),
         );
+    }
+
+    public function test_workspace_exposes_policy_authoring_prerequisites_and_exact_options(): void
+    {
+        $context = $this->context(false);
+
+        $workspace = $this->app->make(GetConflictWorkspace::class)
+            ->execute(
+                $context['user'],
+                $context['business'],
+            );
+
+        self::assertNotNull($workspace);
+
+        self::assertSame(
+            'met',
+            $workspace['prerequisites']['governance_charter']['status'],
+        );
+
+        self::assertSame(
+            'met',
+            $workspace['prerequisites']['operations_register']['status'],
+        );
+
+        self::assertTrue(
+            $workspace['governance_decision_types']
+                ->contains('conflict_formal_decision'),
+        );
+
+        self::assertTrue(
+            $workspace['governance_decision_types']
+                ->contains('conflict_settlement_approval'),
+        );
+
+        self::assertNotEmpty($workspace['memberships']);
+        self::assertNotEmpty($workspace['operations_roles']);
+
+        DB::table('record_family_effective_heads')
+            ->where(
+                'business_id',
+                $context['business']->getKey(),
+            )
+            ->where(
+                'formal_record_version_id',
+                $context['governance_version_id'],
+            )
+            ->delete();
+
+        $missing = $this->app->make(GetConflictWorkspace::class)
+            ->execute(
+                $context['user'],
+                $context['business'],
+            );
+
+        self::assertNotNull($missing);
+
+        self::assertSame(
+            'missing',
+            $missing['prerequisites']['governance_charter']['status'],
+        );
+
+        self::assertSame(
+            [],
+            $missing['governance_decision_types']->all(),
+        );
+    }
+
+    public function test_missing_governance_decision_returns_visible_validation_error_instead_of_404(): void
+    {
+        $context = $this->context(false);
+        $workflow = $this->app->make(ConflictPolicyWorkflow::class);
+
+        $created = $workflow->createDraft(
+            $context['user'],
+            $context['business'],
+            $this->policyPayload($context),
+            now()->subMinute(),
+        );
+
+        self::assertNotNull($created);
+
+        $versionId = $created['formal_record_version_id'];
+
+        self::assertNotNull(
+            $workflow->submitForGovernance(
+                $context['user'],
+                $context['business'],
+                $versionId,
+                1,
+            ),
+        );
+
+        self::assertTrue(
+            $workflow->advanceContentReview(
+                $context['user'],
+                $context['business'],
+                $versionId,
+                FormalRecordState::UnderReview,
+            ),
+        );
+
+        self::assertTrue(
+            $workflow->advanceContentReview(
+                $context['user'],
+                $context['business'],
+                $versionId,
+                FormalRecordState::Approved,
+            ),
+        );
+
+        $this
+            ->actingAs($context['user'])
+            ->withSession([
+                EnsureCurrentBusinessContext::SESSION_KEY => $context['business']->getKey(),
+            ])
+            ->from('/conflict')
+            ->post(
+                route('conflict.policy.sync-decision', [
+                    'formalRecordVersion' => $versionId,
+                ]),
+            )
+            ->assertRedirect('/conflict')
+            ->assertSessionHasErrors('conflict');
     }
 }

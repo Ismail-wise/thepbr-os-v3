@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
 import { useI18n } from '../../i18n/useI18n';
 
@@ -16,6 +16,31 @@ type Policy = {
     urgent_risk_decision_type: string;
     settlement_decision_type: string;
     review_frequency: string;
+};
+
+type PolicyVersion = {
+    id: string;
+    version_number: number;
+    revision: number;
+    frozen_at: string | null;
+    effective_from: string | null;
+    review_due_at: string | null;
+    state: string | null;
+};
+
+type Membership = {
+    id: string;
+    email: string;
+};
+
+type OperationsRole = {
+    id: string;
+    role_key: string;
+    name: string;
+};
+
+type Prerequisite = {
+    status: 'met' | 'missing' | 'unknown';
 };
 
 type CaseRow = {
@@ -75,9 +100,22 @@ type CaseDetail = CaseRow & {
 
 const props = defineProps<{
     conflict: {
+        business: { id: string; name: string };
         current_membership_id: string;
         capabilities: { can_view: boolean; can_manage: boolean };
         policy: Policy | null;
+        policy_versions: PolicyVersion[];
+        memberships: Membership[];
+        operations_roles: OperationsRole[];
+        governance_decision_types: string[];
+        prerequisites: {
+            governance_charter: Prerequisite & {
+                can_open_governance: boolean;
+            };
+            operations_register: Prerequisite & {
+                can_open_operations: boolean;
+            };
+        };
         counts: {
             visible_cases: number;
             needs_attention: number;
@@ -94,6 +132,109 @@ const today = new Date().toISOString().slice(0, 10);
 type PostData = NonNullable<Parameters<typeof router.post>[1]>;
 const post = (url: string, data: PostData = {}) =>
     router.post(url, data, { preserveScroll: true });
+
+const firstMembership = props.conflict.memberships[0]?.id ?? '';
+const firstRole = props.conflict.operations_roles[0]?.id ?? '';
+
+const preferredDecisionType = (preferred: string): string =>
+    props.conflict.governance_decision_types.includes(preferred)
+        ? preferred
+        : (props.conflict.governance_decision_types[0] ?? '');
+
+const policyForm = useForm({
+    effective_from: today,
+    review_due_at: '',
+    conflict_owner_membership_id: firstMembership,
+    formal_decision_type: preferredDecisionType(
+        'conflict_formal_decision',
+    ),
+    deadlock_decision_type: preferredDecisionType(
+        'conflict_deadlock_decision',
+    ),
+    misconduct_decision_type: preferredDecisionType(
+        'conflict_misconduct_decision',
+    ),
+    urgent_risk_decision_type: preferredDecisionType(
+        'conflict_urgent_risk_decision',
+    ),
+    settlement_decision_type: preferredDecisionType(
+        'conflict_settlement_approval',
+    ),
+    review_frequency: 'Quarterly',
+    notes: '',
+    escalation_rules: [
+        {
+            step_key: 'direct_discussion',
+            entry_condition: '',
+            operations_role_id: firstRole,
+            max_days: 3,
+            required_evidence: '',
+            decision_type: preferredDecisionType(
+                'conflict_formal_decision',
+            ),
+            resolution_exit_condition: '',
+            next_step_key: 'mediation',
+            status: 'active',
+        },
+    ],
+    special_path_rules: [
+        {
+            path_type: 'deadlock',
+            entry_condition: '',
+            procedure_summary: '',
+            operations_role_id: firstRole,
+            review_deadline_days: 3,
+            external_handoff_rule: '',
+        },
+        {
+            path_type: 'misconduct',
+            entry_condition: '',
+            procedure_summary: '',
+            operations_role_id: firstRole,
+            review_deadline_days: 3,
+            external_handoff_rule: '',
+        },
+        {
+            path_type: 'urgent_risk',
+            entry_condition: '',
+            procedure_summary: '',
+            operations_role_id: firstRole,
+            review_deadline_days: 1,
+            external_handoff_rule: '',
+        },
+    ],
+});
+
+const policySync = useForm({});
+const policySyncVersionId = ref('');
+
+const syncPolicyDecision = (versionId: string): void => {
+    policySyncVersionId.value = versionId;
+    policySync.clearErrors();
+    policySync.post(
+        `/conflict/policy/${versionId}/sync-decision`,
+        {
+            preserveScroll: true,
+            onSuccess: () => policySync.clearErrors(),
+        },
+    );
+};
+
+const policyPathLabel = (value: string): string => {
+    if (value === 'deadlock') {
+        return t('conflict.policy.deadlockPath');
+    }
+
+    if (value === 'misconduct') {
+        return t('conflict.policy.misconductPath');
+    }
+
+    if (value === 'urgent_risk') {
+        return t('conflict.policy.urgentRiskPath');
+    }
+
+    return value.replaceAll('_', ' ');
+};
 
 const caseForm = useForm({
     conflict_type: 'ordinary_disagreement',
@@ -296,6 +437,587 @@ const canEnterDirectDiscussion = computed(
                     </table>
                 </div>
             </section>
+
+            <section
+                v-if="
+                    conflict.capabilities.can_manage
+                    && (
+                        conflict.prerequisites.governance_charter.status !== 'met'
+                        || conflict.prerequisites.operations_register.status !== 'met'
+                    )
+                "
+                class="mt-8 border border-amber-300 bg-amber-50 p-5"
+            >
+                <h2 class="text-lg font-bold text-amber-950">
+                    {{ t('conflict.policy.prerequisiteTitle') }}
+                </h2>
+
+                <div class="mt-3 space-y-3 text-sm text-amber-950">
+                    <div
+                        v-if="
+                            conflict.prerequisites.governance_charter.status
+                            !== 'met'
+                        "
+                    >
+                        <p class="font-semibold">
+                            {{
+                                conflict.prerequisites.governance_charter.status
+                                === 'missing'
+                                    ? t('conflict.policy.governanceMissing')
+                                    : t('conflict.policy.governanceUnknown')
+                            }}
+                        </p>
+                        <Link
+                            v-if="
+                                conflict.prerequisites.governance_charter
+                                    .can_open_governance
+                            "
+                            href="/governance/rules"
+                            class="mt-2 inline-flex min-h-10 items-center border border-amber-400 bg-white px-3 font-semibold"
+                        >
+                            {{ t('conflict.policy.openGovernance') }}
+                        </Link>
+                    </div>
+
+                    <div
+                        v-if="
+                            conflict.prerequisites.operations_register.status
+                            !== 'met'
+                        "
+                    >
+                        <p class="font-semibold">
+                            {{
+                                conflict.prerequisites.operations_register.status
+                                === 'missing'
+                                    ? t('conflict.policy.operationsMissing')
+                                    : t('conflict.policy.operationsUnknown')
+                            }}
+                        </p>
+                        <Link
+                            v-if="
+                                conflict.prerequisites.operations_register
+                                    .can_open_operations
+                            "
+                            href="/operations"
+                            class="mt-2 inline-flex min-h-10 items-center border border-amber-400 bg-white px-3 font-semibold"
+                        >
+                            {{ t('conflict.policy.openOperations') }}
+                        </Link>
+                    </div>
+                </div>
+            </section>
+
+            <section
+                v-if="conflict.capabilities.can_manage"
+                class="mt-8"
+            >
+                <h2 class="text-lg font-bold">
+                    {{ t('conflict.policy.history') }}
+                </h2>
+
+                <div class="mt-3 overflow-x-auto border border-slate-200">
+                    <table class="min-w-full text-left text-sm">
+                        <thead>
+                            <tr class="border-b bg-slate-50">
+                                <th class="px-3 py-3">
+                                    {{ t('conflict.policy.version') }}
+                                </th>
+                                <th class="px-3 py-3">
+                                    {{ t('conflict.policy.state') }}
+                                </th>
+                                <th class="px-3 py-3">
+                                    {{ t('conflict.policy.effectiveFrom') }}
+                                </th>
+                                <th class="px-3 py-3">
+                                    {{ t('conflict.policy.actions') }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="version in conflict.policy_versions"
+                                :key="version.id"
+                                class="border-b border-slate-100 align-top"
+                            >
+                                <td class="px-3 py-3 font-semibold">
+                                    v{{ version.version_number }}
+                                </td>
+                                <td class="px-3 py-3">
+                                    {{ version.state ?? '—' }}
+                                </td>
+                                <td class="px-3 py-3">
+                                    {{ version.effective_from ?? '—' }}
+                                </td>
+                                <td class="px-3 py-3">
+                                    <div class="flex flex-wrap gap-2">
+                                        <button
+                                            v-if="version.state === 'draft'"
+                                            type="button"
+                                            class="text-xs font-semibold underline"
+                                            @click="
+                                                post(
+                                                    '/conflict/policy/'
+                                                        + version.id
+                                                        + '/submit',
+                                                    {
+                                                        expected_revision:
+                                                            version.revision,
+                                                    },
+                                                )
+                                            "
+                                        >
+                                            {{ t('conflict.policy.submit') }}
+                                        </button>
+
+                                        <button
+                                            v-if="
+                                                version.state
+                                                === 'ready_for_review'
+                                            "
+                                            type="button"
+                                            class="text-xs font-semibold underline"
+                                            @click="
+                                                post(
+                                                    '/conflict/policy/'
+                                                        + version.id
+                                                        + '/content-review',
+                                                    {
+                                                        target: 'under_review',
+                                                    },
+                                                )
+                                            "
+                                        >
+                                            {{
+                                                t(
+                                                    'conflict.policy.startReview',
+                                                )
+                                            }}
+                                        </button>
+
+                                        <button
+                                            v-if="version.state === 'under_review'"
+                                            type="button"
+                                            class="text-xs font-semibold underline"
+                                            @click="
+                                                post(
+                                                    '/conflict/policy/'
+                                                        + version.id
+                                                        + '/content-review',
+                                                    {
+                                                        target: 'approved',
+                                                    },
+                                                )
+                                            "
+                                        >
+                                            {{
+                                                t(
+                                                    'conflict.policy.approveContent',
+                                                )
+                                            }}
+                                        </button>
+
+                                        <button
+                                            v-if="
+                                                version.state === 'approved'
+                                                || version.state
+                                                    === 'ready_for_effect'
+                                            "
+                                            type="button"
+                                            :disabled="policySync.processing"
+                                            class="text-xs font-semibold underline disabled:opacity-50"
+                                            @click="
+                                                syncPolicyDecision(version.id)
+                                            "
+                                        >
+                                            {{
+                                                t(
+                                                    'conflict.policy.syncDecision',
+                                                )
+                                            }}
+                                        </button>
+                                    </div>
+
+                                    <p
+                                        v-if="
+                                            policySyncVersionId === version.id
+                                            && Object.keys(policySync.errors)
+                                                .length
+                                        "
+                                        class="mt-2 text-xs text-red-700"
+                                    >
+                                        {{
+                                            Object.values(
+                                                policySync.errors,
+                                            )[0]
+                                        }}
+                                    </p>
+                                </td>
+                            </tr>
+
+                            <tr v-if="conflict.policy_versions.length === 0">
+                                <td
+                                    colspan="4"
+                                    class="px-3 py-5 text-slate-500"
+                                >
+                                    {{ t('conflict.policy.noVersions') }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <details
+                v-if="
+                    conflict.capabilities.can_manage
+                    && conflict.prerequisites.governance_charter.status
+                        === 'met'
+                    && conflict.prerequisites.operations_register.status
+                        === 'met'
+                "
+                class="mt-8 border border-slate-200"
+            >
+                <summary class="cursor-pointer px-5 py-4 font-semibold">
+                    {{ t('conflict.policy.create') }}
+                </summary>
+
+                <form
+                    class="space-y-6 border-t border-slate-200 p-5"
+                    @submit.prevent="
+                        policyForm.post('/conflict/policy', {
+                            preserveScroll: true,
+                        })
+                    "
+                >
+                    <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        <label class="text-sm font-medium">
+                            {{ t('conflict.policy.effectiveFrom') }}
+                            <input
+                                v-model="policyForm.effective_from"
+                                type="date"
+                                required
+                                class="mt-1 min-h-11 w-full border border-slate-300 px-3"
+                            />
+                        </label>
+
+                        <label class="text-sm font-medium">
+                            {{ t('conflict.reviewDue') }}
+                            <input
+                                v-model="policyForm.review_due_at"
+                                type="date"
+                                class="mt-1 min-h-11 w-full border border-slate-300 px-3"
+                            />
+                        </label>
+
+                        <label class="text-sm font-medium">
+                            {{ t('conflict.policy.owner') }}
+                            <select
+                                v-model="
+                                    policyForm.conflict_owner_membership_id
+                                "
+                                required
+                                class="mt-1 min-h-11 w-full border border-slate-300 px-3"
+                            >
+                                <option
+                                    v-for="member in conflict.memberships"
+                                    :key="member.id"
+                                    :value="member.id"
+                                >
+                                    {{ member.email }}
+                                </option>
+                            </select>
+                        </label>
+
+                        <label class="text-sm font-medium">
+                            {{ t('conflict.policy.reviewFrequency') }}
+                            <input
+                                v-model="policyForm.review_frequency"
+                                required
+                                class="mt-1 min-h-11 w-full border border-slate-300 px-3"
+                            />
+                        </label>
+                    </div>
+
+                    <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        <label class="text-sm font-medium">
+                            {{ t('conflict.policy.formalDecisionType') }}
+                            <select
+                                v-model="policyForm.formal_decision_type"
+                                required
+                                class="mt-1 min-h-11 w-full border border-slate-300 px-3"
+                            >
+                                <option
+                                    v-for="decisionType in conflict.governance_decision_types"
+                                    :key="decisionType"
+                                    :value="decisionType"
+                                >
+                                    {{ decisionType }}
+                                </option>
+                            </select>
+                        </label>
+
+                        <label class="text-sm font-medium">
+                            {{ t('conflict.policy.deadlockDecisionType') }}
+                            <select
+                                v-model="policyForm.deadlock_decision_type"
+                                required
+                                class="mt-1 min-h-11 w-full border border-slate-300 px-3"
+                            >
+                                <option
+                                    v-for="decisionType in conflict.governance_decision_types"
+                                    :key="decisionType"
+                                    :value="decisionType"
+                                >
+                                    {{ decisionType }}
+                                </option>
+                            </select>
+                        </label>
+
+                        <label class="text-sm font-medium">
+                            {{ t('conflict.policy.misconductDecisionType') }}
+                            <select
+                                v-model="policyForm.misconduct_decision_type"
+                                required
+                                class="mt-1 min-h-11 w-full border border-slate-300 px-3"
+                            >
+                                <option
+                                    v-for="decisionType in conflict.governance_decision_types"
+                                    :key="decisionType"
+                                    :value="decisionType"
+                                >
+                                    {{ decisionType }}
+                                </option>
+                            </select>
+                        </label>
+
+                        <label class="text-sm font-medium">
+                            {{ t('conflict.policy.urgentDecisionType') }}
+                            <select
+                                v-model="policyForm.urgent_risk_decision_type"
+                                required
+                                class="mt-1 min-h-11 w-full border border-slate-300 px-3"
+                            >
+                                <option
+                                    v-for="decisionType in conflict.governance_decision_types"
+                                    :key="decisionType"
+                                    :value="decisionType"
+                                >
+                                    {{ decisionType }}
+                                </option>
+                            </select>
+                        </label>
+
+                        <label class="text-sm font-medium">
+                            {{ t('conflict.policy.settlementDecisionType') }}
+                            <select
+                                v-model="policyForm.settlement_decision_type"
+                                required
+                                class="mt-1 min-h-11 w-full border border-slate-300 px-3"
+                            >
+                                <option
+                                    v-for="decisionType in conflict.governance_decision_types"
+                                    :key="decisionType"
+                                    :value="decisionType"
+                                >
+                                    {{ decisionType }}
+                                </option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <label class="block text-sm font-medium">
+                        {{ t('conflict.policy.notes') }}
+                        <textarea
+                            v-model="policyForm.notes"
+                            class="mt-1 min-h-20 w-full border border-slate-300 p-3"
+                        />
+                    </label>
+
+                    <section>
+                        <h3 class="font-semibold">
+                            {{ t('conflict.policy.escalationPath') }}
+                        </h3>
+
+                        <article
+                            v-for="(row, index) in policyForm.escalation_rules"
+                            :key="index"
+                            class="mt-3 grid gap-3 border border-slate-200 p-4 md:grid-cols-2 xl:grid-cols-4"
+                        >
+                            <label class="text-sm font-medium">
+                                {{ t('conflict.policy.stepKey') }}
+                                <input
+                                    v-model="row.step_key"
+                                    required
+                                    class="mt-1 min-h-10 w-full border border-slate-300 px-2"
+                                />
+                            </label>
+
+                            <label class="text-sm font-medium">
+                                {{ t('conflict.policy.operationsRole') }}
+                                <select
+                                    v-model="row.operations_role_id"
+                                    class="mt-1 min-h-10 w-full border border-slate-300 px-2"
+                                >
+                                    <option value="">—</option>
+                                    <option
+                                        v-for="role in conflict.operations_roles"
+                                        :key="role.id"
+                                        :value="role.id"
+                                    >
+                                        {{ role.name }}
+                                    </option>
+                                </select>
+                            </label>
+
+                            <label class="text-sm font-medium">
+                                {{ t('conflict.policy.maxDays') }}
+                                <input
+                                    v-model.number="row.max_days"
+                                    type="number"
+                                    min="1"
+                                    class="mt-1 min-h-10 w-full border border-slate-300 px-2"
+                                />
+                            </label>
+
+                            <label class="text-sm font-medium">
+                                {{ t('conflict.policy.decisionType') }}
+                                <select
+                                    v-model="row.decision_type"
+                                    class="mt-1 min-h-10 w-full border border-slate-300 px-2"
+                                >
+                                    <option value="">—</option>
+                                    <option
+                                        v-for="decisionType in conflict.governance_decision_types"
+                                        :key="decisionType"
+                                        :value="decisionType"
+                                    >
+                                        {{ decisionType }}
+                                    </option>
+                                </select>
+                            </label>
+
+                            <label class="text-sm font-medium md:col-span-2">
+                                {{ t('conflict.policy.entryCondition') }}
+                                <textarea
+                                    v-model="row.entry_condition"
+                                    required
+                                    class="mt-1 min-h-20 w-full border border-slate-300 p-2"
+                                />
+                            </label>
+
+                            <label class="text-sm font-medium md:col-span-2">
+                                {{ t('conflict.policy.requiredEvidence') }}
+                                <textarea
+                                    v-model="row.required_evidence"
+                                    class="mt-1 min-h-20 w-full border border-slate-300 p-2"
+                                />
+                            </label>
+
+                            <label class="text-sm font-medium md:col-span-2">
+                                {{ t('conflict.policy.resolutionExit') }}
+                                <textarea
+                                    v-model="row.resolution_exit_condition"
+                                    required
+                                    class="mt-1 min-h-20 w-full border border-slate-300 p-2"
+                                />
+                            </label>
+
+                            <label class="text-sm font-medium">
+                                {{ t('conflict.policy.nextStep') }}
+                                <input
+                                    v-model="row.next_step_key"
+                                    class="mt-1 min-h-10 w-full border border-slate-300 px-2"
+                                />
+                            </label>
+                        </article>
+                    </section>
+
+                    <section>
+                        <h3 class="font-semibold">
+                            {{ t('conflict.policy.specialPaths') }}
+                        </h3>
+
+                        <article
+                            v-for="(row, index) in policyForm.special_path_rules"
+                            :key="row.path_type"
+                            class="mt-3 grid gap-3 border border-slate-200 p-4 md:grid-cols-2 xl:grid-cols-4"
+                        >
+                            <h4 class="font-semibold md:col-span-2 xl:col-span-4">
+                                {{ policyPathLabel(row.path_type) }}
+                            </h4>
+
+                            <label class="text-sm font-medium md:col-span-2">
+                                {{ t('conflict.policy.entryCondition') }}
+                                <textarea
+                                    v-model="row.entry_condition"
+                                    required
+                                    class="mt-1 min-h-20 w-full border border-slate-300 p-2"
+                                />
+                            </label>
+
+                            <label class="text-sm font-medium md:col-span-2">
+                                {{ t('conflict.policy.procedure') }}
+                                <textarea
+                                    v-model="row.procedure_summary"
+                                    required
+                                    class="mt-1 min-h-20 w-full border border-slate-300 p-2"
+                                />
+                            </label>
+
+                            <label class="text-sm font-medium">
+                                {{ t('conflict.policy.operationsRole') }}
+                                <select
+                                    v-model="row.operations_role_id"
+                                    class="mt-1 min-h-10 w-full border border-slate-300 px-2"
+                                >
+                                    <option value="">—</option>
+                                    <option
+                                        v-for="role in conflict.operations_roles"
+                                        :key="role.id"
+                                        :value="role.id"
+                                    >
+                                        {{ role.name }}
+                                    </option>
+                                </select>
+                            </label>
+
+                            <label class="text-sm font-medium">
+                                {{ t('conflict.policy.deadlineDays') }}
+                                <input
+                                    v-model.number="row.review_deadline_days"
+                                    type="number"
+                                    min="1"
+                                    required
+                                    class="mt-1 min-h-10 w-full border border-slate-300 px-2"
+                                />
+                            </label>
+
+                            <label class="text-sm font-medium md:col-span-2">
+                                {{ t('conflict.policy.externalHandoff') }}
+                                <textarea
+                                    v-model="row.external_handoff_rule"
+                                    class="mt-1 min-h-20 w-full border border-slate-300 p-2"
+                                />
+                            </label>
+                        </article>
+                    </section>
+
+                    <p
+                        v-if="Object.keys(policyForm.errors).length"
+                        class="text-sm text-red-700"
+                    >
+                        {{ Object.values(policyForm.errors)[0] }}
+                    </p>
+
+                    <button
+                        type="submit"
+                        :disabled="policyForm.processing"
+                        class="min-h-11 bg-slate-950 px-5 text-sm font-semibold text-white disabled:opacity-50"
+                    >
+                        {{ t('conflict.policy.createVersion') }}
+                    </button>
+                </form>
+            </details>
 
             <section class="mt-8">
                 <div class="flex flex-wrap items-center justify-between gap-3">

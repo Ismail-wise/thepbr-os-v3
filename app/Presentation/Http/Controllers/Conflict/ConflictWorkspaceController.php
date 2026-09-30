@@ -159,14 +159,16 @@ final class ConflictWorkspaceController
     ): RedirectResponse {
         [$user, $business] = $this->context($request);
 
-        abort_unless(
-            $workflow->syncApprovedDecision(
+        $ok = $this->validated(
+            fn () => $workflow->syncApprovedDecision(
                 $user,
                 $business,
                 $formalRecordVersion,
             ),
-            404,
+            'conflict',
         );
+
+        abort_unless($ok, 404);
 
         return back();
     }

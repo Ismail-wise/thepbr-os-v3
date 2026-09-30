@@ -19,6 +19,7 @@ use App\Domain\Access\CapabilityCatalog;
 use App\Domain\Access\ValueObjects\Capability;
 use App\Domain\Governance\Enums\DecisionOutcome;
 use App\Domain\Governance\Enums\DecisionStatus;
+use App\Domain\Governance\Exceptions\MissingGovernanceDecision;
 use App\Domain\Records\Enums\FormalRecordState;
 use App\Domain\Records\ValueObjects\RecordScope;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
@@ -332,7 +333,7 @@ final class ConflictPolicyWorkflow
             ->get();
 
         if ($decisions->count() !== 1) {
-            return false;
+            throw new MissingGovernanceDecision;
         }
 
         $decisionId = (string) $decisions->first()->getKey();
