@@ -35,12 +35,7 @@ const signIn = async (page: Page) => {
 };
 
 const switchBusiness = async (page: Page) => {
-    const switcher = page
-        .locator('aside')
-        .getByRole('combobox', {
-            name: 'Select current Business',
-            exact: true,
-        });
+    const switcher = page.locator('#business-switcher-desktop');
 
     await switcher.selectOption({ label: BUSINESS });
 
@@ -216,6 +211,7 @@ test(
         }
 
         await setLanguageMode(page, 'my');
+        await rewardPolicy.locator('summary').click();
 
         await expect(
             rewardPolicy.getByLabel(
@@ -238,6 +234,7 @@ test(
         }
 
         await setLanguageMode(page, 'mixed');
+        await rewardPolicy.locator('summary').click();
 
         await expect(
             rewardPolicy.getByLabel(
