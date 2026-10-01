@@ -225,6 +225,128 @@ final class F7PartnerChangeWorkflowTest extends TestCase
         );
     }
 
+    public function test_missing_effective_from_blocks_terms_ready_before_governance_freeze(): void
+    {
+        [$user, $business] = $this->fixture(
+            'f7-missing-effective-from@example.test',
+            'F7 Missing Effective From Business',
+        );
+
+        $partnerId = $this->createPartner(
+            $user,
+            $business,
+            'Missing Effective From Partner',
+        );
+
+        $workflow = $this->app->make(PartnerChangeWorkflow::class);
+
+        $case = $workflow->createCase(
+            $user,
+            $business,
+            PartnerChangeTransactionType::Admission,
+            $partnerId,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'partner_change_approval',
+            false,
+            null,
+        );
+
+        self::assertNotNull($case);
+
+        $case = $workflow->transition(
+            $user,
+            $business,
+            (string) $case->getKey(),
+            1,
+            PartnerChangeStatus::EligibilityReview,
+        );
+
+        self::assertNotNull($case);
+
+        self::assertTrue(
+            $workflow->recordEligibility(
+                $user,
+                $business,
+                (string) $case->getKey(),
+                2,
+                'buyer_eligible',
+                PartnerChangeEligibilityStatus::Met,
+                'Buyer eligibility reviewed.',
+            ),
+        );
+
+        $case = $workflow->transition(
+            $user,
+            $business,
+            (string) $case->getKey(),
+            2,
+            PartnerChangeStatus::Eligible,
+        );
+
+        self::assertNotNull($case);
+        self::assertSame(3, (int) $case->revision);
+
+        $this->completeDueDiligence(
+            $user,
+            $business,
+            $partnerId,
+        );
+
+        self::assertTrue(
+            $workflow->recordRequirement(
+                $user,
+                $business,
+                (string) $case->getKey(),
+                3,
+                'contribution',
+                'contribution_terms_resolved',
+                PartnerChangeEligibilityStatus::NotApplicable,
+                'No pre-admission contribution is required.',
+            ),
+        );
+
+        try {
+            $workflow->transition(
+                $user,
+                $business,
+                (string) $case->getKey(),
+                3,
+                PartnerChangeStatus::TermsReady,
+            );
+
+            self::fail(
+                'Missing Effective From must block Terms Ready.',
+            );
+        } catch (InvalidArgumentException $exception) {
+            self::assertStringContainsString(
+                'Effective From',
+                $exception->getMessage(),
+            );
+        }
+
+        $case->refresh();
+
+        self::assertSame(
+            PartnerChangeStatus::Eligible,
+            $case->status,
+        );
+        self::assertSame(3, (int) $case->revision);
+
+        self::assertSame(
+            0,
+            DB::table('partner_change_governance_submissions')
+                ->where('business_id', $business->getKey())
+                ->where('partner_change_case_id', $case->getKey())
+                ->count(),
+        );
+    }
+
     public function test_duplicate_eligibility_submission_is_idempotent_but_later_review_is_preserved(): void
     {
         [$user, $business] = $this->fixture(

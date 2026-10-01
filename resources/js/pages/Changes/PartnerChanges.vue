@@ -548,7 +548,7 @@ const statusClass = (status: string): string => {
 
                         <label class="space-y-1 text-sm">
                             <span class="font-medium text-slate-700">{{ t('partnerChanges.effectiveFrom') }}</span>
-                            <OptionalTemporalInput v-model="createForm.effective_from" type="datetime-local" class="min-h-11 w-full rounded-md border-slate-300 text-sm" />
+                            <OptionalTemporalInput v-model="createForm.effective_from" required type="datetime-local" class="min-h-11 w-full rounded-md border-slate-300 text-sm" />
                         </label>
 
                         <template v-if="isOwnershipChange">
@@ -671,11 +671,23 @@ const statusClass = (status: string): string => {
                             <button
                                 v-if="selectedCase.status === 'ready_for_effect'"
                                 type="button"
-                                class="min-h-10 rounded-md bg-emerald-700 px-3 text-sm font-semibold text-white hover:bg-emerald-800"
+                                :disabled="revisionActionForm.processing || !selectedCase.effective_from"
+                                :class="[
+                                    'min-h-10 rounded-md px-3 text-sm font-semibold',
+                                    selectedCase.effective_from
+                                        ? 'bg-emerald-700 text-white hover:bg-emerald-800'
+                                        : 'cursor-not-allowed bg-slate-200 text-slate-500',
+                                ]"
                                 @click="postRevisionAction('effect')"
                             >
                                 Make effective
                             </button>
+                            <p
+                                v-if="selectedCase.status === 'ready_for_effect' && !selectedCase.effective_from"
+                                class="w-full text-sm text-rose-700"
+                            >
+                                Effective From is required before this Partner Change can become Effective.
+                            </p>
                         </div>
                         <p
                             v-if="Object.keys(transitionForm.errors).length"

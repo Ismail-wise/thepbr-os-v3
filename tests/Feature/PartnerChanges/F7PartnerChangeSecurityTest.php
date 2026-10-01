@@ -102,6 +102,147 @@ final class F7PartnerChangeSecurityTest extends TestCase
         );
     }
 
+    public function test_legacy_ready_for_effect_without_effective_from_returns_validation_instead_of_500(): void
+    {
+        [$owner, $business] = $this->fixture(
+            'f7-null-effectivity-owner@example.test',
+            'F7 Null Effectivity Business',
+        );
+
+        $incoming = $this->createPartner(
+            $owner,
+            $business,
+            'Null Effectivity Incoming Partner',
+        );
+
+        $this
+            ->actingAs($owner)
+            ->withSession(['current_business_id' => $business->getKey()])
+            ->post('/changes/partner-changes', [
+                'transaction_type' => 'admission',
+                'buyer_partner_id' => $incoming,
+                'governance_decision_type' => 'partner_change_approval',
+                'rofr_required' => false,
+            ])
+            ->assertRedirect();
+
+        $case = DB::table('partner_change_cases')
+            ->where('business_id', $business->getKey())
+            ->sole();
+
+        self::assertNull($case->effective_from);
+
+        $this->advanceHistoricalCaseToReadyForEffect(
+            (string) $business->getKey(),
+            (string) $case->id,
+        );
+
+        $response = $this
+            ->actingAs($owner)
+            ->withSession(['current_business_id' => $business->getKey()])
+            ->from('/changes/partner-changes')
+            ->post(
+                '/changes/partner-changes/'.$case->id.'/effect',
+                ['expected_revision' => 7],
+            );
+
+        $response
+            ->assertRedirect('/changes/partner-changes')
+            ->assertSessionHasErrors([
+                'effectivity' => 'Partner Change Effective From is required before effectivity.',
+            ]);
+
+        $caseAfter = DB::table('partner_change_cases')
+            ->where('id', $case->id)
+            ->sole();
+
+        self::assertSame(
+            'ready_for_effect',
+            (string) $caseAfter->status,
+        );
+        self::assertSame(7, (int) $caseAfter->revision);
+        self::assertNull($caseAfter->effective_from);
+
+        self::assertSame(
+            'prospective',
+            DB::table('partners')
+                ->where('id', $incoming)
+                ->value('status'),
+        );
+    }
+
+    public function test_future_effective_partner_change_is_blocked_before_effective_from(): void
+    {
+        [$owner, $business] = $this->fixture(
+            'f7-future-effectivity-owner@example.test',
+            'F7 Future Effectivity Business',
+        );
+
+        $incoming = $this->createPartner(
+            $owner,
+            $business,
+            'Future Effectivity Incoming Partner',
+        );
+
+        $futureEffectiveFrom = now()->addDay();
+
+        $this
+            ->actingAs($owner)
+            ->withSession(['current_business_id' => $business->getKey()])
+            ->post('/changes/partner-changes', [
+                'transaction_type' => 'admission',
+                'buyer_partner_id' => $incoming,
+                'governance_decision_type' => 'partner_change_approval',
+                'rofr_required' => false,
+                'effective_from' => $futureEffectiveFrom->toDateTimeString(),
+            ])
+            ->assertRedirect();
+
+        $case = DB::table('partner_change_cases')
+            ->where('business_id', $business->getKey())
+            ->sole();
+
+        self::assertNotNull($case->effective_from);
+
+        $this->advanceHistoricalCaseToReadyForEffect(
+            (string) $business->getKey(),
+            (string) $case->id,
+        );
+
+        $response = $this
+            ->actingAs($owner)
+            ->withSession(['current_business_id' => $business->getKey()])
+            ->from('/changes/partner-changes')
+            ->post(
+                '/changes/partner-changes/'.$case->id.'/effect',
+                ['expected_revision' => 7],
+            );
+
+        $response
+            ->assertRedirect('/changes/partner-changes')
+            ->assertSessionHasErrors([
+                'effectivity' => 'Partner Change cannot become Effective before Effective From.',
+            ]);
+
+        $caseAfter = DB::table('partner_change_cases')
+            ->where('id', $case->id)
+            ->sole();
+
+        self::assertSame(
+            'ready_for_effect',
+            (string) $caseAfter->status,
+        );
+
+        self::assertSame(7, (int) $caseAfter->revision);
+
+        self::assertSame(
+            'prospective',
+            DB::table('partners')
+                ->where('id', $incoming)
+                ->value('status'),
+        );
+    }
+
     public function test_explicit_manage_deny_overrides_workspace_owner_profile_allow(): void
     {
         [$owner, $business] = $this->fixture(
@@ -278,6 +419,40 @@ final class F7PartnerChangeSecurityTest extends TestCase
                 ->where('id', $caseB->id)
                 ->value('status'),
         );
+    }
+
+    private function advanceHistoricalCaseToReadyForEffect(
+        string $businessId,
+        string $caseId,
+    ): void {
+        $revision = 1;
+
+        foreach ([
+            'eligibility_review',
+            'eligible',
+            'terms_ready',
+            'under_governance',
+            'approved',
+            'ready_for_effect',
+        ] as $status) {
+            $revision++;
+
+            $updated = DB::table('partner_change_cases')
+                ->where('id', $caseId)
+                ->where('business_id', $businessId)
+                ->where('revision', $revision - 1)
+                ->update([
+                    'status' => $status,
+                    'revision' => $revision,
+                    'updated_at' => now(),
+                ]);
+
+            self::assertSame(
+                1,
+                $updated,
+                'Historical fixture must follow the real database transition guard.',
+            );
+        }
     }
 
     private function createPartner(

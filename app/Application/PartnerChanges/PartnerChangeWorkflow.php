@@ -1161,6 +1161,15 @@ final class PartnerChangeWorkflow
                 );
             }
 
+            if (
+                $case->effective_from !== null
+                && $case->effective_from->isFuture()
+            ) {
+                throw new InvalidArgumentException(
+                    'Partner Change cannot become Effective before Effective From.',
+                );
+            }
+
             $this->assertEffectRequirements($business, $case);
 
             $submission = DB::table('partner_change_governance_submissions')
@@ -1341,6 +1350,12 @@ SQL,
 
     private function assertTermsReady(PartnerChangeCase $case): void
     {
+        if ($case->effective_from === null) {
+            throw new InvalidArgumentException(
+                'Partner Change Effective From is required before Terms Ready.',
+            );
+        }
+
         $buyerStatus = DB::table('partners')
             ->where('business_id', $case->business_id)
             ->where('id', $case->buyer_partner_id)
@@ -1567,6 +1582,12 @@ SQL,
         Business $business,
         PartnerChangeCase $case,
     ): void {
+        if ($case->effective_from === null) {
+            throw new InvalidArgumentException(
+                'Partner Change Effective From is required before effectivity.',
+            );
+        }
+
         $buyerStatus = DB::table('partners')
             ->where('business_id', $business->getKey())
             ->where('id', $case->buyer_partner_id)
