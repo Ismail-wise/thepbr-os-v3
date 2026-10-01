@@ -682,7 +682,10 @@ const statusClass = (status: string): string => {
                             </button>
 
                             <button
-                                v-if="selectedCase.status === 'approved'"
+                                v-if="
+                                    selectedCase.status === 'approved'
+                                        && selectedCase.governance_submission?.formal_record_state === 'approved'
+                                "
                                 type="button"
                                 class="min-h-10 rounded-md border border-amber-300 bg-amber-50 px-3 text-sm font-semibold text-amber-900 hover:bg-amber-100"
                                 @click="postRevisionAction('prepare-effect')"
@@ -743,10 +746,20 @@ const statusClass = (status: string): string => {
                         </dl>
 
                         <div v-if="partnerChanges.permissions.manage" class="mt-3 flex flex-wrap gap-2">
-                            <button type="button" class="min-h-10 rounded-md border border-slate-300 px-3 text-xs font-semibold" @click="reviewRecord('under_review')">
+                            <button
+                                v-if="selectedCase.governance_submission.formal_record_state === 'ready_for_review'"
+                                type="button"
+                                class="min-h-10 rounded-md border border-slate-300 px-3 text-xs font-semibold"
+                                @click="reviewRecord('under_review')"
+                            >
                                 Start record review
                             </button>
-                            <button type="button" class="min-h-10 rounded-md border border-slate-300 px-3 text-xs font-semibold" @click="reviewRecord('approved')">
+                            <button
+                                v-if="selectedCase.governance_submission.formal_record_state === 'under_review'"
+                                type="button"
+                                class="min-h-10 rounded-md border border-slate-300 px-3 text-xs font-semibold"
+                                @click="reviewRecord('approved')"
+                            >
                                 Approve record content
                             </button>
                         </div>

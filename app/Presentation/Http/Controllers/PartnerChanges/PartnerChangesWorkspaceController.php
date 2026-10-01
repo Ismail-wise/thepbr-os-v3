@@ -12,6 +12,7 @@ use App\Domain\PartnerChanges\Enums\PartnerChangeTransactionType;
 use App\Domain\PartnerChanges\Enums\RofrResponseStatus;
 use App\Domain\Partnership\ValueObjects\ShareQuantity;
 use App\Domain\Records\Enums\FormalRecordState;
+use App\Domain\Records\Exceptions\InvalidWorkflowTransition;
 use App\Domain\Records\Exceptions\StaleRevision;
 use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
@@ -470,6 +471,7 @@ final class PartnerChangesWorkspaceController
             return $callback();
         } catch (
             InvalidArgumentException
+            |InvalidWorkflowTransition
             |StaleRevision
             |RuntimeException $exception
         ) {

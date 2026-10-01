@@ -18,6 +18,7 @@ use App\Domain\PartnerChanges\Enums\PartnerChangeEligibilityStatus;
 use App\Domain\PartnerChanges\Enums\PartnerChangeStatus;
 use App\Domain\PartnerChanges\Enums\PartnerChangeTransactionType;
 use App\Domain\Partnership\Enums\DueDiligenceStatus;
+use App\Domain\Records\Enums\FormalRecordState;
 use App\Domain\Records\Exceptions\StaleRevision;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
@@ -200,6 +201,49 @@ final class F7PartnerChangeWorkflowTest extends TestCase
             'proposal_version_id' => $submission['proposal_version_id'],
             'formal_record_version_id' => $submission['formal_record_version_id'],
         ]);
+
+        $invalidReview = $this
+            ->actingAs($user)
+            ->withSession([
+                'current_business_id' => $business->getKey(),
+            ])
+            ->from('/changes/partner-changes')
+            ->post(
+                '/changes/partner-changes/'
+                    .$case->getKey()
+                    .'/records/'
+                    .$submission['formal_record_version_id']
+                    .'/content-review',
+                [
+                    'target' => FormalRecordState::Approved->value,
+                ],
+            );
+
+        $invalidReview
+            ->assertRedirect('/changes/partner-changes')
+            ->assertSessionHasErrors([
+                'governance' => 'Invalid formal-record transition from ready_for_review to approved.',
+            ]);
+
+        self::assertTrue(
+            $workflow->advanceContentReview(
+                $user,
+                $business,
+                (string) $case->getKey(),
+                $submission['formal_record_version_id'],
+                FormalRecordState::UnderReview,
+            ),
+        );
+
+        self::assertTrue(
+            $workflow->advanceContentReview(
+                $user,
+                $business,
+                (string) $case->getKey(),
+                $submission['formal_record_version_id'],
+                FormalRecordState::Approved,
+            ),
+        );
 
         $record = DB::table('partner_change_record_versions')
             ->where(

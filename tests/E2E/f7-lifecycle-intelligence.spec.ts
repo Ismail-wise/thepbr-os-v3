@@ -324,6 +324,69 @@ test(
             page.getByText('under governance', { exact: true }).first(),
         ).toBeVisible();
 
+        const partnerChangeGovernance = page
+            .getByRole('heading', {
+                name: 'Governance',
+                exact: true,
+            })
+            .locator('..');
+
+        await expect(
+            partnerChangeGovernance.getByText(
+                'ready_for_review',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            partnerChangeGovernance.getByRole('button', {
+                name: 'Start record review',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            partnerChangeGovernance.getByRole('button', {
+                name: 'Approve record content',
+                exact: true,
+            }),
+        ).toHaveCount(0);
+
+        await partnerChangeGovernance
+            .getByRole('button', {
+                name: 'Start record review',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            partnerChangeGovernance.getByText(
+                'under_review',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            partnerChangeGovernance.getByRole('button', {
+                name: 'Approve record content',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await partnerChangeGovernance
+            .getByRole('button', {
+                name: 'Approve record content',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            partnerChangeGovernance.getByText(
+                'approved',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
         await page
             .getByRole('button', {
                 name: 'Sync Governance decision',
