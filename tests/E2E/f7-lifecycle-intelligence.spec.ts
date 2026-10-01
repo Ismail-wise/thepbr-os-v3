@@ -147,7 +147,7 @@ test(
             .slice(0, 16);
 
         await newCasePanel
-            .getByLabel('Effective From', {
+            .getByLabel('Effective from', {
                 exact: true,
             })
             .fill(effectiveFrom);
