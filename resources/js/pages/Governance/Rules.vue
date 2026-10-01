@@ -32,6 +32,19 @@ type Rule = {
     amount_min: string | null;
     amount_max: string | null;
 };
+
+type CharterHeader = {
+    governance_owner_membership_id: string;
+    voting_basis: string;
+    default_approval_rule: string;
+    meeting_frequency: string | null;
+    default_quorum_count: number;
+    minutes_owner_membership_id: string;
+    conflict_of_interest_rule: string;
+    deadlock_rule: string;
+    remote_voting_allowed: boolean;
+    written_resolution_allowed: boolean;
+};
 type VersionRow = {
     id: string;
     version_number: number;
@@ -77,7 +90,7 @@ const props = defineProps<{
             formal_record_version_id: string;
             version_number: number;
             effective_from: string | null;
-            header: Record<string, unknown>;
+            header: CharterHeader;
             rules: Rule[];
             actors: RuleActor[];
         };
@@ -167,22 +180,77 @@ const rule = () => ({
     actors: [actor(true)],
 });
 
+const currentCharter = props.governanceRules.current_charter;
+const currentHeader = currentCharter?.header ?? null;
+
+const actorFromCurrentCharter = (row: RuleActor) => ({
+    membership_id: row.membership_id,
+    capacity: row.capacity,
+    is_decision_owner: row.is_decision_owner,
+    is_consulted: row.is_consulted,
+    can_approve: row.can_approve,
+    can_vote: row.can_vote,
+    can_sign: row.can_sign,
+});
+
+const ruleFromCurrentCharter = (row: Rule) => ({
+    decision_type: row.decision_type,
+    category: row.category,
+    decision_method: row.decision_method,
+    required_approvals: row.required_approvals,
+    required_votes: row.required_votes,
+    quorum_count: row.quorum_count,
+    signature_required: row.signature_required,
+    reserved_matter: row.reserved_matter,
+    meeting_required: row.meeting_required,
+    record_required: row.record_required,
+    amount_min: row.amount_min ?? '',
+    amount_max: row.amount_max ?? '',
+    actors:
+        currentCharter?.actors
+            .filter(
+                (candidate) =>
+                    candidate.governance_charter_rule_id === row.id,
+            )
+            .map(actorFromCurrentCharter) ?? [],
+});
+
+const currentCharterRules =
+    currentCharter?.rules.map(ruleFromCurrentCharter) ?? [];
+
 const charter = useForm({
     effective_from: new Date().toISOString().slice(0, 10),
     review_due_at: '',
-    governance_owner_membership_id: firstMembership,
-    voting_basis: 'One eligible Governance participant, one vote',
-    default_approval_rule: 'Use the exact Decision/Authority Matrix rule',
-    meeting_frequency: 'Monthly',
-    default_quorum_count: 1,
-    minutes_owner_membership_id: firstMembership,
+    governance_owner_membership_id:
+        currentHeader?.governance_owner_membership_id ?? firstMembership,
+    voting_basis:
+        currentHeader?.voting_basis ??
+        'One eligible Governance participant, one vote',
+    default_approval_rule:
+        currentHeader?.default_approval_rule ??
+        'Use the exact Decision/Authority Matrix rule',
+    meeting_frequency:
+        currentHeader === null
+            ? 'Monthly'
+            : (currentHeader.meeting_frequency ?? ''),
+    default_quorum_count:
+        currentHeader?.default_quorum_count ?? 1,
+    minutes_owner_membership_id:
+        currentHeader?.minutes_owner_membership_id ?? firstMembership,
     conflict_of_interest_rule:
+        currentHeader?.conflict_of_interest_rule ??
         'Conflicts must be disclosed and the conflicted participant must recuse from the affected decision.',
     deadlock_rule:
+        currentHeader?.deadlock_rule ??
         'Escalate unresolved deadlock under the approved deadlock process before structural remedies.',
-    remote_voting_allowed: true,
-    written_resolution_allowed: true,
-    rules: [rule()],
+    remote_voting_allowed:
+        currentHeader?.remote_voting_allowed ?? true,
+    written_resolution_allowed:
+        currentHeader?.written_resolution_allowed ?? true,
+    rules:
+        currentCharter === null
+            ? [rule()]
+            : currentCharterRules,
 });
 
 const delegation = useForm({
@@ -668,6 +736,16 @@ const formatDate = (value: string | null | undefined) =>
                     Create Governance Charter Draft / Amendment
                 </summary>
                 <form class="space-y-6 border-t border-slate-200 p-5" @submit.prevent="charter.post('/governance/rules/charter', { preserveScroll: true })">
+                    <p
+                        v-if="currentCharter"
+                        class="border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700"
+                    >
+                        This amendment starts from Current Effective Governance Charter
+                        v{{ currentCharter.version_number }}. Existing authority rules and
+                        actors are copied into this draft form so only intended changes
+                        need to be made.
+                    </p>
+
                     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                         <label class="text-sm font-medium">Effective from
                             <input v-model="charter.effective_from" type="date" required class="mt-1 min-h-11 w-full border border-slate-300 px-3" />

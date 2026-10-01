@@ -130,6 +130,40 @@ SQL,
         );
     }
 
+    public function test_charter_amendment_ui_starts_from_the_current_effective_charter_without_inventing_authority(): void
+    {
+        $source = file_get_contents(
+            base_path('resources/js/pages/Governance/Rules.vue'),
+        );
+
+        self::assertIsString($source);
+
+        foreach ([
+            'const currentCharter = props.governanceRules.current_charter;',
+            'const currentHeader = currentCharter?.header ?? null;',
+            'const actorFromCurrentCharter = (row: RuleActor) => ({',
+            'const ruleFromCurrentCharter = (row: Rule) => ({',
+            'candidate.governance_charter_rule_id === row.id',
+            'const currentCharterRules =',
+            'currentCharter?.rules.map(ruleFromCurrentCharter) ?? [];',
+            'currentHeader?.governance_owner_membership_id ?? firstMembership',
+            'currentHeader?.minutes_owner_membership_id ?? firstMembership',
+            'currentHeader?.remote_voting_allowed ?? true',
+            'currentHeader?.written_resolution_allowed ?? true',
+            'currentCharter === null',
+            ': currentCharterRules,',
+            'This amendment starts from Current Effective Governance Charter',
+        ] as $required) {
+            self::assertStringContainsString($required, $source);
+        }
+
+        self::assertStringNotContainsString(
+            'currentCharterRules.length',
+            $source,
+            'An existing Charter with missing rules must fail closed instead of inventing default authority.',
+        );
+    }
+
     public function test_frozen_governance_charter_content_is_immutable(): void
     {
         [$business, $user, $membership] = $this->identity(
