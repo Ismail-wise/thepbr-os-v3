@@ -142,9 +142,15 @@ test(
                 label: 'Lifecycle Local Partner · prospective',
             });
 
-        const effectiveFrom = new Date(Date.now() - 60_000)
-            .toISOString()
-            .slice(0, 16);
+        const effectiveDate = new Date(Date.now() - 60_000);
+        const twoDigits = (value: number): string =>
+            String(value).padStart(2, '0');
+        const effectiveFrom =
+            `${effectiveDate.getFullYear()}-`
+            + `${twoDigits(effectiveDate.getMonth() + 1)}-`
+            + `${twoDigits(effectiveDate.getDate())}T`
+            + `${twoDigits(effectiveDate.getHours())}:`
+            + `${twoDigits(effectiveDate.getMinutes())}`;
 
         await newCasePanel
             .getByLabel('Effective from', {
@@ -152,12 +158,32 @@ test(
             })
             .fill(effectiveFrom);
 
+        const createCaseRequestPromise = page.waitForRequest(
+            (request) =>
+                request.method() === 'POST'
+                && new URL(request.url()).pathname
+                    === '/changes/partner-changes',
+        );
+
         await newCasePanel
             .getByRole('button', {
                 name: 'Create case',
                 exact: true,
             })
             .click();
+
+        const createCaseRequest = await createCaseRequestPromise;
+        const createCasePayload = createCaseRequest.postDataJSON() as {
+            effective_from: string;
+        };
+
+        expect(createCasePayload.effective_from).toMatch(/Z$/);
+        expect(
+            Math.abs(
+                Date.parse(createCasePayload.effective_from)
+                - effectiveDate.getTime(),
+            ),
+        ).toBeLessThan(60_000);
 
         await page
             .getByRole('button', {

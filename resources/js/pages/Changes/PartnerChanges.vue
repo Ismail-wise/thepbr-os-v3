@@ -148,6 +148,14 @@ const isAdmission = computed(
 );
 const isOwnershipChange = computed(() => !isAdmission.value);
 
+const localDateTimeToUtcIso = (value: string): string => {
+    const parsed = new Date(value);
+
+    return Number.isNaN(parsed.getTime())
+        ? value
+        : parsed.toISOString();
+};
+
 const createCase = (): void => {
     if (isAdmission.value) {
         createForm.seller_partner_id = '';
@@ -156,10 +164,17 @@ const createCase = (): void => {
         createForm.rofr_required = false;
     }
 
-    createForm.post('/changes/partner-changes', {
-        preserveScroll: true,
-        onSuccess: () => createForm.reset(),
-    });
+    createForm
+        .transform((data) => ({
+            ...data,
+            effective_from: data.effective_from
+                ? localDateTimeToUtcIso(data.effective_from)
+                : data.effective_from,
+        }))
+        .post('/changes/partner-changes', {
+            preserveScroll: true,
+            onSuccess: () => createForm.reset(),
+        });
 };
 
 const transitionForm = useForm({
@@ -278,9 +293,16 @@ const openRofr = (): void => {
     }
 
     rofrForm.expected_revision = item.revision;
-    rofrForm.post(`/changes/partner-changes/${item.id}/rofr`, {
-        preserveScroll: true,
-    });
+    rofrForm
+        .transform((data) => ({
+            ...data,
+            deadline_at: data.deadline_at
+                ? localDateTimeToUtcIso(data.deadline_at)
+                : data.deadline_at,
+        }))
+        .post(`/changes/partner-changes/${item.id}/rofr`, {
+            preserveScroll: true,
+        });
 };
 
 const revisionActionForm = useForm({
