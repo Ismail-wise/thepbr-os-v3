@@ -142,6 +142,16 @@ test(
                 label: 'Lifecycle Local Partner · prospective',
             });
 
+        const effectiveFrom = new Date(Date.now() - 60_000)
+            .toISOString()
+            .slice(0, 16);
+
+        await newCasePanel
+            .getByLabel('Effective From', {
+                exact: true,
+            })
+            .fill(effectiveFrom);
+
         await newCasePanel
             .getByRole('button', {
                 name: 'Create case',
