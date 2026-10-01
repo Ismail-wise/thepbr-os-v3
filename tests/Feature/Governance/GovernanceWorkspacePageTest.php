@@ -169,6 +169,26 @@ final class GovernanceWorkspacePageTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_governance_command_center_surfaces_effectivity_validation_errors(): void
+    {
+        $source = file_get_contents(
+            base_path('resources/js/pages/Governance/Index.vue'),
+        );
+
+        self::assertIsString($source);
+
+        foreach ([
+            'const governanceActionError = computed(() => {',
+            'page.props.errors',
+            'errors?.formal_record_version_id',
+            'v-if="governanceActionError"',
+            'role="alert"',
+            '{{ governanceActionError }}',
+        ] as $required) {
+            self::assertStringContainsString($required, $source);
+        }
+    }
+
     public function test_governance_route_is_current_business_scoped(): void
     {
         $route = app('router')

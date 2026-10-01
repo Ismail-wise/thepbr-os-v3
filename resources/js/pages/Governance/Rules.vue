@@ -218,8 +218,24 @@ const ruleFromCurrentCharter = (row: Rule) => ({
 const currentCharterRules =
     currentCharter?.rules.map(ruleFromCurrentCharter) ?? [];
 
+const localDateTimeInputValue = (date: Date): string => {
+    const local = new Date(
+        date.getTime() - date.getTimezoneOffset() * 60_000,
+    );
+
+    return local.toISOString().slice(0, 16);
+};
+
+const localDateTimeToUtcIso = (value: string): string => {
+    const parsed = new Date(value);
+
+    return Number.isNaN(parsed.getTime())
+        ? value
+        : parsed.toISOString();
+};
+
 const charter = useForm({
-    effective_from: new Date().toISOString().slice(0, 10),
+    effective_from: localDateTimeInputValue(new Date()),
     review_due_at: '',
     governance_owner_membership_id:
         currentHeader?.governance_owner_membership_id ?? firstMembership,
@@ -286,6 +302,19 @@ const formError = (errors: object, key: string) =>
 const firstFormError = (errors: object) =>
     Object.values(errors as Record<string, string | undefined>)
         .find((value) => value !== undefined);
+
+const submitCharter = (): void => {
+    charter
+        .transform((data) => ({
+            ...data,
+            effective_from: data.effective_from
+                ? localDateTimeToUtcIso(data.effective_from)
+                : data.effective_from,
+        }))
+        .post('/governance/rules/charter', {
+            preserveScroll: true,
+        });
+};
 
 const actorsFor = (ruleId: string) =>
     props.governanceRules.current_charter?.actors.filter(
@@ -735,7 +764,7 @@ const formatDate = (value: string | null | undefined) =>
                 <summary class="cursor-pointer px-5 py-4 font-semibold text-slate-950">
                     Create Governance Charter Draft / Amendment
                 </summary>
-                <form class="space-y-6 border-t border-slate-200 p-5" @submit.prevent="charter.post('/governance/rules/charter', { preserveScroll: true })">
+                <form class="space-y-6 border-t border-slate-200 p-5" @submit.prevent="submitCharter">
                     <p
                         v-if="currentCharter"
                         class="border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700"
@@ -748,7 +777,12 @@ const formatDate = (value: string | null | undefined) =>
 
                     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                         <label class="text-sm font-medium">Effective from
-                            <input v-model="charter.effective_from" type="date" required class="mt-1 min-h-11 w-full border border-slate-300 px-3" />
+                            <OptionalTemporalInput
+                                v-model="charter.effective_from"
+                                type="datetime-local"
+                                required
+                                class="mt-1 min-h-11 w-full border border-slate-300 px-3"
+                            />
                         </label>
                         <label class="text-sm font-medium">Review due
                             <OptionalTemporalInput v-model="charter.review_due_at" type="date" class="mt-1 min-h-11 w-full border border-slate-300 px-3" />

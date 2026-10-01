@@ -164,6 +164,32 @@ SQL,
         );
     }
 
+    public function test_charter_effective_from_uses_browser_local_datetime_and_utc_payload(): void
+    {
+        $source = file_get_contents(
+            base_path('resources/js/pages/Governance/Rules.vue'),
+        );
+
+        self::assertIsString($source);
+
+        foreach ([
+            'const localDateTimeInputValue = (date: Date): string => {',
+            'const localDateTimeToUtcIso = (value: string): string => {',
+            'effective_from: localDateTimeInputValue(new Date()),',
+            '@submit.prevent="submitCharter"',
+            'localDateTimeToUtcIso(data.effective_from)',
+            'v-model="charter.effective_from"',
+            'type="datetime-local"',
+        ] as $required) {
+            self::assertStringContainsString($required, $source);
+        }
+
+        self::assertStringNotContainsString(
+            'v-model="charter.effective_from" type="date"',
+            $source,
+        );
+    }
+
     public function test_frozen_governance_charter_content_is_immutable(): void
     {
         [$business, $user, $membership] = $this->identity(

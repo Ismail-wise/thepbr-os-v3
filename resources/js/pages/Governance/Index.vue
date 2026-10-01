@@ -204,6 +204,15 @@ const props = defineProps<{
 }>();
 
 const page = usePage();
+
+const governanceActionError = computed(() => {
+    const errors = page.props.errors as
+        | Record<string, string>
+        | undefined;
+
+    return errors?.formal_record_version_id ?? '';
+});
+
 const mode = computed(
     () =>
         ((page.props.uiLanguageMode as LanguageMode | undefined) ??
@@ -547,6 +556,14 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                     role="note"
                 >
                     {{ c.rights }}
+                </p>
+
+                <p
+                    v-if="governanceActionError"
+                    class="mt-3 border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800"
+                    role="alert"
+                >
+                    {{ governanceActionError }}
                 </p>
             </header>
 
