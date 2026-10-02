@@ -2,26 +2,31 @@
 
 :root {
     --pbr-canvas: #f2f5f2;
+    --pbr-canvas-warm: #f8f5ed;
     --pbr-surface: #ffffff;
+    --pbr-surface-elevated: #fffdf9;
     --pbr-surface-soft: #f7f9f7;
     --pbr-surface-green: #eaf5ee;
     --pbr-ink: #10231a;
     --pbr-ink-soft: #2e4037;
     --pbr-muted: #6d7b73;
-    --pbr-line: #e2e9e4;
-    --pbr-line-strong: #d1ddd5;
+    --pbr-line: #dde7df;
+    --pbr-line-strong: #cddbd1;
     --pbr-green: #0d6a3b;
     --pbr-green-dark: #084d2b;
     --pbr-green-soft: #eaf5ee;
+    --pbr-gold: #d2a743;
+    --pbr-gold-soft: #fbf5e7;
     --pbr-amber: #9a5b12;
     --pbr-amber-soft: #fff6e7;
     --pbr-blue: #315d92;
     --pbr-blue-soft: #edf4fb;
     --pbr-red: #9d4137;
     --pbr-red-soft: #fff0ed;
-    --pbr-shadow-sm: 0 8px 24px rgb(16 35 26 / 5%);
-    --pbr-shadow-md: 0 18px 48px rgb(16 35 26 / 8%);
-    --pbr-shadow-lg: 0 28px 80px rgb(16 35 26 / 10%);
+    --pbr-shadow-xs: 0 5px 16px rgb(16 35 26 / 4%);
+    --pbr-shadow-sm: 0 10px 28px rgb(16 35 26 / 6%);
+    --pbr-shadow-md: 0 20px 52px rgb(16 35 26 / 8%);
+    --pbr-shadow-lg: 0 30px 90px rgb(16 35 26 / 11%);
 }
 
 @layer base {
@@ -36,8 +41,9 @@
     body {
         min-width: 320px;
         background:
-            radial-gradient(circle at 88% -12%, rgb(210 167 67 / 8%), transparent 27rem),
-            var(--pbr-canvas);
+            radial-gradient(circle at 88% -12%, rgb(210 167 67 / 11%), transparent 28rem),
+            radial-gradient(circle at 18% 18%, rgb(13 106 59 / 4%), transparent 34rem),
+            linear-gradient(135deg, var(--pbr-canvas) 0%, #f5f5ef 64%, var(--pbr-canvas-warm) 100%);
     }
 
     :focus-visible {
@@ -68,21 +74,55 @@
         min-height: 44px;
         width: 100%;
         border: 1px solid var(--pbr-line-strong);
-        border-radius: 12px;
-        background: var(--pbr-surface);
+        border-radius: 14px;
+        background: rgb(255 255 255 / 96%);
         color: var(--pbr-ink);
+        box-shadow:
+            inset 0 1px 0 rgb(255 255 255 / 80%),
+            0 5px 14px rgb(16 35 26 / 4%);
+    }
+
+    .pbr-input-control:hover {
+        border-color: #b7cabd;
     }
 
     .pbr-input-control:focus-visible {
         border-color: var(--pbr-green);
-        box-shadow: 0 0 0 4px rgb(13 106 59 / 9%);
+        box-shadow:
+            0 0 0 4px rgb(13 106 59 / 9%),
+            0 8px 20px rgb(16 35 26 / 5%);
         outline: none;
     }
 
     .pbr-app-canvas {
         background:
-            radial-gradient(circle at 96% 0%, rgb(210 167 67 / 8%), transparent 24rem),
-            var(--pbr-canvas);
+            radial-gradient(circle at 95% 2%, rgb(210 167 67 / 10%), transparent 25rem),
+            radial-gradient(circle at 31% 0%, rgb(13 106 59 / 3.5%), transparent 30rem),
+            linear-gradient(135deg, #eef2ed 0%, #f4f5ef 58%, #f8f4ea 100%);
+    }
+
+    .pbr-page-stage {
+        position: relative;
+    }
+
+    .pbr-page-frame {
+        min-width: 0;
+        overflow: hidden;
+        background: var(--pbr-surface);
+    }
+}
+
+@media (min-width: 1024px) {
+    .pbr-page-stage {
+        padding: 0 20px 20px;
+    }
+
+    .pbr-page-frame {
+        border: 1px solid rgb(217 227 220 / 94%);
+        border-radius: 24px;
+        box-shadow:
+            0 1px 0 rgb(255 255 255 / 84%) inset,
+            0 22px 58px rgb(30 55 39 / 7%);
     }
 }
 

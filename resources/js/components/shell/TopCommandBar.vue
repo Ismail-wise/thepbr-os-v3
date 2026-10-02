@@ -25,12 +25,19 @@ const openNavigation = (event: MouseEvent) => {
 
 <template>
     <header
-        class="sticky top-0 z-30 border-b border-[var(--pbr-line)] bg-[rgb(250_252_250_/_90%)] px-3 py-2.5 shadow-[0_8px_28px_rgb(16_35_26_/_3%)] backdrop-blur-xl sm:px-5 lg:px-6"
+        class="sticky top-0 z-30 bg-[rgb(241_244_239_/_90%)] px-3 py-3 backdrop-blur-xl sm:px-5 lg:px-5 lg:pb-4 lg:pt-4"
     >
-        <div class="flex min-h-12 min-w-0 items-center gap-2.5">
+        <div
+            class="relative flex min-h-16 min-w-0 items-center gap-2.5 overflow-hidden rounded-[20px] border border-[#d9e5dc] bg-[rgb(255_254_251_/_96%)] px-3.5 shadow-[0_12px_34px_rgb(16_35_26_/_6%)] ring-1 ring-white/80 sm:px-4 lg:min-h-[72px] lg:px-5"
+        >
+            <div
+                aria-hidden="true"
+                class="pointer-events-none absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-[#d2a743]/55 to-transparent"
+            />
+
             <button
                 type="button"
-                class="pbr-touch inline-flex shrink-0 items-center justify-center rounded-xl border border-[var(--pbr-line-strong)] bg-white text-[var(--pbr-ink)] shadow-[0_4px_14px_rgb(16_35_26_/_3%)] hover:bg-[var(--pbr-green-soft)] focus-visible:outline-none lg:hidden"
+                class="pbr-touch inline-flex shrink-0 items-center justify-center rounded-xl border border-[var(--pbr-line-strong)] bg-white text-[var(--pbr-ink)] shadow-[0_5px_16px_rgb(16_35_26_/_4%)] hover:border-[#bad0c0] hover:bg-[var(--pbr-green-soft)] focus-visible:outline-none lg:hidden"
                 aria-controls="mobile-workspace-navigation"
                 :aria-expanded="mobileNavigationOpen ? 'true' : 'false'"
                 :aria-label="t('shell.openNavigation')"
@@ -59,14 +66,16 @@ const openNavigation = (event: MouseEvent) => {
                 <BreadcrumbContext :current-business-name="currentBusinessName" />
             </div>
 
+            <div class="hidden h-8 w-px bg-[#e2e9e4] md:block" />
+
             <Link
                 href="/search"
-                class="pbr-touch hidden items-center gap-2 rounded-xl border border-[var(--pbr-line)] bg-white px-3 text-sm font-bold text-[var(--pbr-muted)] shadow-[0_4px_14px_rgb(16_35_26_/_3%)] hover:border-[#c4d5ca] hover:text-[var(--pbr-green-dark)] focus-visible:outline-none md:inline-flex"
+                class="pbr-touch hidden min-w-28 items-center justify-center gap-2 rounded-xl border border-[var(--pbr-line)] bg-white px-3.5 text-sm font-extrabold text-[var(--pbr-muted)] shadow-[0_5px_16px_rgb(16_35_26_/_4%)] hover:border-[#b9cfc0] hover:bg-[#fcfefc] hover:text-[var(--pbr-green-dark)] focus-visible:outline-none md:inline-flex"
             >
                 <svg
                     aria-hidden="true"
                     viewBox="0 0 24 24"
-                    class="h-4.5 w-4.5"
+                    class="h-[18px] w-[18px]"
                     fill="none"
                     stroke="currentColor"
                     stroke-width="1.8"

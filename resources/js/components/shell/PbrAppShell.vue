@@ -43,7 +43,7 @@ const openMobileNavigation = (trigger: HTMLButtonElement) => {
 
 <template>
     <div class="pbr-app-canvas min-h-screen text-[var(--pbr-ink)]">
-        <div class="min-h-screen lg:grid lg:grid-cols-[18.5rem_minmax(0,1fr)]">
+        <div class="min-h-screen lg:grid lg:grid-cols-[19.75rem_minmax(0,1fr)]">
             <BusinessSidebar
                 :businesses="workspace?.businesses ?? []"
                 :current-business="workspace?.currentBusiness ?? null"
@@ -56,8 +56,10 @@ const openMobileNavigation = (trigger: HTMLButtonElement) => {
                     @open-navigation="openMobileNavigation"
                 />
 
-                <div class="min-w-0">
-                    <slot />
+                <div class="pbr-page-stage min-w-0">
+                    <div class="pbr-page-frame">
+                        <slot />
+                    </div>
                 </div>
             </div>
         </div>

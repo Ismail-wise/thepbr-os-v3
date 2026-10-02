@@ -52,14 +52,14 @@ const selectBusiness = () => {
         <div class="flex items-center justify-between gap-3">
             <label
                 :for="resolvedSelectId"
-                class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--pbr-green-dark)]"
+                class="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--pbr-green-dark)]"
             >
                 {{ t('businessSwitcher.label') }}
             </label>
 
             <span
                 v-if="currentBusiness"
-                class="inline-flex items-center gap-1.5 text-[10px] font-bold text-[var(--pbr-muted)]"
+                class="inline-flex min-h-6 items-center gap-1.5 rounded-full border border-[#cfe2d5] bg-white/80 px-2 text-[9px] font-extrabold text-[#5c7164] shadow-[0_3px_10px_rgb(16_35_26_/_3%)]"
             >
                 <span
                     aria-hidden="true"
@@ -73,7 +73,7 @@ const selectBusiness = () => {
             :id="resolvedSelectId"
             v-model="form.business_id"
             :disabled="form.processing || businesses.length === 0"
-            class="pbr-input-control mt-2 px-3 py-2.5 text-sm font-extrabold focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-[#f1f4f2] disabled:text-[var(--pbr-muted)]"
+            class="pbr-input-control mt-2.5 px-3.5 py-2.5 text-sm font-black tracking-[-0.01em] focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-[#f1f4f2] disabled:text-[var(--pbr-muted)]"
             :aria-label="t('businessSwitcher.ariaLabel')"
             @change="selectBusiness"
         >

@@ -47,12 +47,23 @@ const sectionLabel = computed(() => {
 
 <template>
     <div class="min-w-0">
-        <div class="flex min-w-0 items-center gap-2 text-xs font-semibold text-[var(--pbr-muted)]">
-            <span class="truncate">{{ t('shell.currentBusiness') }}</span>
+        <div class="flex min-w-0 items-center gap-2">
+            <span
+                class="inline-flex min-h-6 items-center gap-1.5 rounded-full border border-[#d5e4da] bg-[var(--pbr-green-soft)] px-2.5 text-[9px] font-extrabold uppercase tracking-[0.15em] text-[var(--pbr-green-dark)]"
+            >
+                <span aria-hidden="true" class="h-1.5 w-1.5 rounded-full bg-[var(--pbr-green)]" />
+                {{ t('shell.currentBusiness') }}
+            </span>
             <span aria-hidden="true" class="hidden text-[#aebbb3] sm:inline">/</span>
-            <span class="hidden truncate sm:inline">{{ sectionLabel }}</span>
+            <span class="hidden truncate text-[11px] font-bold text-[var(--pbr-muted)] sm:inline">
+                {{ sectionLabel }}
+            </span>
         </div>
-        <p class="mt-1 truncate text-sm font-extrabold text-[var(--pbr-ink)]" :title="currentBusinessName">
+
+        <p
+            class="mt-1.5 truncate text-[15px] font-black tracking-[-0.015em] text-[var(--pbr-ink)] lg:text-[17px]"
+            :title="currentBusinessName"
+        >
             {{ currentBusinessName }}
         </p>
     </div>

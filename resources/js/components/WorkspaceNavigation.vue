@@ -59,7 +59,6 @@ const groups: NavGroup[] = [
             { href: '/partnership', label: 'nav.partnership' },
         ],
     },
-
     {
         label: 'nav.group.operate',
         items: [
@@ -85,7 +84,6 @@ const groups: NavGroup[] = [
             { href: '/changes/closure', label: 'nav.closure' },
         ],
     },
-
     {
         label: 'nav.group.records',
         items: [
@@ -105,17 +103,23 @@ const groups: NavGroup[] = [
 </script>
 
 <template>
-    <nav :aria-label="t('nav.workspaceNavigation')" class="py-3">
+    <nav :aria-label="t('nav.workspaceNavigation')" class="py-2">
         <section
             v-for="group in groups"
             :key="group.label"
-            class="mb-4 last:mb-0"
+            class="mb-5 last:mb-0"
         >
-            <p
-                class="px-3 pb-1.5 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#8a968f]"
-            >
-                {{ t(group.label) }}
-            </p>
+            <div class="mb-1.5 flex items-center gap-2 px-3">
+                <span
+                    aria-hidden="true"
+                    class="h-px w-3 bg-[#cbd7ce]"
+                />
+                <p
+                    class="text-[9px] font-black uppercase tracking-[0.19em] text-[#87958c]"
+                >
+                    {{ t(group.label) }}
+                </p>
+            </div>
 
             <div class="space-y-1">
                 <Link
@@ -123,23 +127,37 @@ const groups: NavGroup[] = [
                     :key="item.href"
                     :href="item.href"
                     :aria-current="isCurrent(item.href) ? 'page' : undefined"
-                    class="pbr-touch group relative flex items-center rounded-xl px-3 py-2.5 text-sm font-bold focus-visible:outline-none"
+                    class="pbr-touch group relative flex items-center overflow-hidden rounded-[13px] border px-3 py-2.5 text-sm font-bold transition-[background-color,border-color,box-shadow,color] duration-150 focus-visible:outline-none"
                     :class="
                         isCurrent(item.href)
-                            ? 'bg-[var(--pbr-green-soft)] text-[var(--pbr-green-dark)]'
-                            : 'text-[#55665c] hover:bg-[var(--pbr-surface-soft)] hover:text-[var(--pbr-ink)]'
+                            ? 'border-[#cddfd3] bg-[linear-gradient(90deg,#e9f5ed_0%,#f3f8f4_70%,#fbf8ef_100%)] text-[var(--pbr-green-dark)] shadow-[0_7px_18px_rgb(30_67_43_/_6%)]'
+                            : 'border-transparent text-[#56675d] hover:border-[#e1e8e3] hover:bg-white/72 hover:text-[var(--pbr-ink)]'
                     "
                     @click="emit('navigate')"
                 >
                     <span
+                        v-if="isCurrent(item.href)"
                         aria-hidden="true"
-                        class="mr-3 h-2 w-2 shrink-0 rounded-full"
+                        class="absolute inset-y-2 left-0 w-[3px] rounded-r-full bg-gradient-to-b from-[var(--pbr-green)] to-[var(--pbr-gold)]"
+                    />
+                    <span
+                        aria-hidden="true"
+                        class="mr-3 grid h-5 w-5 shrink-0 place-items-center rounded-lg border"
                         :class="
                             isCurrent(item.href)
-                                ? 'bg-[var(--pbr-green)] shadow-[0_0_0_4px_rgb(13_106_59_/_9%)]'
-                                : 'bg-[#d5ded8] group-hover:bg-[#9db6a6]'
+                                ? 'border-[#c8dfd0] bg-white text-[var(--pbr-green)] shadow-[0_3px_8px_rgb(13_106_59_/_8%)]'
+                                : 'border-[#e1e8e3] bg-[#f6f8f6] text-[#9caf9f] group-hover:border-[#d0ded4] group-hover:bg-white'
                         "
-                    />
+                    >
+                        <span
+                            class="h-1.5 w-1.5 rounded-full"
+                            :class="
+                                isCurrent(item.href)
+                                    ? 'bg-[var(--pbr-green)]'
+                                    : 'bg-[#c7d3ca] group-hover:bg-[#9caf9f]'
+                            "
+                        />
+                    </span>
                     <span class="min-w-0 truncate">{{ t(item.label) }}</span>
                 </Link>
             </div>
