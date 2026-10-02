@@ -341,6 +341,22 @@ const acceptedMatrix = computed(() =>
     }),
 );
 
+const partnerFoundationSummary = computed(() => {
+    const total = props.partnership.partners.length;
+    const diligenceCompleted = props.partnership.partners.filter(
+        (partner) => latestDueDiligence.value.get(partner.id)?.status === 'completed',
+    ).length;
+    const dynamicsReferenced = props.partnership.partners.filter(
+        (partner) => latestDynamics.value.has(partner.id),
+    ).length;
+
+    return {
+        total,
+        diligenceCompleted,
+        dynamicsReferenced,
+    };
+});
+
 const createPartner = () => {
     partnerForm.post('/partnership/partners', {
         preserveScroll: true,
@@ -443,23 +459,56 @@ const createPartner = () => {
 
             <div class="mt-6">
                 <section v-if="activeSection === 'partners'">
-                    <div
-                        class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
-                    >
+                    <div class="rounded-[22px] border border-[#d8e4da] bg-white/88 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)] sm:p-6">
                         <div>
-                            <h2 class="text-lg font-bold text-slate-950">
+                            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--pbr-green)]">
+                                {{ t('partnership.partnerFoundationTitle') }}
+                            </p>
+                            <h2 class="mt-2 text-xl font-black tracking-[-0.02em] text-[var(--pbr-ink)]">
                                 {{ t('partnership.partners') }}
                             </h2>
-                            <p class="mt-1 text-sm text-slate-600">
-                                Partner identity is separate from Membership,
-                                Ownership and Governance authority.
+                            <p class="mt-2 max-w-4xl text-sm leading-6 text-[var(--pbr-muted)]">
+                                {{ t('partnership.partnerFoundationDescription') }}
                             </p>
                         </div>
+
+                        <dl class="mt-5 grid gap-3 sm:grid-cols-3">
+                            <div class="rounded-[18px] border border-[#dde7df] bg-[#f8faf8] p-4">
+                                <dt class="text-xs font-bold text-[var(--pbr-muted)]">
+                                    {{ t('partnership.partnersRecorded') }}
+                                </dt>
+                                <dd class="mt-2 text-2xl font-black text-[var(--pbr-ink)]">
+                                    {{ partnerFoundationSummary.total }}
+                                </dd>
+                            </div>
+                            <div class="rounded-[18px] border border-[#dde7df] bg-[#f8faf8] p-4">
+                                <dt class="text-xs font-bold text-[var(--pbr-muted)]">
+                                    {{ t('partnership.diligenceCompleted') }}
+                                </dt>
+                                <dd class="mt-2 text-2xl font-black text-[var(--pbr-ink)]">
+                                    {{ partnerFoundationSummary.diligenceCompleted }}
+                                    <span class="text-sm font-bold text-[var(--pbr-muted)]">
+                                        / {{ partnerFoundationSummary.total }}
+                                    </span>
+                                </dd>
+                            </div>
+                            <div class="rounded-[18px] border border-[#e8d9ab] bg-[#fffaf0] p-4">
+                                <dt class="text-xs font-bold text-[#7d672d]">
+                                    {{ t('partnership.dynamicsReferenced') }}
+                                </dt>
+                                <dd class="mt-2 text-2xl font-black text-[#66531f]">
+                                    {{ partnerFoundationSummary.dynamicsReferenced }}
+                                </dd>
+                                <p class="mt-2 text-[11px] leading-4 text-[#7d672d]">
+                                    {{ t('partnership.referenceOnly') }}
+                                </p>
+                            </div>
+                        </dl>
                     </div>
 
                     <form
                         v-if="partnership.permissions.partners_manage"
-                        class="mt-5 grid gap-3 border border-slate-200 bg-white p-4 md:grid-cols-2 xl:grid-cols-4"
+                        class="mt-5 grid gap-3 rounded-[20px] border border-[#d8e4da] bg-white/90 p-4 shadow-[0_8px_22px_rgb(16_35_26_/_3%)] md:grid-cols-2 xl:grid-cols-4"
                         @submit.prevent="createPartner"
                     >
                         <label class="text-sm font-medium text-slate-700">
@@ -499,7 +548,7 @@ const createPartner = () => {
                         </div>
                     </form>
 
-                    <div class="mt-5 overflow-x-auto border border-slate-200">
+                    <div class="mt-5 overflow-x-auto rounded-[20px] border border-[#d8e4da] bg-white shadow-[0_8px_22px_rgb(16_35_26_/_3%)]">
                         <table class="min-w-full divide-y divide-slate-200 text-sm">
                             <thead class="bg-slate-50 text-left text-slate-600">
                                 <tr>
@@ -581,11 +630,18 @@ const createPartner = () => {
                                                     )?.primary_profile
                                                 }}
                                             </p>
-                                            <p class="mt-1 text-slate-500">
+                                            <p
+                                                v-if="
+                                                    latestDynamics.get(
+                                                        partner.id,
+                                                    )?.secondary_profile
+                                                "
+                                                class="mt-1 text-slate-500"
+                                            >
                                                 {{
                                                     latestDynamics.get(
                                                         partner.id,
-                                                    )?.assessment_version
+                                                    )?.secondary_profile
                                                 }}
                                             </p>
                                         </template>
@@ -643,13 +699,19 @@ const createPartner = () => {
                                         Description
                                     </th>
                                     <th class="px-4 py-3 font-semibold">
-                                        Proposed
+                                        {{ t('partnership.proposedValue') }}
                                     </th>
                                     <th class="px-4 py-3 font-semibold">
-                                        Accepted
+                                        {{ t('partnership.reviewedValue') }}
                                     </th>
                                     <th class="px-4 py-3 font-semibold">
-                                        Status
+                                        {{ t('partnership.approvedValue') }}
+                                    </th>
+                                    <th class="px-4 py-3 font-semibold">
+                                        {{ t('partnership.acceptedValue') }}
+                                    </th>
+                                    <th class="px-4 py-3 font-semibold">
+                                        {{ t('partnership.currentState') }}
                                     </th>
                                 </tr>
                             </thead>
@@ -668,19 +730,34 @@ const createPartner = () => {
                                     <td class="px-4 py-4">
                                         {{ row.description }}
                                     </td>
-                                    <td class="px-4 py-4">
-                                        {{ row.proposed_value }}
-                                        {{ row.currency }}
+                                    <td class="px-4 py-4 font-medium">
+                                        {{ row.proposed_value }} {{ row.currency }}
                                     </td>
                                     <td class="px-4 py-4">
+                                        {{
+                                            row.reviewed_value
+                                                ? `${row.reviewed_value} ${row.currency}`
+                                                : '—'
+                                        }}
+                                    </td>
+                                    <td class="px-4 py-4">
+                                        {{
+                                            row.approved_value
+                                                ? `${row.approved_value} ${row.currency}`
+                                                : '—'
+                                        }}
+                                    </td>
+                                    <td class="px-4 py-4 font-black text-[var(--pbr-green-dark)]">
                                         {{
                                             row.accepted_value
                                                 ? `${row.accepted_value} ${row.currency}`
                                                 : '—'
                                         }}
                                     </td>
-                                    <td class="px-4 py-4 font-medium">
-                                        {{ row.status }}
+                                    <td class="px-4 py-4">
+                                        <span class="inline-flex rounded-full bg-[#eef4ef] px-2.5 py-1 text-xs font-black text-[#476052]">
+                                            {{ row.status }}
+                                        </span>
                                     </td>
                                 </tr>
 
@@ -690,7 +767,7 @@ const createPartner = () => {
                                     "
                                 >
                                     <td
-                                        colspan="6"
+                                        colspan="8"
                                         class="px-4 py-8 text-center text-slate-500"
                                     >
                                         No Contributions yet.
@@ -777,6 +854,15 @@ const createPartner = () => {
                         />
                     </div>
 
+                    <div class="mt-5 rounded-[18px] border border-[#cfe1d3] bg-[#f3f8f4] p-4">
+                        <p class="text-sm font-black text-[var(--pbr-green-dark)]">
+                            {{ t('partnership.governedOwnershipTitle') }}
+                        </p>
+                        <p class="mt-1 max-w-4xl text-sm leading-6 text-[var(--pbr-muted)]">
+                            {{ t('partnership.governedOwnershipHelp') }}
+                        </p>
+                    </div>
+
                     <div
                         class="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
                     >
@@ -850,13 +936,13 @@ const createPartner = () => {
                                 >
                                     <div>
                                         <dt class="text-slate-500">
-                                            Version
+                                            {{ t('partnership.effectiveSince') }}
                                         </dt>
                                         <dd class="font-semibold">
                                             {{
                                                 partnership
                                                     .current_ownership_register
-                                                    .version_number
+                                                    .effective_from || '—'
                                             }}
                                         </dd>
                                     </div>

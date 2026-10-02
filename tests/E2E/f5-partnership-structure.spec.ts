@@ -98,6 +98,17 @@ test(
             }),
         ).toBeVisible();
 
+        await expect(
+            page.getByText('Partner Foundation', { exact: true }),
+        ).toBeVisible();
+
+        await expect(
+            page.getByText(
+                'Reference only. It never creates ownership, authority or workspace access.',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
         const partnerRow = page
             .getByRole('row')
             .filter({
@@ -330,6 +341,24 @@ test(
             ),
         ).toBeVisible();
 
+        await expect(
+            page.getByRole('columnheader', {
+                name: 'Reviewed',
+                exact: true,
+            }),
+        ).toBeVisible();
+        await expect(
+            page.getByRole('columnheader', {
+                name: 'Approved',
+                exact: true,
+            }),
+        ).toBeVisible();
+        await expect(
+            page.getByText('Accepted Contribution Matrix', {
+                exact: true,
+            }),
+        ).toBeVisible();
+
         const reviewSummary = workflow
             .locator('summary')
             .filter({
@@ -507,6 +536,10 @@ test(
                 'Ownership scenarios are planning only. They never change official ownership directly.',
                 { exact: true },
             ).first(),
+        ).toBeVisible();
+
+        await expect(
+            page.getByText('Governed Ownership', { exact: true }),
         ).toBeVisible();
 
         await expect(
