@@ -56,7 +56,7 @@ const emit = defineEmits<{
                         "
                     >
                         <span v-if="step.state === 'recorded'" aria-hidden="true">✓</span>
-                        <span v-else>{{ index + 1 }}</span>
+                        <span v-else aria-hidden="true">{{ index + 1 }}</span>
                     </span>
 
                     <span class="min-w-0">
