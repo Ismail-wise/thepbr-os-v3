@@ -801,7 +801,7 @@ const formatDate = (value: string | null | undefined) =>
                         v-if="currentCharter"
                         class="border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700"
                     >
-                        This amendment starts from the Current Effective Governance Charter.
+                        This amendment starts from Current Effective Governance Charter.
                         Existing authority rules and actors are copied into this draft form
                         so only intended changes need to be made.
                     </p>
