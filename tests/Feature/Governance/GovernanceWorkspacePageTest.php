@@ -131,7 +131,12 @@ final class GovernanceWorkspacePageTest extends TestCase
                     ->has('governance.signatureRequests', 0)
                     ->has('governance.actions', 0)
                     ->has('governance.reviews', 0)
-                    ->has('governance.amendments', 0),
+                    ->has('governance.amendments', 0)
+                    ->has('governance.activeMemberships', 1)
+                    ->where(
+                        'governance.activeMemberships.0.label',
+                        'f3-command-center@example.test',
+                    ),
             );
 
         $this->assertDatabaseCount('formation_authority_establishments', 0);

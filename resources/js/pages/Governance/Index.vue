@@ -192,7 +192,7 @@ type GovernanceWorkspace = {
     reviews: ReviewRow[];
     amendments: AmendmentRow[];
     notifications: NotificationRow[];
-    activeMemberships: Array<{ id: string }>;
+    activeMemberships: Array<{ id: string; label: string }>;
     permissions: {
         canManageGovernance: boolean;
         canManageActions: boolean;
@@ -1268,7 +1268,7 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                                 :key="member.id"
                                                 :value="member.id"
                                             >
-                                                {{ member.id }}
+                                                {{ member.label }}
                                             </option>
                                         </select>
                                         <input
@@ -1326,13 +1326,18 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                             :key="recordVersion.id"
                                             class="flex flex-wrap items-center gap-2"
                                         >
-                                            <code class="break-all text-[11px] text-slate-500">
-                                                {{ recordVersion.id }}
-                                            </code>
-
                                             <span class="text-xs font-semibold text-slate-600">
                                                 {{ recordVersion.state ?? '—' }}
                                             </span>
+
+                                            <details class="text-xs text-slate-500">
+                                                <summary class="cursor-pointer font-semibold">
+                                                    {{ c.advancedDetails }}
+                                                </summary>
+                                                <code class="mt-1 block break-all text-[10px]">
+                                                    {{ recordVersion.id }}
+                                                </code>
+                                            </details>
 
                                             <button
                                                 v-if="recordVersion.state === 'approved'"

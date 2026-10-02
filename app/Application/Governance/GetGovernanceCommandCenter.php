@@ -730,13 +730,22 @@ final class GetGovernanceCommandCenter
 
         if ($canManageGovernance || $canManageActions) {
             $memberRows = Membership::query()
+                ->with([
+                    'user:id,email',
+                    'user.profile:user_id,display_name',
+                ])
                 ->where('business_id', $businessId)
                 ->where('access_status', 'active')
                 ->orderBy('created_at')
-                ->get(['id'])
+                ->get(['id', 'user_id'])
                 ->map(
                     static fn (Membership $row): array => [
                         'id' => (string) $row->getKey(),
+                        'label' => trim(
+                            (string) ($row->user?->profile?->display_name ?? ''),
+                        ) !== ''
+                            ? (string) $row->user->profile->display_name
+                            : (string) ($row->user?->email ?? 'Business member'),
                     ],
                 )
                 ->values()
