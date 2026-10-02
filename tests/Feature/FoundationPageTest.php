@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Presentation\Http\Middleware\EnsureActiveAccount;
 use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Support\Facades\Redis;
@@ -79,6 +80,12 @@ final class FoundationPageTest extends TestCase
 
         foreach (Route::getRoutes() as $route) {
             $uri = $route->uri();
+            $middleware = $route->gatherMiddleware();
+            $isCurrentBusinessWorkspaceRoute =
+                str_starts_with($uri, 'business/')
+                && in_array('auth', $middleware, true)
+                && in_array(EnsureActiveAccount::class, $middleware, true)
+                && in_array(EnsureCurrentBusinessContext::class, $middleware, true);
 
             $this->assertFalse(
                 $uri === 'register'
@@ -88,6 +95,7 @@ final class FoundationPageTest extends TestCase
                 || (
                     str_starts_with($uri, 'business')
                     && ! in_array($uri, ['businesses/create', 'businesses'], true)
+                    && ! $isCurrentBusinessWorkspaceRoute
                 )
                 || str_starts_with($uri, 'membership'),
                 "Unexpected F1-A4 route URI: {$uri}",

@@ -295,27 +295,27 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
             )->name('formation.capital.scenarios.export');
 
             Route::get(
-                '/legal-structure',
+                '/business/legal-structure',
                 [LegalArchitectureController::class, 'index'],
             )->name('legal.index');
 
             Route::post(
-                '/legal-structure',
+                '/business/legal-structure',
                 [LegalArchitectureController::class, 'create'],
             )->name('legal.store');
 
             Route::post(
-                '/legal-structure/{formalRecordVersion}/submit',
+                '/business/legal-structure/{formalRecordVersion}/submit',
                 [LegalArchitectureController::class, 'submit'],
             )->name('legal.submit');
 
             Route::post(
-                '/legal-structure/{formalRecordVersion}/content-review',
+                '/business/legal-structure/{formalRecordVersion}/content-review',
                 [LegalArchitectureController::class, 'review'],
             )->name('legal.content-review');
 
             Route::post(
-                '/legal-structure/{formalRecordVersion}/sync-decision',
+                '/business/legal-structure/{formalRecordVersion}/sync-decision',
                 [LegalArchitectureController::class, 'syncDecision'],
             )->name('legal.sync-decision');
 

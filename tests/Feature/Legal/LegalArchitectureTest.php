@@ -169,7 +169,7 @@ final class LegalArchitectureTest extends TestCase
         $this
             ->actingAs($owner['user'])
             ->withSession($session)
-            ->get('/legal-structure')
+            ->get('/business/legal-structure')
             ->assertOk()
             ->assertInertia(
                 fn (Assert $page) => $page
@@ -184,7 +184,7 @@ final class LegalArchitectureTest extends TestCase
         $this
             ->actingAs($viewer)
             ->withSession($session)
-            ->get('/legal-structure')
+            ->get('/business/legal-structure')
             ->assertNotFound();
     }
 

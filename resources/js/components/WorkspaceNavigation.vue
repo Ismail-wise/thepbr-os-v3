@@ -68,8 +68,8 @@ const isFormationCurrent = computed(
 
 const isLegalCurrent = computed(
     () =>
-        currentPath.value === '/legal-structure' ||
-        currentPath.value.startsWith('/legal-structure/'),
+        currentPath.value === '/business/legal-structure' ||
+        currentPath.value.startsWith('/business/legal-structure/'),
 );
 
 const isPartnershipCurrent = computed(
@@ -268,7 +268,7 @@ const isClosureCurrent = computed(
         </Link>
 
         <Link
-            href="/legal-structure"
+            href="/business/legal-structure"
             :aria-current="isLegalCurrent ? 'page' : undefined"
             class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
             :class="

@@ -261,7 +261,7 @@ const addReview = (): void => {
 };
 
 const submitDraft = (): void => {
-    form.post('/legal-structure', {
+    form.post('/business/legal-structure', {
         preserveScroll: true,
     });
 };
@@ -278,7 +278,7 @@ const syncDecision = (versionId: string): void => {
     syncingVersion.value = versionId;
     governanceSync.clearErrors();
     governanceSync.post(
-        `/legal-structure/${versionId}/sync-decision`,
+        `/business/legal-structure/${versionId}/sync-decision`,
         { preserveScroll: true },
     );
 };
@@ -525,7 +525,7 @@ const syncDecision = (versionId: string): void => {
                                             v-if="version.state === 'draft'"
                                             type="button"
                                             class="min-h-10 text-xs font-semibold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
-                                            @click="post('/legal-structure/' + version.id + '/submit', { expected_revision: version.revision })"
+                                            @click="post('/business/legal-structure/' + version.id + '/submit', { expected_revision: version.revision })"
                                         >
                                             {{ t('legal.createProposal') }}
                                         </button>
@@ -533,7 +533,7 @@ const syncDecision = (versionId: string): void => {
                                             v-if="version.state === 'ready_for_review'"
                                             type="button"
                                             class="min-h-10 text-xs font-semibold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
-                                            @click="post('/legal-structure/' + version.id + '/content-review', { target: 'under_review' })"
+                                            @click="post('/business/legal-structure/' + version.id + '/content-review', { target: 'under_review' })"
                                         >
                                             {{ t('legal.startReview') }}
                                         </button>
@@ -541,7 +541,7 @@ const syncDecision = (versionId: string): void => {
                                             v-if="version.state === 'under_review'"
                                             type="button"
                                             class="min-h-10 text-xs font-semibold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
-                                            @click="post('/legal-structure/' + version.id + '/content-review', { target: 'approved' })"
+                                            @click="post('/business/legal-structure/' + version.id + '/content-review', { target: 'approved' })"
                                         >
                                             {{ t('legal.approveContent') }}
                                         </button>
