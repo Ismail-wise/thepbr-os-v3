@@ -52,7 +52,7 @@ final class LegalRecordVisibility
      * Record-level grants remain System permissions only. They do not create
      * governance authority, ownership rights or document visibility.
      *
-     * @param list<string> $membershipIds
+     * @param  list<string>  $membershipIds
      */
     public function grantRestrictedAccess(
         Business $business,

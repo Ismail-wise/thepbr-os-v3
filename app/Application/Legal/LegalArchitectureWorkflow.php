@@ -741,7 +741,7 @@ final class LegalArchitectureWorkflow
     }
 
     /**
-     * @param array<string,mixed> $snapshot
+     * @param  array<string,mixed>  $snapshot
      */
     private function insertSnapshot(
         Business $business,

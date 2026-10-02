@@ -150,13 +150,12 @@ final class GetLegalWorkspace
                 'legal.primary_jurisdiction_code',
                 'legal.confidentiality',
             ])
-            ->filter(fn (object $version): bool =>
-                $this->visibility->canViewVersion(
-                    $user,
-                    $business,
-                    (string) $version->id,
-                    (string) $version->confidentiality,
-                )
+            ->filter(fn (object $version): bool => $this->visibility->canViewVersion(
+                $user,
+                $business,
+                (string) $version->id,
+                (string) $version->confidentiality,
+            )
             )
             ->map(function (object $version) use ($business): object {
                 $version->state = DB::table(
@@ -248,7 +247,7 @@ final class GetLegalWorkspace
     }
 
     /**
-     * @param array<string,mixed>|null $current
+     * @param  array<string,mixed>|null  $current
      * @return array<string,int>
      */
     private function attention(?array $current): array
@@ -274,8 +273,7 @@ final class GetLegalWorkspace
                 ->count(),
             'licenses_due_soon' => $licenses
                 ->filter(
-                    fn (object $license): bool =>
-                        $license->expiry_date !== null
+                    fn (object $license): bool => $license->expiry_date !== null
                         && (string) $license->expiry_date
                             <= now()->addDays(60)->toDateString()
                         && in_array(

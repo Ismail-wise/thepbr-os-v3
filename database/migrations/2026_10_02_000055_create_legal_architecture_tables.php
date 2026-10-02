@@ -158,17 +158,17 @@ return new class extends Migration
             ADD CONSTRAINT legal_license_status_check
             CHECK (status IN ('planned','pending','active','suspended','expired','cancelled','closed'))");
 
-        DB::statement("ALTER TABLE legal_license_permits
+        DB::statement('ALTER TABLE legal_license_permits
             ADD CONSTRAINT legal_license_dates_check
-            CHECK (expiry_date IS NULL OR start_date IS NULL OR expiry_date >= start_date)");
+            CHECK (expiry_date IS NULL OR start_date IS NULL OR expiry_date >= start_date)');
 
         DB::statement("ALTER TABLE legal_requirements
             ADD CONSTRAINT legal_requirement_status_check
             CHECK (status IN ('identified','met','warning','blocked','not_applicable'))");
 
-        DB::statement("ALTER TABLE legal_requirements
+        DB::statement('ALTER TABLE legal_requirements
             ADD CONSTRAINT legal_requirement_dates_check
-            CHECK (applicable_until IS NULL OR applicable_from IS NULL OR applicable_until >= applicable_from)");
+            CHECK (applicable_until IS NULL OR applicable_from IS NULL OR applicable_until >= applicable_from)');
 
         DB::statement("ALTER TABLE legal_reviews
             ADD CONSTRAINT legal_review_outcome_check
