@@ -2129,6 +2129,7 @@ jobs:
           trap cleanup EXIT
 
           test -f tests/E2E/f7-lifecycle-intelligence.spec.ts
+          test -f tests/E2E/ux3-account-experience.spec.ts
           test -f tests/E2E/support/prepare-f7-e2e.php
 
           f7_e2e_password="PbrF7_$(openssl rand -hex 32)"
@@ -2195,7 +2196,12 @@ jobs:
 
           npm run test:e2e -- \
             --project=chromium-desktop \
-            tests/E2E/f7-lifecycle-intelligence.spec.ts
+            tests/E2E/f7-lifecycle-intelligence.spec.ts \
+            tests/E2E/ux3-account-experience.spec.ts
+
+          npm run test:e2e -- \
+            --project=chromium-mobile \
+            tests/E2E/ux3-account-experience.spec.ts
 
           unset F7_E2E_PASSWORD
           unset f7_e2e_password

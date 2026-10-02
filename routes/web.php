@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Presentation\Http\Controllers\Access\BusinessAccessInvitationRedemptionController;
 use App\Presentation\Http\Controllers\Access\WorkspaceAccessController;
 use App\Presentation\Http\Controllers\Access\WorkspaceAccessInvitationController;
+use App\Presentation\Http\Controllers\Account\AccountExperienceController;
 use App\Presentation\Http\Controllers\Account\AccountSettingsController;
 use App\Presentation\Http\Controllers\AI\PbrAiController;
 use App\Presentation\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -35,9 +36,7 @@ use App\Presentation\Http\Controllers\Rewards\RewardsWorkspaceController;
 use App\Presentation\Http\Controllers\Risk\RiskWorkspaceController;
 use App\Presentation\Http\Controllers\Search\SearchController;
 use App\Presentation\Http\Middleware\EnsureActiveAccount;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthenticatedSessionController::class, 'show'])
@@ -66,13 +65,30 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
         ->name('businesses.store');
     Route::post('/current-business', SelectCurrentBusinessController::class)
         ->name('business-context.select');
-    Route::get('/', function (Request $request) {
-        return Inertia::render('AccountHome', [
-            'account' => [
-                'email' => $request->user()->email,
-            ],
-        ]);
-    })->name('home');
+    Route::get(
+        '/',
+        [AccountExperienceController::class, 'home'],
+    )->name('home');
+    Route::get(
+        '/account/businesses',
+        [AccountExperienceController::class, 'businesses'],
+    )->name('account.businesses');
+    Route::get(
+        '/account/work',
+        [AccountExperienceController::class, 'work'],
+    )->name('account.work');
+    Route::get(
+        '/account/notifications',
+        [AccountExperienceController::class, 'notifications'],
+    )->name('account.notifications');
+    Route::get(
+        '/account/approvals',
+        [AccountExperienceController::class, 'approvals'],
+    )->name('account.approvals');
+    Route::get(
+        '/account/signatures',
+        [AccountExperienceController::class, 'signatures'],
+    )->name('account.signatures');
     Route::get('/records/activity', ActivityController::class)
         ->middleware(EnsureCurrentBusinessContext::class)
         ->name('records.activity');
