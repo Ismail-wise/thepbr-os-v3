@@ -192,13 +192,11 @@ const partnershipSteps = computed(() => [
     {
         key: 'partners',
         label: t('partnership.partners'),
-        helper: t('partnership.partnerFoundationHelp'),
         state: sectionState('partners', props.partnership.partners.length > 0),
     },
     {
         key: 'contributions',
         label: t('partnership.contributions'),
-        helper: t('partnership.contributionJourneyHelp'),
         state: sectionState(
             'contributions',
             props.partnership.contributions.length > 0,
@@ -207,7 +205,6 @@ const partnershipSteps = computed(() => [
     {
         key: 'ownership',
         label: t('partnership.ownership'),
-        helper: t('partnership.ownershipJourneyHelp'),
         state: sectionState(
             'ownership',
             props.partnership.current_ownership_register !== null
