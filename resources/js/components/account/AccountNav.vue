@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { useAccountCopy } from '../../account/copy';
+import { useI18n } from '../../i18n/useI18n';
 
 const page = usePage();
-const { c } = useAccountCopy();
+const { t } = useI18n();
 
 const currentPath = computed(() => {
     const [path] = page.url.split(/[?#]/);
@@ -13,12 +13,12 @@ const currentPath = computed(() => {
 });
 
 const items = computed(() => [
-    { href: '/', label: c.value.navHome },
-    { href: '/account/businesses', label: c.value.navBusinesses },
-    { href: '/account/work', label: c.value.navWork },
-    { href: '/account/notifications', label: c.value.navNotifications },
-    { href: '/account/approvals', label: c.value.navApprovals },
-    { href: '/account/signatures', label: c.value.navSignatures },
+    { href: '/', label: t('account.navHome') },
+    { href: '/account/businesses', label: t('account.navBusinesses') },
+    { href: '/account/work', label: t('account.navWork') },
+    { href: '/account/notifications', label: t('account.navNotifications') },
+    { href: '/account/approvals', label: t('account.navApprovals') },
+    { href: '/account/signatures', label: t('account.navSignatures') },
 ]);
 
 const isCurrent = (href: string): boolean => currentPath.value === href;

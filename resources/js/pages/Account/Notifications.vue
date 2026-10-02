@@ -4,17 +4,15 @@ import AccountNav from '../../components/account/AccountNav.vue';
 import AccountPageHeader from '../../components/account/AccountPageHeader.vue';
 import AccountEmptyState from '../../components/account/AccountEmptyState.vue';
 import AccountItemCard from '../../components/account/AccountItemCard.vue';
-import {
-    accountKindLabel,
-    useAccountCopy,
-} from '../../account/copy';
+import { accountKindKey } from '../../account/copy';
+import { useI18n } from '../../i18n/useI18n';
 import type { AccountNotification } from '../../account/types';
 
 defineProps<{
     notifications: AccountNotification[];
 }>();
 
-const { c } = useAccountCopy();
+const { t } = useI18n();
 </script>
 
 <template>
@@ -25,9 +23,9 @@ const { c } = useAccountCopy();
             <div class="mx-auto max-w-[1250px] space-y-5 sm:space-y-6">
                 <AccountNav />
                 <AccountPageHeader
-                    :eyebrow="c.notificationsEyebrow"
-                    :title="c.notificationsTitle"
-                    :subtitle="c.notificationsSubtitle"
+                    :eyebrow="t('account.notificationsEyebrow')"
+                    :title="t('account.notificationsTitle')"
+                    :subtitle="t('account.notificationsSubtitle')"
                 />
 
                 <div v-if="notifications.length > 0" class="space-y-3">
@@ -37,25 +35,25 @@ const { c } = useAccountCopy();
                         :business-id="notification.businessId"
                         :business-name="notification.businessName"
                         :kind="notification.kind"
-                        :title="accountKindLabel(notification.kind, c)"
+                        :title="t(accountKindKey(notification.kind))"
                         :status="notification.status"
-                        :date-label="c.created"
+                        :date-label="t('account.created')"
                         :date-value="notification.createdAt"
                         :route="notification.route"
-                        :action-label="c.reviewNotification"
+                        :action-label="t('account.reviewNotification')"
                     />
                 </div>
 
                 <AccountEmptyState
                     v-else
-                    :title="c.noNotifications"
-                    :body="c.noNotificationsHelp"
+                    :title="t('account.noNotifications')"
+                    :body="t('account.noNotificationsHelp')"
                 />
 
                 <p
                     class="rounded-[16px] border border-[#dce6de] bg-white/70 px-4 py-3 text-xs leading-5 text-[#77837b]"
                 >
-                    {{ c.privacyNote }}
+                    {{ t('account.privacyNote') }}
                 </p>
             </div>
         </main>

@@ -5,14 +5,14 @@ import AccountNav from '../../components/account/AccountNav.vue';
 import AccountPageHeader from '../../components/account/AccountPageHeader.vue';
 import AccountBusinessCard from '../../components/account/AccountBusinessCard.vue';
 import AccountEmptyState from '../../components/account/AccountEmptyState.vue';
-import { useAccountCopy } from '../../account/copy';
+import { useI18n } from '../../i18n/useI18n';
 import type { AccountBusiness } from '../../account/types';
 
 defineProps<{
     businesses: AccountBusiness[];
 }>();
 
-const { c } = useAccountCopy();
+const { t } = useI18n();
 </script>
 
 <template>
@@ -23,16 +23,16 @@ const { c } = useAccountCopy();
             <div class="mx-auto max-w-[1500px] space-y-5 sm:space-y-6">
                 <AccountNav />
                 <AccountPageHeader
-                    :eyebrow="c.businessesEyebrow"
-                    :title="c.businessesTitle"
-                    :subtitle="c.businessesSubtitle"
+                    :eyebrow="t('account.businessesEyebrow')"
+                    :title="t('account.businessesTitle')"
+                    :subtitle="t('account.businessesSubtitle')"
                 >
                     <template #actions>
                         <Link
                             href="/businesses/create"
                             class="pbr-touch inline-flex min-h-10 items-center rounded-xl bg-[var(--pbr-green-dark)] px-4 text-sm font-black text-white"
                         >
-                            {{ c.createBusiness }}
+                            {{ t('account.createBusiness') }}
                         </Link>
                     </template>
                 </AccountPageHeader>
@@ -50,10 +50,10 @@ const { c } = useAccountCopy();
 
                 <AccountEmptyState
                     v-else
-                    :title="c.noBusinesses"
-                    :body="c.noBusinessesHelp"
+                    :title="t('account.noBusinesses')"
+                    :body="t('account.noBusinessesHelp')"
                     action-href="/businesses/create"
-                    :action-label="c.createBusiness"
+                    :action-label="t('account.createBusiness')"
                 />
             </div>
         </main>

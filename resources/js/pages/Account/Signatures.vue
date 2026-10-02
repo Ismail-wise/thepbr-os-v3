@@ -4,14 +4,14 @@ import AccountNav from '../../components/account/AccountNav.vue';
 import AccountPageHeader from '../../components/account/AccountPageHeader.vue';
 import AccountEmptyState from '../../components/account/AccountEmptyState.vue';
 import AccountItemCard from '../../components/account/AccountItemCard.vue';
-import { useAccountCopy } from '../../account/copy';
+import { useI18n } from '../../i18n/useI18n';
 import type { AccountSignature } from '../../account/types';
 
 defineProps<{
     signatures: AccountSignature[];
 }>();
 
-const { c } = useAccountCopy();
+const { t } = useI18n();
 </script>
 
 <template>
@@ -22,9 +22,9 @@ const { c } = useAccountCopy();
             <div class="mx-auto max-w-[1250px] space-y-5 sm:space-y-6">
                 <AccountNav />
                 <AccountPageHeader
-                    :eyebrow="c.signaturesEyebrow"
-                    :title="c.signaturesTitle"
-                    :subtitle="c.signaturesSubtitle"
+                    :eyebrow="t('account.signaturesEyebrow')"
+                    :title="t('account.signaturesTitle')"
+                    :subtitle="t('account.signaturesSubtitle')"
                 />
 
                 <div v-if="signatures.length > 0" class="space-y-3">
@@ -36,17 +36,17 @@ const { c } = useAccountCopy();
                         kind="signature"
                         :title="signature.decisionLabel"
                         :status="signature.status"
-                        :date-label="c.requested"
+                        :date-label="t('account.requested')"
                         :date-value="signature.requestedAt"
                         :route="signature.route"
-                        :action-label="c.reviewSignature"
+                        :action-label="t('account.reviewSignature')"
                     />
                 </div>
 
                 <AccountEmptyState
                     v-else
-                    :title="c.noSignatures"
-                    :body="c.noSignaturesHelp"
+                    :title="t('account.noSignatures')"
+                    :body="t('account.noSignaturesHelp')"
                 />
             </div>
         </main>

@@ -8,10 +8,7 @@ import AccountPageHeader from '../components/account/AccountPageHeader.vue';
 import AccountEmptyState from '../components/account/AccountEmptyState.vue';
 import AccountItemCard from '../components/account/AccountItemCard.vue';
 import AccountBusinessCard from '../components/account/AccountBusinessCard.vue';
-import {
-    accountKindLabel,
-    useAccountCopy,
-} from '../account/copy';
+import { accountKindKey } from '../account/copy';
 import type {
     AccountAttentionItem,
     AccountBusiness,
@@ -28,7 +25,6 @@ const props = defineProps<{
     notifications: AccountNotification[];
 }>();
 
-const { c } = useAccountCopy();
 const { t } = useI18n();
 const logoutForm = useForm({});
 
@@ -38,14 +34,14 @@ const greetingName = computed(
 
 const actionLabel = (kind: string): string => {
     if (kind === 'approval') {
-        return c.value.reviewApproval;
+        return t('account.reviewApproval');
     }
 
     if (kind === 'signature') {
-        return c.value.reviewSignature;
+        return t('account.reviewSignature');
     }
 
-    return c.value.reviewWork;
+    return t('account.reviewWork');
 };
 
 const logout = () => {
@@ -63,22 +59,22 @@ const logout = () => {
                 <AccountNav />
 
                 <AccountPageHeader
-                    :eyebrow="c.accountEyebrow"
-                    :title="c.accountTitle"
-                    :subtitle="c.accountSubtitle"
+                    :eyebrow="t('account.accountEyebrow')"
+                    :title="t('account.accountTitle')"
+                    :subtitle="t('account.accountSubtitle')"
                 >
                     <template #actions>
                         <Link
                             href="/businesses/create"
                             class="pbr-touch inline-flex min-h-10 items-center rounded-xl bg-[var(--pbr-green-dark)] px-4 text-sm font-black text-white shadow-[0_8px_18px_rgb(13_106_59_/_16%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pbr-green)] focus-visible:ring-offset-2"
                         >
-                            {{ c.createBusiness }}
+                            {{ t('account.createBusiness') }}
                         </Link>
                         <Link
                             href="/account/settings"
                             class="pbr-touch inline-flex min-h-10 items-center rounded-xl border border-[#cedbd1] bg-white px-4 text-sm font-black text-[var(--pbr-ink-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pbr-green)]"
                         >
-                            {{ c.profileSettings }}
+                            {{ t('account.profileSettings') }}
                         </Link>
                         <button
                             type="button"
@@ -86,7 +82,7 @@ const logout = () => {
                             class="pbr-touch inline-flex min-h-10 items-center rounded-xl border border-[#dedfdc] bg-white px-4 text-sm font-extrabold text-[#657168] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pbr-green)] disabled:opacity-60"
                             @click="logout"
                         >
-                            {{ c.signOut }}
+                            {{ t('account.signOut') }}
                         </button>
                     </template>
                 </AccountPageHeader>
@@ -97,7 +93,7 @@ const logout = () => {
                     <p
                         class="text-[10px] font-black uppercase tracking-[0.18em] text-[#7d8a82]"
                     >
-                        {{ c.welcome }}
+                        {{ t('account.welcome') }}
                     </p>
                     <div
                         class="mt-1 flex flex-wrap items-end justify-between gap-3"
@@ -109,13 +105,13 @@ const logout = () => {
                                 {{ greetingName }}
                             </h2>
                             <p class="mt-1 text-sm text-[var(--pbr-muted)]">
-                                {{ c.signedInAs }} · {{ account.email }}
+                                {{ t('account.signedInAs') }} · {{ account.email }}
                             </p>
                         </div>
                         <p
                             class="max-w-xl text-xs leading-5 text-[#77837b]"
                         >
-                            {{ c.privacyNote }}
+                            {{ t('account.privacyNote') }}
                         </p>
                     </div>
                 </section>
@@ -125,17 +121,17 @@ const logout = () => {
                         <p
                             class="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--pbr-green)]"
                         >
-                            {{ c.needsYou }}
+                            {{ t('account.needsYou') }}
                         </p>
                         <h2
                             class="mt-1 text-xl font-black tracking-[-0.02em] sm:text-2xl"
                         >
-                            {{ c.needsYou }}
+                            {{ t('account.needsYou') }}
                         </h2>
                         <p
                             class="mt-1 max-w-3xl text-sm leading-6 text-[var(--pbr-muted)]"
                         >
-                            {{ c.needsYouHelp }}
+                            {{ t('account.needsYouHelp') }}
                         </p>
                     </div>
 
@@ -152,7 +148,7 @@ const logout = () => {
                             :title="item.title"
                             :description="item.description ?? null"
                             :status="item.status ?? null"
-                            :date-label="c.due"
+                            :date-label="t('account.due')"
                             :date-value="item.dueAt"
                             :route="item.route"
                             :action-label="actionLabel(item.kind)"
@@ -161,10 +157,10 @@ const logout = () => {
 
                     <AccountEmptyState
                         v-else
-                        :title="c.nothingWaiting"
-                        :body="c.nothingWaitingHelp"
+                        :title="t('account.nothingWaiting')"
+                        :body="t('account.nothingWaitingHelp')"
                         action-href="/account/businesses"
-                        :action-label="c.viewAllBusinesses"
+                        :action-label="t('account.viewAllBusinesses')"
                     />
                 </section>
 
@@ -176,24 +172,24 @@ const logout = () => {
                             <p
                                 class="text-[10px] font-black uppercase tracking-[0.18em] text-[#7d8a82]"
                             >
-                                {{ c.yourBusinesses }}
+                                {{ t('account.yourBusinesses') }}
                             </p>
                             <h2
                                 class="mt-1 text-xl font-black tracking-[-0.02em] sm:text-2xl"
                             >
-                                {{ c.yourBusinesses }}
+                                {{ t('account.yourBusinesses') }}
                             </h2>
                             <p
                                 class="mt-1 max-w-3xl text-sm leading-6 text-[var(--pbr-muted)]"
                             >
-                                {{ c.businessesHelp }}
+                                {{ t('account.businessesHelp') }}
                             </p>
                         </div>
                         <Link
                             href="/account/businesses"
                             class="pbr-touch inline-flex min-h-9 items-center rounded-xl border border-[#cedbd1] bg-white px-3.5 text-xs font-black text-[var(--pbr-green-dark)]"
                         >
-                            {{ c.viewAllBusinesses }}
+                            {{ t('account.viewAllBusinesses') }}
                         </Link>
                     </div>
 
@@ -210,10 +206,10 @@ const logout = () => {
 
                     <AccountEmptyState
                         v-else
-                        :title="c.noBusinesses"
-                        :body="c.noBusinessesHelp"
+                        :title="t('account.noBusinesses')"
+                        :body="t('account.noBusinessesHelp')"
                         action-href="/businesses/create"
-                        :action-label="c.createBusiness"
+                        :action-label="t('account.createBusiness')"
                     />
                 </section>
 
@@ -225,24 +221,24 @@ const logout = () => {
                             <p
                                 class="text-[10px] font-black uppercase tracking-[0.18em] text-[#7d8a82]"
                             >
-                                {{ c.recentNotifications }}
+                                {{ t('account.recentNotifications') }}
                             </p>
                             <h2
                                 class="mt-1 text-xl font-black tracking-[-0.02em] sm:text-2xl"
                             >
-                                {{ c.recentNotifications }}
+                                {{ t('account.recentNotifications') }}
                             </h2>
                             <p
                                 class="mt-1 max-w-3xl text-sm leading-6 text-[var(--pbr-muted)]"
                             >
-                                {{ c.notificationsHelp }}
+                                {{ t('account.notificationsHelp') }}
                             </p>
                         </div>
                         <Link
                             href="/account/notifications"
                             class="pbr-touch inline-flex min-h-9 items-center rounded-xl border border-[#cedbd1] bg-white px-3.5 text-xs font-black text-[var(--pbr-green-dark)]"
                         >
-                            {{ c.viewAllNotifications }}
+                            {{ t('account.viewAllNotifications') }}
                         </Link>
                     </div>
 
@@ -256,19 +252,19 @@ const logout = () => {
                             :business-id="notification.businessId"
                             :business-name="notification.businessName"
                             :kind="notification.kind"
-                            :title="accountKindLabel(notification.kind, c)"
+                            :title="t(accountKindKey(notification.kind))"
                             :status="notification.status"
-                            :date-label="c.created"
+                            :date-label="t('account.created')"
                             :date-value="notification.createdAt"
                             :route="notification.route"
-                            :action-label="c.reviewNotification"
+                            :action-label="t('account.reviewNotification')"
                         />
                     </div>
 
                     <AccountEmptyState
                         v-else
-                        :title="c.noNotifications"
-                        :body="c.noNotificationsHelp"
+                        :title="t('account.noNotifications')"
+                        :body="t('account.noNotificationsHelp')"
                     />
                 </section>
             </div>

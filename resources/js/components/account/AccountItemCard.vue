@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import {
-    accountKindLabel,
-    humanizeAccountValue,
-    useAccountCopy,
-} from '../../account/copy';
+import { accountKindKey, humanizeAccountValue } from '../../account/copy';
+import { useI18n } from '../../i18n/useI18n';
 import { formatAccountDate } from '../../account/format';
 import OpenBusinessButton from './OpenBusinessButton.vue';
 
@@ -21,9 +18,9 @@ const props = defineProps<{
     actionLabel: string;
 }>();
 
-const { c } = useAccountCopy();
+const { t } = useI18n();
 
-const kindLabel = computed(() => accountKindLabel(props.kind, c.value));
+const kindLabel = computed(() => t(accountKindKey(props.kind)));
 
 const statusLabel = computed(() => {
     if (!props.status) {
@@ -31,11 +28,11 @@ const statusLabel = computed(() => {
     }
 
     if (props.status === 'unread') {
-        return c.value.unread;
+        return t('account.unread');
     }
 
     if (props.status === 'read') {
-        return c.value.read;
+        return t('account.read');
     }
 
     return humanizeAccountValue(props.status);

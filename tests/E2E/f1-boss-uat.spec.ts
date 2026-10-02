@@ -70,7 +70,7 @@ const signIn = async (page: Page) => {
     await expect(page).toHaveURL(/\/$/);
 
     await expect(
-        page.getByRole('heading', { name: 'Account', exact: true }),
+        page.getByRole('heading', { name: 'Account Home', exact: true }),
     ).toBeVisible();
 };
 
@@ -367,7 +367,7 @@ test(
 
         await expect(
             page.getByRole('heading', {
-                name: 'Account',
+                name: 'Account Home',
                 exact: true,
             }),
         ).toBeVisible();

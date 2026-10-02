@@ -4,14 +4,14 @@ import AccountNav from '../../components/account/AccountNav.vue';
 import AccountPageHeader from '../../components/account/AccountPageHeader.vue';
 import AccountEmptyState from '../../components/account/AccountEmptyState.vue';
 import AccountItemCard from '../../components/account/AccountItemCard.vue';
-import { useAccountCopy } from '../../account/copy';
+import { useI18n } from '../../i18n/useI18n';
 import type { AccountWorkItem } from '../../account/types';
 
 defineProps<{
     items: AccountWorkItem[];
 }>();
 
-const { c } = useAccountCopy();
+const { t } = useI18n();
 </script>
 
 <template>
@@ -22,9 +22,9 @@ const { c } = useAccountCopy();
             <div class="mx-auto max-w-[1250px] space-y-5 sm:space-y-6">
                 <AccountNav />
                 <AccountPageHeader
-                    :eyebrow="c.workEyebrow"
-                    :title="c.workTitle"
-                    :subtitle="c.workSubtitle"
+                    :eyebrow="t('account.workEyebrow')"
+                    :title="t('account.workTitle')"
+                    :subtitle="t('account.workSubtitle')"
                 />
 
                 <div v-if="items.length > 0" class="space-y-3">
@@ -37,17 +37,17 @@ const { c } = useAccountCopy();
                         :title="item.title"
                         :description="item.description"
                         :status="item.status"
-                        :date-label="c.due"
+                        :date-label="t('account.due')"
                         :date-value="item.dueAt"
                         :route="item.route"
-                        :action-label="c.reviewWork"
+                        :action-label="t('account.reviewWork')"
                     />
                 </div>
 
                 <AccountEmptyState
                     v-else
-                    :title="c.noWork"
-                    :body="c.noWorkHelp"
+                    :title="t('account.noWork')"
+                    :body="t('account.noWorkHelp')"
                 />
             </div>
         </main>

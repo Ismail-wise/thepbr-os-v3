@@ -1,21 +1,19 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { AccountBusiness } from '../../account/types';
-import {
-    humanizeAccountValue,
-    useAccountCopy,
-} from '../../account/copy';
+import { humanizeAccountValue } from '../../account/copy';
+import { useI18n } from '../../i18n/useI18n';
 import OpenBusinessButton from './OpenBusinessButton.vue';
 
 const props = defineProps<{
     business: AccountBusiness;
 }>();
 
-const { c } = useAccountCopy();
+const { t } = useI18n();
 
 const setupLabel = computed(() => {
     if (!props.business.setupPhase) {
-        return c.value.notStarted;
+        return t('account.notStarted');
     }
 
     return humanizeAccountValue(props.business.setupPhase);
@@ -56,7 +54,7 @@ const setupLabel = computed(() => {
             <dl class="mt-4 grid grid-cols-2 gap-2 text-sm">
                 <div class="rounded-xl border border-[#e2e9e4] bg-white/80 p-3">
                     <dt class="text-[10px] font-extrabold uppercase tracking-wide text-[#88948c]">
-                        {{ c.stage }}
+                        {{ t('account.stage') }}
                     </dt>
                     <dd class="mt-1 font-black text-[var(--pbr-ink-soft)]">
                         {{ humanizeAccountValue(business.stage) }}
@@ -64,7 +62,7 @@ const setupLabel = computed(() => {
                 </div>
                 <div class="rounded-xl border border-[#e2e9e4] bg-white/80 p-3">
                     <dt class="text-[10px] font-extrabold uppercase tracking-wide text-[#88948c]">
-                        {{ c.setup }}
+                        {{ t('account.setup') }}
                     </dt>
                     <dd class="mt-1 font-black text-[var(--pbr-ink-soft)]">
                         {{ setupLabel }}
@@ -76,7 +74,7 @@ const setupLabel = computed(() => {
                 <OpenBusinessButton
                     :business-id="business.businessId"
                     href="/overview"
-                    :label="c.openBusiness"
+                    :label="t('account.openBusiness')"
                 />
             </div>
         </div>

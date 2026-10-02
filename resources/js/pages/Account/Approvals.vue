@@ -4,14 +4,14 @@ import AccountNav from '../../components/account/AccountNav.vue';
 import AccountPageHeader from '../../components/account/AccountPageHeader.vue';
 import AccountEmptyState from '../../components/account/AccountEmptyState.vue';
 import AccountItemCard from '../../components/account/AccountItemCard.vue';
-import { useAccountCopy } from '../../account/copy';
+import { useI18n } from '../../i18n/useI18n';
 import type { AccountApproval } from '../../account/types';
 
 defineProps<{
     approvals: AccountApproval[];
 }>();
 
-const { c } = useAccountCopy();
+const { t } = useI18n();
 </script>
 
 <template>
@@ -22,9 +22,9 @@ const { c } = useAccountCopy();
             <div class="mx-auto max-w-[1250px] space-y-5 sm:space-y-6">
                 <AccountNav />
                 <AccountPageHeader
-                    :eyebrow="c.approvalsEyebrow"
-                    :title="c.approvalsTitle"
-                    :subtitle="c.approvalsSubtitle"
+                    :eyebrow="t('account.approvalsEyebrow')"
+                    :title="t('account.approvalsTitle')"
+                    :subtitle="t('account.approvalsSubtitle')"
                 />
 
                 <div v-if="approvals.length > 0" class="space-y-3">
@@ -36,17 +36,17 @@ const { c } = useAccountCopy();
                         kind="approval"
                         :title="approval.decisionLabel"
                         status="open"
-                        :date-label="c.opened"
+                        :date-label="t('account.opened')"
                         :date-value="approval.openedAt"
                         :route="approval.route"
-                        :action-label="c.reviewApproval"
+                        :action-label="t('account.reviewApproval')"
                     />
                 </div>
 
                 <AccountEmptyState
                     v-else
-                    :title="c.noApprovals"
-                    :body="c.noApprovalsHelp"
+                    :title="t('account.noApprovals')"
+                    :body="t('account.noApprovalsHelp')"
                 />
             </div>
         </main>

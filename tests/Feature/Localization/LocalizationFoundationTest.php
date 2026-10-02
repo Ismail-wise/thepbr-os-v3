@@ -336,6 +336,14 @@ final class LocalizationFoundationTest extends TestCase
             'resources/js/components/shell/PbrAppShell.vue',
             'resources/js/components/shell/TopCommandBar.vue',
             'resources/js/pages/AccountHome.vue',
+            'resources/js/pages/Account/Approvals.vue',
+            'resources/js/pages/Account/Businesses.vue',
+            'resources/js/pages/Account/Notifications.vue',
+            'resources/js/pages/Account/Signatures.vue',
+            'resources/js/pages/Account/Work.vue',
+            'resources/js/components/account/AccountBusinessCard.vue',
+            'resources/js/components/account/AccountItemCard.vue',
+            'resources/js/components/account/AccountNav.vue',
             'resources/js/pages/Account/Settings.vue',
             'resources/js/pages/Auth/Login.vue',
             'resources/js/pages/Businesses/Create.vue',
@@ -384,6 +392,45 @@ final class LocalizationFoundationTest extends TestCase
                     sprintf('%s contains hard-coded localized copy: %s', $path, $copy),
                 );
             }
+        }
+
+        $accountHelperSource = file_get_contents(
+            base_path('resources/js/account/copy.ts'),
+        );
+
+        $this->assertIsString($accountHelperSource);
+
+        foreach ([
+            'useAccountCopy',
+            'const en =',
+            'const my =',
+            'const mixed =',
+            'UiLanguageMode',
+        ] as $parallelAccountTranslationTruth) {
+            $this->assertStringNotContainsString(
+                $parallelAccountTranslationTruth,
+                $accountHelperSource,
+            );
+        }
+
+        $catalogSource = file_get_contents(
+            base_path('resources/js/i18n/catalog.ts'),
+        );
+
+        $this->assertIsString($catalogSource);
+
+        foreach ([
+            "'account.accountTitle':",
+            "'account.businessesTitle':",
+            "'account.workTitle':",
+            "'account.notificationsTitle':",
+            "'account.approvalsTitle':",
+            "'account.signaturesTitle':",
+        ] as $accountTranslationKey) {
+            $this->assertStringContainsString(
+                $accountTranslationKey,
+                $catalogSource,
+            );
         }
 
         $topCommandBarSource = file_get_contents(
