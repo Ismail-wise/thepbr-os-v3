@@ -83,6 +83,30 @@ final class AccountSettingsController
         return redirect()->route('account.settings.show');
     }
 
+    public function updateLanguage(
+        Request $request,
+        UpdateAccountProfile $updateAccountProfile,
+    ): RedirectResponse {
+        $user = $this->authenticatedUser($request);
+
+        $validated = $request->validate([
+            'language_mode' => ['required', new Enum(LanguageMode::class)],
+        ]);
+
+        $profile = UserProfile::query()
+            ->whereKey((string) $user->getAuthIdentifier())
+            ->firstOrFail();
+
+        $updateAccountProfile->handle(
+            userId: (string) $user->getAuthIdentifier(),
+            displayName: $profile->display_name,
+            languageMode: LanguageMode::from((string) $validated['language_mode']),
+            timezone: $profile->timezone,
+        );
+
+        return back();
+    }
+
     private function authenticatedUser(Request $request): User
     {
         $user = $request->user();

@@ -8,222 +8,183 @@ use Tests\TestCase;
 
 final class AppShellResponsiveTest extends TestCase
 {
-    public function test_authenticated_layout_reuses_shared_workspace_components_across_breakpoints(): void
+    public function test_authenticated_layout_delegates_to_reusable_pbr_app_shell(): void
     {
         $layout = $this->source(
             'resources/js/layouts/AuthenticatedLayout.vue',
         );
 
-        $this->assertSame(
-            2,
-            substr_count($layout, '<WorkspaceNavigation'),
-        );
-
-        $this->assertSame(
-            2,
-            substr_count($layout, '<BusinessSwitcher'),
+        $shell = $this->source(
+            'resources/js/components/shell/PbrAppShell.vue',
         );
 
         $this->assertStringContainsString(
-            'class="hidden bg-white lg:sticky',
+            '<PbrAppShell>',
             $layout,
         );
 
+        foreach ([
+            '<BusinessSidebar',
+            '<TopCommandBar',
+            '<MobileNavigation',
+        ] as $component) {
+            $this->assertStringContainsString($component, $shell);
+        }
+    }
+
+    public function test_shell_keeps_current_business_visible_without_exposing_technical_identifiers(): void
+    {
+        $shellSources = implode("\n", [
+            $this->source('resources/js/components/shell/PbrAppShell.vue'),
+            $this->source('resources/js/components/shell/BusinessSidebar.vue'),
+            $this->source('resources/js/components/shell/TopCommandBar.vue'),
+            $this->source('resources/js/components/shell/BreadcrumbContext.vue'),
+        ]);
+
         $this->assertStringContainsString(
-            'class="flex min-w-0 items-center gap-3 lg:hidden"',
-            $layout,
+            "t('shell.noBusinessSelected')",
+            $shellSources,
         );
 
         $this->assertStringContainsString(
-            'select-id="business-switcher-desktop"',
-            $layout,
+            ':current-business="workspace?.currentBusiness ?? null"',
+            $shellSources,
         );
 
-        $this->assertStringContainsString(
-            'select-id="business-switcher-mobile"',
-            $layout,
+        $this->assertDoesNotMatchRegularExpression(
+            '/(?:formal_record_version|proposal_version|authority_snapshot|content_hash|snapshot_hash|sha-?256)/i',
+            $shellSources,
         );
     }
 
-    public function test_mobile_navigation_uses_native_dialog_accessibility_and_focus_contract(): void
+    public function test_mobile_navigation_preserves_native_dialog_focus_and_breakpoint_contract(): void
     {
-        $layout = $this->source(
-            'resources/js/layouts/AuthenticatedLayout.vue',
+        $topBar = $this->source(
+            'resources/js/components/shell/TopCommandBar.vue',
         );
 
-        $this->assertStringContainsString('<dialog', $layout);
-
-        $this->assertStringContainsString(
-            'id="mobile-workspace-navigation"',
-            $layout,
+        $mobile = $this->source(
+            'resources/js/components/shell/MobileNavigation.vue',
         );
 
         $this->assertStringContainsString(
             'aria-controls="mobile-workspace-navigation"',
-            $layout,
+            $topBar,
         );
 
         $this->assertStringContainsString(
             ':aria-expanded="mobileNavigationOpen ? \'true\' : \'false\'"',
-            $layout,
+            $topBar,
         );
 
-        $this->assertStringContainsString(
-            ':aria-label="t(\'shell.openNavigation\')"',
-            $layout,
-        );
-
-        $this->assertStringContainsString(
-            ':aria-label="t(\'shell.closeNavigation\')"',
-            $layout,
-        );
-
-        $this->assertStringContainsString(
-            'dialog.showModal();',
-            $layout,
-        );
-
-        $this->assertStringContainsString(
-            'dialog.close();',
-            $layout,
-        );
-
-        $this->assertStringContainsString(
-            '@cancel="handleMobileNavigationCancel"',
-            $layout,
-        );
-
-        $this->assertStringContainsString(
-            '@close="handleMobileNavigationClose"',
-            $layout,
-        );
-
-        $this->assertStringContainsString(
-            'mobileNavigationTrigger.value?.focus()',
-            $layout,
-        );
-
-        $this->assertStringContainsString(
+        foreach ([
+            '<dialog',
+            'id="mobile-workspace-navigation"',
+            'dialog.value.showModal();',
+            'dialog.value.close();',
+            '@cancel="handleCancel"',
+            '@close="handleClose"',
             "window.matchMedia('(min-width: 1024px)')",
-            $layout,
-        );
+            'restoreTarget?.focus()',
+        ] as $contract) {
+            $this->assertStringContainsString($contract, $mobile);
+        }
     }
 
-    public function test_workspace_navigation_exposes_current_page_and_keyboard_contract(): void
+    public function test_workspace_navigation_is_grouped_keyboard_visible_and_touch_sized(): void
     {
         $navigation = $this->source(
             'resources/js/components/WorkspaceNavigation.vue',
         );
 
+        foreach ([
+            "'nav.group.workspace'",
+            "'nav.group.setup'",
+            "'nav.group.operate'",
+            "'nav.group.protect'",
+            "'nav.group.changes'",
+            "'nav.group.records'",
+            "'nav.group.account'",
+        ] as $group) {
+            $this->assertStringContainsString($group, $navigation);
+        }
+
         $this->assertStringContainsString(
-            ':aria-current="isCurrent(\'/\') ? \'page\' : undefined"',
+            ':aria-current="isCurrent(item.href) ? \'page\' : undefined"',
             $navigation,
         );
 
+        $this->assertStringContainsString('pbr-touch', $navigation);
         $this->assertStringContainsString(
-            ':aria-current="isCurrent(\'/businesses/create\') ? \'page\' : undefined"',
-            $navigation,
-        );
-
-        $this->assertStringContainsString(
-            ':aria-current="isCurrent(\'/account/settings\') ? \'page\' : undefined"',
-            $navigation,
-        );
-
-        $this->assertStringContainsString(
-            'focus-visible:outline-none',
-            $navigation,
-        );
-
-        $this->assertStringContainsString(
-            'focus-visible:ring-2',
-            $navigation,
-        );
-
-        $this->assertStringContainsString(
-            'min-h-11',
-            $navigation,
-        );
-
-        $this->assertStringContainsString(
-            "@click=\"emit('navigate')\"",
+            '@click="emit(\'navigate\')"',
             $navigation,
         );
     }
 
-    public function test_shell_keeps_current_business_visible_overflow_safe_and_motion_free(): void
+    public function test_business_and_language_switchers_preserve_authorized_server_paths(): void
     {
-        $layout = $this->source(
-            'resources/js/layouts/AuthenticatedLayout.vue',
-        );
-
-        $navigation = $this->source(
-            'resources/js/components/WorkspaceNavigation.vue',
-        );
-
-        $switcher = $this->source(
+        $business = $this->source(
             'resources/js/components/BusinessSwitcher.vue',
         );
 
-        $this->assertSame(
-            1,
-            substr_count(
-                $layout,
-                "{{ t('shell.currentBusiness') }}",
-            ),
-        );
-
-        $this->assertStringContainsString(
-            'class="mt-1 truncate text-sm font-semibold text-slate-950"',
-            $layout,
-        );
-
-        $this->assertStringContainsString(
-            ':title="currentBusinessName"',
-            $layout,
-        );
-
-        $this->assertStringContainsString(
-            'min-h-11',
-            $layout,
-        );
-
-        $this->assertDoesNotMatchRegularExpression(
-            '/(?:transition-|animate-|duration-|motion-)/',
-            $layout.$navigation.$switcher,
-        );
-    }
-
-    public function test_business_switcher_supports_multiple_shell_instances_without_changing_authorized_switch_path(): void
-    {
-        $switcher = $this->source(
-            'resources/js/components/BusinessSwitcher.vue',
-        );
-
-        $this->assertStringContainsString(
-            'selectId?: string;',
-            $switcher,
-        );
-
-        $this->assertStringContainsString(
-            "props.selectId ?? 'business-switcher'",
-            $switcher,
-        );
-
-        $this->assertStringContainsString(
-            ':for="resolvedSelectId"',
-            $switcher,
-        );
-
-        $this->assertStringContainsString(
-            ':id="resolvedSelectId"',
-            $switcher,
+        $language = $this->source(
+            'resources/js/components/shell/LanguageSwitcher.vue',
         );
 
         $this->assertStringContainsString(
             "form.post('/current-business'",
-            $switcher,
+            $business,
         );
+
+        $this->assertStringContainsString(
+            'select-id="business-switcher-desktop"',
+            $this->source(
+                'resources/js/components/shell/BusinessSidebar.vue',
+            ),
+        );
+
+        $this->assertStringContainsString(
+            'select-id="business-switcher-mobile"',
+            $this->source(
+                'resources/js/components/shell/MobileNavigation.vue',
+            ),
+        );
+
+        $this->assertStringContainsString(
+            "form.patch('/account/language'",
+            $language,
+        );
+
+        $this->assertStringNotContainsString('localStorage', $language);
+        $this->assertStringNotContainsString('sessionStorage', $language);
+    }
+
+    public function test_premium_tokens_primitives_and_accessibility_foundation_are_shared(): void
+    {
+        $css = $this->source('resources/css/app.css');
+
+        foreach ([
+            '--pbr-canvas: #f2f5f2',
+            '--pbr-green: #0d6a3b',
+            '--pbr-ink: #10231a',
+            '.pbr-touch',
+            'min-height: 44px',
+            ':focus-visible',
+            'prefers-reduced-motion',
+        ] as $contract) {
+            $this->assertStringContainsString($contract, $css);
+        }
+
+        foreach ([
+            'PbrButton.vue',
+            'PbrCard.vue',
+            'PbrBadge.vue',
+            'PbrField.vue',
+        ] as $component) {
+            $this->assertFileExists(
+                base_path('resources/js/components/ui/'.$component),
+            );
+        }
     }
 
     private function source(string $path): string

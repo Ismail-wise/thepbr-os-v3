@@ -329,7 +329,12 @@ final class LocalizationFoundationTest extends TestCase
         $surfacePaths = [
             'resources/js/components/BusinessSwitcher.vue',
             'resources/js/components/WorkspaceNavigation.vue',
-            'resources/js/layouts/AuthenticatedLayout.vue',
+            'resources/js/components/shell/BusinessSidebar.vue',
+            'resources/js/components/shell/BreadcrumbContext.vue',
+            'resources/js/components/shell/MobileNavigation.vue',
+            'resources/js/components/shell/NotificationButton.vue',
+            'resources/js/components/shell/PbrAppShell.vue',
+            'resources/js/components/shell/TopCommandBar.vue',
             'resources/js/pages/AccountHome.vue',
             'resources/js/pages/Account/Settings.vue',
             'resources/js/pages/Auth/Login.vue',
@@ -381,25 +386,30 @@ final class LocalizationFoundationTest extends TestCase
             }
         }
 
-        $layoutSource = file_get_contents(
-            base_path('resources/js/layouts/AuthenticatedLayout.vue'),
+        $topCommandBarSource = file_get_contents(
+            base_path('resources/js/components/shell/TopCommandBar.vue'),
+        );
+
+        $mobileNavigationSource = file_get_contents(
+            base_path('resources/js/components/shell/MobileNavigation.vue'),
         );
 
         $workspaceNavigationSource = file_get_contents(
             base_path('resources/js/components/WorkspaceNavigation.vue'),
         );
 
-        $this->assertIsString($layoutSource);
+        $this->assertIsString($topCommandBarSource);
+        $this->assertIsString($mobileNavigationSource);
         $this->assertIsString($workspaceNavigationSource);
 
         $this->assertStringContainsString(
             "t('shell.openNavigation')",
-            $layoutSource,
+            $topCommandBarSource,
         );
 
         $this->assertStringContainsString(
             "t('shell.closeNavigation')",
-            $layoutSource,
+            $mobileNavigationSource,
         );
 
         $this->assertStringContainsString(

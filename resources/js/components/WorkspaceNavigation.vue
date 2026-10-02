@@ -2,6 +2,7 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from '../i18n/useI18n';
+import type { TranslationKey } from '../i18n/catalog';
 
 const emit = defineEmits<{
     navigate: [];
@@ -10,485 +11,138 @@ const emit = defineEmits<{
 const page = usePage();
 const { t } = useI18n();
 
+type NavItem = {
+    href: string;
+    label: TranslationKey;
+};
+
+type NavGroup = {
+    label: TranslationKey;
+    items: NavItem[];
+};
+
 const currentPath = computed(() => {
     const [path] = page.url.split(/[?#]/);
 
     return path || '/';
 });
 
-const isCurrent = (href: string): boolean => currentPath.value === href;
+const isCurrent = (href: string): boolean => {
+    if (href === '/') {
+        return currentPath.value === '/';
+    }
 
-const isSearchCurrent = computed(
-    () =>
-        currentPath.value === '/search' ||
-        currentPath.value.startsWith('/search/'),
-);
+    return (
+        currentPath.value === href ||
+        currentPath.value.startsWith(`${href}/`)
+    );
+};
 
-const isAiCurrent = computed(
-    () =>
-        currentPath.value === '/ai' ||
-        currentPath.value.startsWith('/ai/'),
-);
+const groups: NavGroup[] = [
+    {
+        label: 'nav.group.workspace',
+        items: [
+            { href: '/', label: 'nav.home' },
+            { href: '/search', label: 'nav.search' },
+            { href: '/ai', label: 'nav.ai' },
+            { href: '/health', label: 'nav.health' },
+            { href: '/reports', label: 'nav.reports' },
+        ],
+    },
+    {
+        label: 'nav.group.setup',
+        items: [
+            { href: '/businesses/create', label: 'nav.createBusiness' },
+            { href: '/workspace/access', label: 'nav.workspaceAccess' },
+            { href: '/formation', label: 'nav.formationCapital' },
+            { href: '/business/legal-structure', label: 'nav.legalStructure' },
+            { href: '/partnership', label: 'nav.partnership' },
+        ],
+    },
 
-const isHealthCurrent = computed(
-    () =>
-        currentPath.value === '/health' ||
-        currentPath.value.startsWith('/health/'),
-);
+    {
+        label: 'nav.group.operate',
+        items: [
+            { href: '/governance', label: 'nav.governance' },
+            { href: '/operations', label: 'nav.operations' },
+            { href: '/finance', label: 'nav.finance' },
+            { href: '/rewards', label: 'nav.rewards' },
+        ],
+    },
+    {
+        label: 'nav.group.protect',
+        items: [
+            { href: '/risk', label: 'nav.risk' },
+            { href: '/continuity', label: 'nav.continuity' },
+            { href: '/conflict', label: 'nav.conflict' },
+        ],
+    },
+    {
+        label: 'nav.group.changes',
+        items: [
+            { href: '/changes/partner-changes', label: 'nav.partnerChanges' },
+            { href: '/changes/exit', label: 'nav.exitBuyout' },
+            { href: '/changes/closure', label: 'nav.closure' },
+        ],
+    },
 
-const isReportsCurrent = computed(
-    () =>
-        currentPath.value === '/reports' ||
-        currentPath.value.startsWith('/reports/'),
-);
-
-const isImportCurrent = computed(
-    () =>
-        currentPath.value === '/import' ||
-        currentPath.value.startsWith('/import/'),
-);
-
-const isDocumentVaultCurrent = computed(
-    () =>
-        currentPath.value === '/records/documents' ||
-        currentPath.value.startsWith('/records/documents/'),
-);
-
-const isPortabilityCurrent = computed(
-    () =>
-        currentPath.value === '/records/portability' ||
-        currentPath.value.startsWith('/records/portability/'),
-);
-
-const isFormationCurrent = computed(
-    () =>
-        currentPath.value === '/formation' ||
-        currentPath.value.startsWith('/formation/'),
-);
-
-const isLegalCurrent = computed(
-    () =>
-        currentPath.value === '/business/legal-structure' ||
-        currentPath.value.startsWith('/business/legal-structure/'),
-);
-
-const isPartnershipCurrent = computed(
-    () =>
-        currentPath.value === '/partnership' ||
-        currentPath.value.startsWith('/partnership/'),
-);
-
-const isGovernanceCurrent = computed(
-    () =>
-        currentPath.value === '/governance' ||
-        currentPath.value.startsWith('/governance/'),
-);
-
-const isOperationsCurrent = computed(
-    () =>
-        currentPath.value === '/operations' ||
-        currentPath.value.startsWith('/operations/'),
-);
-
-const isFinanceCurrent = computed(
-    () =>
-        currentPath.value === '/finance' ||
-        currentPath.value.startsWith('/finance/'),
-);
-
-const isRewardsCurrent = computed(
-    () =>
-        currentPath.value === '/rewards' ||
-        currentPath.value.startsWith('/rewards/'),
-);
-
-const isRiskCurrent = computed(
-    () =>
-        currentPath.value === '/risk' ||
-        currentPath.value.startsWith('/risk/'),
-);
-
-const isContinuityCurrent = computed(
-    () =>
-        currentPath.value === '/continuity' ||
-        currentPath.value.startsWith('/continuity/'),
-);
-
-const isConflictCurrent = computed(
-    () =>
-        currentPath.value === '/conflict' ||
-        currentPath.value.startsWith('/conflict/'),
-);
-
-const isPartnerChangesCurrent = computed(
-    () =>
-        currentPath.value === '/changes/partner-changes' ||
-        currentPath.value.startsWith('/changes/partner-changes/'),
-);
-
-const isExitCurrent = computed(
-    () =>
-        currentPath.value === '/changes/exit' ||
-        currentPath.value.startsWith('/changes/exit/'),
-);
-
-const isClosureCurrent = computed(
-    () =>
-        currentPath.value === '/changes/closure' ||
-        currentPath.value.startsWith('/changes/closure/'),
-);
+    {
+        label: 'nav.group.records',
+        items: [
+            { href: '/records/documents', label: 'nav.documentVault' },
+            { href: '/records/activity', label: 'nav.activity' },
+            { href: '/import', label: 'nav.import' },
+            { href: '/records/portability', label: 'nav.portability' },
+        ],
+    },
+    {
+        label: 'nav.group.account',
+        items: [
+            { href: '/account/settings', label: 'nav.profileSettings' },
+        ],
+    },
+];
 </script>
 
 <template>
-    <nav :aria-label="t('nav.workspaceNavigation')" class="px-3 py-4">
-        <Link
-            href="/"
-            :aria-current="isCurrent('/') ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isCurrent('/')
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
+    <nav :aria-label="t('nav.workspaceNavigation')" class="py-3">
+        <section
+            v-for="group in groups"
+            :key="group.label"
+            class="mb-4 last:mb-0"
         >
-            {{ t('nav.home') }}
-        </Link>
+            <p
+                class="px-3 pb-1.5 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#8a968f]"
+            >
+                {{ t(group.label) }}
+            </p>
 
-        <Link
-            href="/search"
-            :aria-current="isSearchCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isSearchCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.search') }}
-        </Link>
-
-        <Link
-            href="/ai"
-            :aria-current="isAiCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isAiCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.ai') }}
-        </Link>
-
-        <Link
-            href="/health"
-            :aria-current="isHealthCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isHealthCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.health') }}
-        </Link>
-
-        <Link
-            href="/reports"
-            :aria-current="isReportsCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isReportsCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.reports') }}
-        </Link>
-
-        <Link
-            href="/import"
-            :aria-current="isImportCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isImportCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.import') }}
-        </Link>
-
-        <Link
-            href="/businesses/create"
-            :aria-current="isCurrent('/businesses/create') ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isCurrent('/businesses/create')
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.createBusiness') }}
-        </Link>
-
-        <Link
-            href="/workspace/access"
-            :aria-current="isCurrent('/workspace/access') ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isCurrent('/workspace/access')
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.workspaceAccess') }}
-        </Link>
-
-        <Link
-            href="/formation"
-            :aria-current="isFormationCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isFormationCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.formationCapital') }}
-        </Link>
-
-        <Link
-            href="/business/legal-structure"
-            :aria-current="isLegalCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isLegalCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.legalStructure') }}
-        </Link>
-
-        <Link
-            href="/partnership"
-            :aria-current="isPartnershipCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isPartnershipCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.partnership') }}
-        </Link>
-
-        <Link
-            href="/governance"
-            :aria-current="isGovernanceCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isGovernanceCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.governance') }}
-        </Link>
-
-        <Link
-            href="/operations"
-            :aria-current="isOperationsCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isOperationsCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.operations') }}
-        </Link>
-
-        <Link
-            href="/finance"
-            :aria-current="isFinanceCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isFinanceCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.finance') }}
-        </Link>
-
-        <Link
-            href="/rewards"
-            :aria-current="isRewardsCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isRewardsCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.rewards') }}
-        </Link>
-
-        <Link
-            href="/risk"
-            :aria-current="isRiskCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isRiskCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.risk') }}
-        </Link>
-
-        <Link
-            href="/continuity"
-            :aria-current="isContinuityCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isContinuityCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.continuity') }}
-        </Link>
-
-        <Link
-            href="/conflict"
-            :aria-current="isConflictCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isConflictCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.conflict') }}
-        </Link>
-
-        <Link
-            href="/changes/partner-changes"
-            :aria-current="isPartnerChangesCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isPartnerChangesCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.partnerChanges') }}
-        </Link>
-
-        <Link
-            href="/changes/exit"
-            :aria-current="isExitCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isExitCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.exitBuyout') }}
-        </Link>
-
-        <Link
-            href="/changes/closure"
-            :aria-current="isClosureCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isClosureCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.closure') }}
-        </Link>
-
-        <Link
-            href="/records/documents"
-            :aria-current="isDocumentVaultCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isDocumentVaultCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.documentVault') }}
-        </Link>
-
-        <Link
-            href="/records/portability"
-            :aria-current="isPortabilityCurrent ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isPortabilityCurrent
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.portability') }}
-        </Link>
-
-        <Link
-            href="/records/activity"
-            :aria-current="isCurrent('/records/activity') ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isCurrent('/records/activity')
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.activity') }}
-        </Link>
-
-        <Link
-            href="/account/settings"
-            :aria-current="isCurrent('/account/settings') ? 'page' : undefined"
-            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
-            :class="
-                isCurrent('/account/settings')
-                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                    : 'border-transparent text-slate-700'
-            "
-            @click="emit('navigate')"
-        >
-            {{ t('nav.profileSettings') }}
-        </Link>
+            <div class="space-y-1">
+                <Link
+                    v-for="item in group.items"
+                    :key="item.href"
+                    :href="item.href"
+                    :aria-current="isCurrent(item.href) ? 'page' : undefined"
+                    class="pbr-touch group relative flex items-center rounded-xl px-3 py-2.5 text-sm font-bold focus-visible:outline-none"
+                    :class="
+                        isCurrent(item.href)
+                            ? 'bg-[var(--pbr-green-soft)] text-[var(--pbr-green-dark)]'
+                            : 'text-[#55665c] hover:bg-[var(--pbr-surface-soft)] hover:text-[var(--pbr-ink)]'
+                    "
+                    @click="emit('navigate')"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="mr-3 h-2 w-2 shrink-0 rounded-full"
+                        :class="
+                            isCurrent(item.href)
+                                ? 'bg-[var(--pbr-green)] shadow-[0_0_0_4px_rgb(13_106_59_/_9%)]'
+                                : 'bg-[#d5ded8] group-hover:bg-[#9db6a6]'
+                        "
+                    />
+                    <span class="min-w-0 truncate">{{ t(item.label) }}</span>
+                </Link>
+            </div>
+        </section>
     </nav>
 </template>

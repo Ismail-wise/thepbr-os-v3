@@ -65,6 +65,37 @@ final class AccountSettingsTest extends TestCase
         ])->assertRedirect('/login');
     }
 
+    public function test_guest_cannot_update_shell_language(): void
+    {
+        $this->patch('/account/language', [
+            'language_mode' => 'my',
+        ])->assertRedirect('/login');
+    }
+
+    public function test_shell_language_update_preserves_other_profile_preferences(): void
+    {
+        $user = $this->createUser(
+            email: 'shell-language@example.test',
+            displayName: 'Shell Language User',
+            languageMode: LanguageMode::English,
+            timezone: 'Asia/Bangkok',
+        );
+
+        $this->actingAs($user);
+
+        $this->from('/finance')
+            ->patch('/account/language', [
+                'language_mode' => 'mixed',
+            ])
+            ->assertRedirect('/finance');
+
+        $profile = UserProfile::query()->whereKey($user->id)->sole();
+
+        $this->assertSame('Shell Language User', $profile->display_name);
+        $this->assertSame(LanguageMode::Mixed, $profile->language_mode);
+        $this->assertSame('Asia/Bangkok', $profile->timezone);
+    }
+
     public function test_active_authenticated_user_sees_own_account_profile_values(): void
     {
         $user = $this->createUser(

@@ -49,18 +49,31 @@ const selectBusiness = () => {
 
 <template>
     <div>
-        <label
-            :for="resolvedSelectId"
-            class="block text-xs font-semibold uppercase tracking-wider text-slate-500"
-        >
-            {{ t('businessSwitcher.label') }}
-        </label>
+        <div class="flex items-center justify-between gap-3">
+            <label
+                :for="resolvedSelectId"
+                class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--pbr-green-dark)]"
+            >
+                {{ t('businessSwitcher.label') }}
+            </label>
+
+            <span
+                v-if="currentBusiness"
+                class="inline-flex items-center gap-1.5 text-[10px] font-bold text-[var(--pbr-muted)]"
+            >
+                <span
+                    aria-hidden="true"
+                    class="h-2 w-2 rounded-full bg-[#20a35d] shadow-[0_0_0_4px_rgb(32_163_93_/_10%)]"
+                />
+                {{ t('businessSwitcher.current') }}
+            </span>
+        </div>
 
         <select
             :id="resolvedSelectId"
             v-model="form.business_id"
             :disabled="form.processing || businesses.length === 0"
-            class="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+            class="pbr-input-control mt-2 px-3 py-2.5 text-sm font-extrabold focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-[#f1f4f2] disabled:text-[var(--pbr-muted)]"
             :aria-label="t('businessSwitcher.ariaLabel')"
             @change="selectBusiness"
         >
@@ -84,7 +97,7 @@ const selectBusiness = () => {
         <p
             v-if="form.hasErrors"
             role="alert"
-            class="mt-2 text-xs font-medium text-red-700"
+            class="mt-2 text-xs font-semibold text-[var(--pbr-red)]"
         >
             {{ t('businessSwitcher.error') }}
         </p>
