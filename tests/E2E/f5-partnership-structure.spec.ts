@@ -354,7 +354,8 @@ test(
             }),
         ).toBeVisible();
         await expect(
-            page.getByText('Accepted Contribution Matrix', {
+            page.getByRole('heading', {
+                name: 'Accepted Contribution Matrix',
                 exact: true,
             }),
         ).toBeVisible();
