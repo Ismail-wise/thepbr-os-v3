@@ -36,7 +36,8 @@ const signIn = async (page: Page) => {
     await homeNavigation;
 
     await expect(
-        page.getByText('Signed-in identity', {
+        page.getByRole('heading', {
+            name: 'Account Home',
             exact: true,
         }),
     ).toBeVisible();
