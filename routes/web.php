@@ -393,6 +393,11 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 [PartnerChangesWorkspaceController::class, 'createCase'],
             )->name('partner-changes.store');
 
+            Route::patch(
+                '/changes/partner-changes/{case}/draft',
+                [PartnerChangesWorkspaceController::class, 'updateDraft'],
+            )->name('partner-changes.draft.update');
+
             Route::post(
                 '/changes/partner-changes/{case}/transition',
                 [PartnerChangesWorkspaceController::class, 'transitionCase'],

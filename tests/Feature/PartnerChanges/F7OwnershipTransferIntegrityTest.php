@@ -455,6 +455,137 @@ final class F7OwnershipTransferIntegrityTest extends TestCase
         }
     }
 
+    public function test_ownership_change_draft_can_recover_required_terms_before_eligibility(): void
+    {
+        $context = $this->ownershipContext();
+
+        $workflow = $this->app->make(PartnerChangeWorkflow::class);
+
+        $source = $this->app
+            ->make(OwnershipWorkflow::class)
+            ->currentEffectiveRegisterVersion(
+                $context['manager'],
+                $context['business'],
+                CarbonImmutable::now(),
+            );
+
+        self::assertNotNull($source);
+
+        $sourceClass = DB::table('ownership_register_share_classes')
+            ->where('business_id', $context['business']->getKey())
+            ->where('ownership_register_version_id', $source->id)
+            ->where('name', 'Ordinary')
+            ->sole();
+
+        $case = $workflow->createCase(
+            $context['manager'],
+            $context['business'],
+            PartnerChangeTransactionType::TransferExisting,
+            $context['buyerId'],
+            $context['sellerId'],
+            (string) $sourceClass->id,
+            new ShareQuantity('10'),
+            'USD',
+            null,
+            null,
+            null,
+            'partner_change_approval',
+            false,
+            CarbonImmutable::now()->subMinute(),
+        );
+
+        self::assertNotNull($case);
+        self::assertSame(1, (int) $case->revision);
+
+        try {
+            $workflow->transition(
+                $context['manager'],
+                $context['business'],
+                (string) $case->getKey(),
+                1,
+                PartnerChangeStatus::EligibilityReview,
+            );
+
+            self::fail(
+                'Incomplete ownership-changing Draft must not enter Eligibility Review.',
+            );
+        } catch (InvalidArgumentException $exception) {
+            self::assertStringContainsString(
+                'valuation method',
+                $exception->getMessage(),
+            );
+        }
+
+        $case->refresh();
+
+        self::assertSame(PartnerChangeStatus::Draft, $case->status);
+        self::assertSame(1, (int) $case->revision);
+
+        $updated = $workflow->updateDraftTerms(
+            $context['manager'],
+            $context['business'],
+            (string) $case->getKey(),
+            1,
+            'USD',
+            null,
+            'Recovered Draft valuation basis',
+            'Recovered Draft rights impact summary.',
+            false,
+            CarbonImmutable::now()->subMinute(),
+        );
+
+        self::assertNotNull($updated);
+        self::assertSame(PartnerChangeStatus::Draft, $updated->status);
+        self::assertSame(2, (int) $updated->revision);
+        self::assertSame(
+            'Recovered Draft valuation basis',
+            $updated->valuation_method,
+        );
+        self::assertSame(
+            'Recovered Draft rights impact summary.',
+            $updated->rights_impact_summary,
+        );
+
+        $review = $workflow->transition(
+            $context['manager'],
+            $context['business'],
+            (string) $case->getKey(),
+            2,
+            PartnerChangeStatus::EligibilityReview,
+        );
+
+        self::assertNotNull($review);
+        self::assertSame(
+            PartnerChangeStatus::EligibilityReview,
+            $review->status,
+        );
+        self::assertSame(3, (int) $review->revision);
+
+        try {
+            $workflow->updateDraftTerms(
+                $context['manager'],
+                $context['business'],
+                (string) $case->getKey(),
+                3,
+                'USD',
+                null,
+                'Late edit',
+                'Late edit',
+                false,
+                CarbonImmutable::now()->subMinute(),
+            );
+
+            self::fail(
+                'Non-Draft Partner Change must not accept Draft edits.',
+            );
+        } catch (InvalidArgumentException $exception) {
+            self::assertSame(
+                'Only a Draft Partner Change may edit draft terms.',
+                $exception->getMessage(),
+            );
+        }
+    }
+
     public function test_partner_change_history_guards_exist(): void
     {
         $count = (int) DB::selectOne(

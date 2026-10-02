@@ -104,6 +104,48 @@ final class PartnerChangesWorkspaceController
         return back();
     }
 
+    public function updateDraft(
+        Request $request,
+        string $case,
+        PartnerChangeWorkflow $workflow,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $data = $request->validate([
+            'expected_revision' => ['required', 'integer', 'min:1'],
+            'currency' => ['nullable', 'regex:/\A[A-Z]{3}\z/'],
+            'consideration_minor_units' => ['nullable', 'integer', 'min:0'],
+            'valuation_method' => ['nullable', 'string', 'max:4000'],
+            'rights_impact_summary' => ['nullable', 'string', 'max:10000'],
+            'rofr_required' => ['required', 'boolean'],
+            'effective_from' => ['nullable', 'date'],
+        ]);
+
+        $updated = $this->validated(
+            fn () => $workflow->updateDraftTerms(
+                $user,
+                $business,
+                $case,
+                (int) $data['expected_revision'],
+                $data['currency'] ?? null,
+                isset($data['consideration_minor_units'])
+                    ? (int) $data['consideration_minor_units']
+                    : null,
+                $data['valuation_method'] ?? null,
+                $data['rights_impact_summary'] ?? null,
+                (bool) $data['rofr_required'],
+                isset($data['effective_from'])
+                    ? CarbonImmutable::parse($data['effective_from'])
+                    : null,
+            ),
+            'partner_change',
+        );
+
+        abort_if($updated === null, 404);
+
+        return back();
+    }
+
     public function transitionCase(
         Request $request,
         string $case,

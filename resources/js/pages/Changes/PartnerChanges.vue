@@ -156,6 +156,84 @@ const localDateTimeToUtcIso = (value: string): string => {
         : parsed.toISOString();
 };
 
+const utcIsoToLocalDateTime = (value: string): string => {
+    const parsed = new Date(value);
+
+    if (Number.isNaN(parsed.getTime())) {
+        return value;
+    }
+
+    const local = new Date(
+        parsed.getTime() - parsed.getTimezoneOffset() * 60_000,
+    );
+
+    return local.toISOString().slice(0, 16);
+};
+
+const editDraftForm = useForm({
+    expected_revision: 1,
+    currency: '',
+    consideration_minor_units: null as number | null,
+    valuation_method: '',
+    rights_impact_summary: '',
+    rofr_required: false,
+    effective_from: '',
+});
+
+const hydrateDraftForm = (item: PartnerChangeCase | null): void => {
+    editDraftForm.clearErrors();
+
+    if (item === null) {
+        return;
+    }
+
+    editDraftForm.expected_revision = item.revision;
+    editDraftForm.currency =
+        item.currency
+        ?? props.partnerChanges.current_ownership_register?.currency
+        ?? '';
+    editDraftForm.consideration_minor_units =
+        item.consideration_minor_units;
+    editDraftForm.valuation_method = item.valuation_method ?? '';
+    editDraftForm.rights_impact_summary =
+        item.rights_impact_summary ?? '';
+    editDraftForm.rofr_required = item.rofr_required;
+    editDraftForm.effective_from = item.effective_from
+        ? utcIsoToLocalDateTime(item.effective_from)
+        : '';
+};
+
+watch(
+    selectedCase,
+    (item) => hydrateDraftForm(item),
+    { immediate: true, deep: true },
+);
+
+const updateDraftTerms = (): void => {
+    const item = selectedCase.value;
+
+    if (item === null || item.status !== 'draft') {
+        return;
+    }
+
+    editDraftForm.expected_revision = item.revision;
+
+    editDraftForm
+        .transform((data) => ({
+            ...data,
+            rofr_required:
+                item.transaction_type === 'admission'
+                    ? false
+                    : data.rofr_required,
+            effective_from: data.effective_from
+                ? localDateTimeToUtcIso(data.effective_from)
+                : data.effective_from,
+        }))
+        .patch(`/changes/partner-changes/${item.id}/draft`, {
+            preserveScroll: true,
+        });
+};
+
 const createCase = (): void => {
     if (isAdmission.value) {
         createForm.seller_partner_id = '';
@@ -210,7 +288,16 @@ const nextActions = computed(() => {
 
     switch (item.status) {
         case 'draft':
-            return [{ label: 'Start eligibility review', target: 'eligibility_review' }];
+            return [
+                {
+                    label: 'Start eligibility review',
+                    target: 'eligibility_review',
+                },
+                {
+                    label: 'Withdraw case',
+                    target: 'withdrawn',
+                },
+            ];
         case 'eligibility_review':
             return [
                 { label: 'Mark eligible', target: 'eligible' },
@@ -766,6 +853,120 @@ const statusClass = (status: string): string => {
                     </div>
                 </div>
                 <div class="space-y-4">
+                    <details
+                        v-if="
+                            partnerChanges.permissions.manage
+                                && selectedCase.status === 'draft'
+                        "
+                        open
+                        class="rounded-lg border border-slate-200 bg-white"
+                    >
+                        <summary class="cursor-pointer p-4 font-semibold text-slate-950">
+                            Edit draft terms
+                        </summary>
+
+                        <form
+                            class="space-y-3 border-t border-slate-200 p-4"
+                            @submit.prevent="updateDraftTerms"
+                        >
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">
+                                    Currency
+                                </span>
+                                <input
+                                    v-model="editDraftForm.currency"
+                                    maxlength="3"
+                                    class="min-h-11 w-full rounded-md border-slate-300 text-sm uppercase"
+                                >
+                            </label>
+
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">
+                                    Consideration minor units (optional)
+                                </span>
+                                <input
+                                    v-model.number="editDraftForm.consideration_minor_units"
+                                    type="number"
+                                    min="0"
+                                    class="min-h-11 w-full rounded-md border-slate-300 text-sm"
+                                >
+                            </label>
+
+                            <label
+                                v-if="selectedCase.transaction_type !== 'admission'"
+                                class="block space-y-1 text-sm"
+                            >
+                                <span class="font-medium text-slate-700">
+                                    Valuation method
+                                </span>
+                                <textarea
+                                    v-model="editDraftForm.valuation_method"
+                                    rows="2"
+                                    class="w-full rounded-md border-slate-300 text-sm"
+                                />
+                                <span class="text-xs text-slate-500">
+                                    Required before Eligibility Review for ownership-changing cases.
+                                </span>
+                            </label>
+
+                            <label
+                                v-if="selectedCase.transaction_type !== 'admission'"
+                                class="block space-y-1 text-sm"
+                            >
+                                <span class="font-medium text-slate-700">
+                                    Rights impact summary
+                                </span>
+                                <textarea
+                                    v-model="editDraftForm.rights_impact_summary"
+                                    rows="3"
+                                    class="w-full rounded-md border-slate-300 text-sm"
+                                />
+                                <span class="text-xs text-slate-500">
+                                    Required before Eligibility Review for ownership-changing cases.
+                                </span>
+                            </label>
+
+                            <label class="block space-y-1 text-sm">
+                                <span class="font-medium text-slate-700">
+                                    Effective From
+                                </span>
+                                <OptionalTemporalInput
+                                    v-model="editDraftForm.effective_from"
+                                    type="datetime-local"
+                                    class="min-h-11 w-full rounded-md border-slate-300 text-sm"
+                                />
+                            </label>
+
+                            <label
+                                v-if="selectedCase.transaction_type !== 'admission'"
+                                class="flex min-h-11 items-center gap-2 text-sm text-slate-700"
+                            >
+                                <input
+                                    v-model="editDraftForm.rofr_required"
+                                    type="checkbox"
+                                    class="rounded border-slate-300"
+                                >
+                                ROFR required
+                            </label>
+
+                            <div
+                                v-if="Object.keys(editDraftForm.errors).length"
+                                class="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800"
+                                role="alert"
+                            >
+                                {{ Object.values(editDraftForm.errors)[0] }}
+                            </div>
+
+                            <button
+                                type="submit"
+                                :disabled="editDraftForm.processing"
+                                class="min-h-10 rounded-md bg-slate-950 px-3 text-sm font-semibold text-white disabled:opacity-50"
+                            >
+                                Save draft changes
+                            </button>
+                        </form>
+                    </details>
+
                     <details
                         v-if="partnerChanges.permissions.manage && selectedCase.status === 'eligibility_review'"
                         class="rounded-lg border border-slate-200 bg-white"

@@ -233,6 +233,96 @@ final class PartnerChangeWorkflow
         return $case->fresh();
     }
 
+    public function updateDraftTerms(
+        User $user,
+        Business $business,
+        string $caseId,
+        int $expectedRevision,
+        ?string $currency,
+        ?int $considerationMinorUnits,
+        ?string $valuationMethod,
+        ?string $rightsImpactSummary,
+        bool $rofrRequired,
+        ?DateTimeInterface $effectiveFrom,
+    ): ?PartnerChangeCase {
+        if (! $this->actor->allows(
+            $user,
+            $business,
+            CapabilityCatalog::PARTNER_CHANGES_MANAGE,
+        )) {
+            return null;
+        }
+
+        if ($considerationMinorUnits !== null && $considerationMinorUnits < 0) {
+            throw new InvalidArgumentException(
+                'Consideration cannot be negative.',
+            );
+        }
+
+        return DB::transaction(function () use (
+            $user,
+            $business,
+            $caseId,
+            $expectedRevision,
+            $currency,
+            $considerationMinorUnits,
+            $valuationMethod,
+            $rightsImpactSummary,
+            $rofrRequired,
+            $effectiveFrom,
+        ): PartnerChangeCase {
+            $case = $this->lockCase(
+                $user,
+                $business,
+                $caseId,
+                $expectedRevision,
+            );
+
+            if ($case->status !== PartnerChangeStatus::Draft) {
+                throw new InvalidArgumentException(
+                    'Only a Draft Partner Change may edit draft terms.',
+                );
+            }
+
+            if (
+                $case->transaction_type === PartnerChangeTransactionType::Admission
+                && $rofrRequired
+            ) {
+                throw new InvalidArgumentException(
+                    'Admission-only cases cannot require ROFR.',
+                );
+            }
+
+            $case->currency = $this->currency($currency);
+            $case->consideration_minor_units = $considerationMinorUnits;
+            $case->valuation_method = $this->nullableText($valuationMethod);
+            $case->rights_impact_summary = $this->nullableText(
+                $rightsImpactSummary,
+            );
+            $case->rofr_required =
+                $case->transaction_type === PartnerChangeTransactionType::Admission
+                    ? false
+                    : $rofrRequired;
+            $case->effective_from = $effectiveFrom;
+            $case->revision = ((int) $case->revision) + 1;
+            $case->save();
+
+            $this->occurrence->record(
+                $user,
+                $business,
+                'partner_change.case.draft_updated',
+                'partner_change_case',
+                (string) $case->getKey(),
+                [
+                    'status' => PartnerChangeStatus::Draft->value,
+                    'revision' => (int) $case->revision,
+                ],
+            );
+
+            return $case->fresh();
+        });
+    }
+
     public function recordEligibility(
         User $user,
         Business $business,
@@ -496,6 +586,13 @@ final class PartnerChangeWorkflow
                 throw new InvalidArgumentException(
                     "Partner Change transition {$from->value} -> {$target->value} is not allowed.",
                 );
+            }
+
+            if (
+                $from === PartnerChangeStatus::Draft
+                && $target === PartnerChangeStatus::EligibilityReview
+            ) {
+                $this->assertDraftReadyForEligibility($case);
             }
 
             if ($target === PartnerChangeStatus::Eligible) {
@@ -1272,6 +1369,26 @@ final class PartnerChangeWorkflow
                 PartnerChangeStatus::Completed,
             );
         });
+    }
+
+    private function assertDraftReadyForEligibility(
+        PartnerChangeCase $case,
+    ): void {
+        if (! $case->transaction_type->changesOwnership()) {
+            return;
+        }
+
+        if ($this->nullableText($case->valuation_method) === null) {
+            throw new InvalidArgumentException(
+                'Ownership-changing Partner Changes require a valuation method before Eligibility Review.',
+            );
+        }
+
+        if ($this->nullableText($case->rights_impact_summary) === null) {
+            throw new InvalidArgumentException(
+                'Ownership-changing Partner Changes require an explicit rights impact summary before Eligibility Review.',
+            );
+        }
     }
 
     private function assertEligibilityReady(PartnerChangeCase $case): void
