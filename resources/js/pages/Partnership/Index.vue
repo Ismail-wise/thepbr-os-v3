@@ -2,6 +2,7 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PartnershipWorkflowPanel from '../../components/PartnershipWorkflowPanel.vue';
+import GuidedJourneyStepper from '../../components/hybrid/GuidedJourneyStepper.vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
 import { useI18n } from '../../i18n/useI18n';
 
@@ -55,6 +56,7 @@ type Contribution = {
     approved_value: string | null;
     accepted_value: string | null;
     valuation_method: string | null;
+    conditions?: string | null;
     revision: number;
 };
 
@@ -92,6 +94,7 @@ type OwnershipScenarioPosition = {
     ownership_scenario_id: string;
     partner_id: string;
     shares_issued?: string;
+    vested_shares?: string;
 };
 
 type CurrentRegister = {
@@ -172,6 +175,175 @@ const latestDynamics = computed(() => {
     return map;
 });
 
+type StepState = 'recorded' | 'current' | 'next' | 'available';
+
+const sectionState = (
+    key: 'partners' | 'contributions' | 'ownership',
+    hasData: boolean,
+): StepState => {
+    if (activeSection.value === key) {
+        return 'current';
+    }
+
+    return hasData ? 'recorded' : 'available';
+};
+
+const partnershipSteps = computed(() => [
+    {
+        key: 'partners',
+        label: t('partnership.partners'),
+        helper: t('partnership.partnerFoundationHelp'),
+        state: sectionState('partners', props.partnership.partners.length > 0),
+    },
+    {
+        key: 'contributions',
+        label: t('partnership.contributions'),
+        helper: t('partnership.contributionJourneyHelp'),
+        state: sectionState(
+            'contributions',
+            props.partnership.contributions.length > 0,
+        ),
+    },
+    {
+        key: 'ownership',
+        label: t('partnership.ownership'),
+        helper: t('partnership.ownershipJourneyHelp'),
+        state: sectionState(
+            'ownership',
+            props.partnership.current_ownership_register !== null
+                || props.partnership.ownership_scenarios.length > 0,
+        ),
+    },
+]);
+
+const selectPartnershipSection = (key: string): void => {
+    if (
+        key === 'partners'
+        || key === 'contributions'
+        || key === 'ownership'
+    ) {
+        activeSection.value = key;
+    }
+};
+
+const contributionSteps = computed(() => {
+    const hasContributions = props.partnership.contributions.length > 0;
+    const hasReviewed = props.partnership.contributions.some(
+        (row) => row.reviewed_value !== null,
+    );
+    const hasConditions = props.partnership.contributions.some(
+        (row) => Boolean(row.conditions?.trim()),
+    );
+    const hasApproved = props.partnership.contributions.some(
+        (row) => row.approved_value !== null || row.accepted_value !== null,
+    );
+    const hasAccepted = props.partnership.contributions.some(
+        (row) => row.accepted_value !== null,
+    );
+
+    return [
+        { key: 'setup', label: t('partnership.setup'), state: (hasContributions ? 'recorded' : 'current') as StepState },
+        { key: 'partners', label: t('partnership.partners'), state: (props.partnership.partners.length > 0 ? 'recorded' : 'next') as StepState },
+        { key: 'contributions', label: t('partnership.contributionsStep'), state: (hasContributions ? 'recorded' : 'available') as StepState },
+        { key: 'valuation', label: t('partnership.valuation'), state: (hasReviewed ? 'recorded' : hasContributions ? 'current' : 'available') as StepState },
+        { key: 'evidence', label: t('partnership.evidenceConditions'), state: (hasConditions ? 'recorded' : 'available') as StepState },
+        { key: 'approval', label: t('partnership.approval'), state: (hasApproved ? 'recorded' : 'available') as StepState },
+        { key: 'matrix', label: t('partnership.acceptedMatrix'), state: (hasAccepted ? 'recorded' : 'available') as StepState },
+    ];
+});
+
+const ownershipSteps = computed(() => {
+    const hasAccepted = props.partnership.contributions.some(
+        (row) => row.accepted_value !== null,
+    );
+    const hasScenario = props.partnership.ownership_scenarios.length > 0;
+    const hasClasses = props.partnership.ownership_scenario_share_classes.length > 0;
+    const hasPositions = props.partnership.ownership_scenario_positions.length > 0;
+    const hasVesting = props.partnership.ownership_scenario_positions.some(
+        (row) => Number(row.vested_shares ?? 0) > 0,
+    );
+    const hasFrozen = props.partnership.ownership_scenarios.some(
+        (row) => row.status === 'frozen',
+    );
+    const hasSubmission = props.partnership.ownership_submissions.length > 0;
+    const hasEffective = props.partnership.current_ownership_register !== null;
+
+    return [
+        { key: 'accepted', label: t('partnership.acceptedContributions'), state: (hasAccepted ? 'recorded' : 'current') as StepState },
+        { key: 'structure', label: t('partnership.shareStructure'), state: (hasScenario ? 'recorded' : hasAccepted ? 'current' : 'available') as StepState },
+        { key: 'classes', label: t('partnership.shareClasses'), state: (hasClasses ? 'recorded' : 'available') as StepState },
+        { key: 'allocation', label: t('partnership.allocation'), state: (hasPositions ? 'recorded' : 'available') as StepState },
+        { key: 'vesting', label: t('partnership.vesting'), state: (hasVesting ? 'recorded' : 'available') as StepState },
+        { key: 'scenario', label: t('partnership.scenario'), state: (hasFrozen ? 'recorded' : hasScenario ? 'current' : 'available') as StepState },
+        { key: 'proposal', label: t('partnership.proposal'), state: (hasSubmission ? 'recorded' : 'available') as StepState },
+        { key: 'governance', label: t('partnership.openGovernance'), state: (hasEffective ? 'recorded' : hasSubmission ? 'current' : 'available') as StepState },
+        { key: 'effective', label: t('partnership.effectiveRegister'), state: (hasEffective ? 'recorded' : 'available') as StepState },
+    ];
+});
+
+type MoneyBucket = Record<string, number>;
+
+const addMoney = (
+    bucket: MoneyBucket,
+    currency: string,
+    value: string | null,
+): void => {
+    if (value === null) {
+        return;
+    }
+
+    const amount = Number(value);
+
+    if (Number.isFinite(amount)) {
+        bucket[currency] = (bucket[currency] ?? 0) + amount;
+    }
+};
+
+const formatMoneyBucket = (bucket: MoneyBucket): string => {
+    const entries = Object.entries(bucket);
+
+    return entries.length === 0
+        ? '—'
+        : entries
+              .map(([currency, amount]) => `${amount.toFixed(2)} ${currency}`)
+              .join(' · ');
+};
+
+const acceptedMatrix = computed(() =>
+    props.partnership.partners.map((partner) => {
+        const buckets = {
+            cash: {} as MoneyBucket,
+            time_skill: {} as MoneyBucket,
+            property_asset: {} as MoneyBucket,
+            ip_intangible: {} as MoneyBucket,
+            total: {} as MoneyBucket,
+        };
+
+        for (const row of props.partnership.contributions) {
+            if (row.partner_id !== partner.id || row.accepted_value === null) {
+                continue;
+            }
+
+            const key = row.contribution_type as keyof typeof buckets;
+
+            if (key !== 'total' && key in buckets) {
+                addMoney(buckets[key], row.currency, row.accepted_value);
+            }
+
+            addMoney(buckets.total, row.currency, row.accepted_value);
+        }
+
+        return {
+            partner,
+            cash: formatMoneyBucket(buckets.cash),
+            timeSkill: formatMoneyBucket(buckets.time_skill),
+            propertyAsset: formatMoneyBucket(buckets.property_asset),
+            intangible: formatMoneyBucket(buckets.ip_intangible),
+            total: formatMoneyBucket(buckets.total),
+        };
+    }),
+);
+
 const createPartner = () => {
     partnerForm.post('/partnership/partners', {
         preserveScroll: true,
@@ -184,20 +356,21 @@ const createPartner = () => {
     <Head :title="t('partnership.title')" />
 
     <AuthenticatedLayout>
-        <main class="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
-            <div class="border-b border-slate-200 pb-5">
+        <main class="min-h-screen bg-[radial-gradient(circle_at_88%_0%,rgb(210_167_67_/_8%),transparent_26rem),linear-gradient(180deg,#f7f9f6_0%,#f1f5f1_100%)] px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <div class="mx-auto w-full max-w-[1500px]">
+            <div class="rounded-[24px] border border-[#d8e4da] bg-white/88 px-5 py-5 shadow-[0_14px_34px_rgb(16_35_26_/_5%)] sm:px-6">
                 <div
                     class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
                 >
                     <div>
                         <p
-                            class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500"
+                            class="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--pbr-green)]"
                         >
                             {{ partnership.business.name }}
                         </p>
 
                         <h1
-                            class="mt-2 text-2xl font-bold tracking-tight text-slate-950"
+                            class="mt-2 text-2xl font-black tracking-[-0.03em] text-[var(--pbr-ink)] sm:text-3xl"
                         >
                             {{ t('partnership.title') }}
                         </h1>
@@ -250,56 +423,28 @@ const createPartner = () => {
                 </p>
             </div>
 
+            <section class="mt-6">
+                <div class="mb-3">
+                    <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#7d8a82]">
+                        {{ t('partnership.journey') }}
+                    </p>
+                    <p class="mt-1 max-w-4xl text-sm leading-6 text-[var(--pbr-muted)]">
+                        {{ t('partnership.journeyHelp') }}
+                    </p>
+                </div>
+
+                <GuidedJourneyStepper
+                    :steps="partnershipSteps"
+                    :label="t('partnership.journey')"
+                    @select="selectPartnershipSection"
+                />
+            </section>
+
             <PartnershipWorkflowPanel
                 :partnership="partnership"
             />
 
-            <div
-                class="mt-6 grid gap-6 xl:grid-cols-[220px_minmax(0,1fr)]"
-            >
-                <aside class="border-r border-slate-200 pr-4">
-                    <nav aria-label="Partnership workspace sections">
-                        <button
-                            type="button"
-                            class="flex min-h-11 w-full items-center border-l-2 px-3 text-left text-sm font-semibold"
-                            :class="
-                                activeSection === 'partners'
-                                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                                    : 'border-transparent text-slate-600'
-                            "
-                            @click="activeSection = 'partners'"
-                        >
-                            {{ t('partnership.partners') }}
-                        </button>
-
-                        <button
-                            type="button"
-                            class="flex min-h-11 w-full items-center border-l-2 px-3 text-left text-sm font-semibold"
-                            :class="
-                                activeSection === 'contributions'
-                                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                                    : 'border-transparent text-slate-600'
-                            "
-                            @click="activeSection = 'contributions'"
-                        >
-                            {{ t('partnership.contributions') }}
-                        </button>
-
-                        <button
-                            type="button"
-                            class="flex min-h-11 w-full items-center border-l-2 px-3 text-left text-sm font-semibold"
-                            :class="
-                                activeSection === 'ownership'
-                                    ? 'border-slate-950 bg-slate-100 text-slate-950'
-                                    : 'border-transparent text-slate-600'
-                            "
-                            @click="activeSection = 'ownership'"
-                        >
-                            {{ t('partnership.ownership') }}
-                        </button>
-                    </nav>
-                </aside>
-
+            <div class="mt-6">
                 <section v-if="activeSection === 'partners'">
                     <div
                         class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
@@ -479,7 +624,15 @@ const createPartner = () => {
                         </p>
                     </div>
 
-                    <div class="mt-5 overflow-x-auto border border-slate-200">
+                    <div class="mt-5">
+                        <GuidedJourneyStepper
+                            :steps="contributionSteps"
+                            :label="t('partnership.contributionJourney')"
+                            @select="() => undefined"
+                        />
+                    </div>
+
+                    <div class="mt-5 overflow-x-auto rounded-[18px] border border-[#dce6de]">
                         <table class="min-w-full divide-y divide-slate-200 text-sm">
                             <thead class="bg-slate-50 text-left text-slate-600">
                                 <tr>
@@ -550,8 +703,50 @@ const createPartner = () => {
                         </table>
                     </div>
 
+                    <section class="mt-6">
+                        <div class="mb-3">
+                            <h3 class="text-base font-black text-[var(--pbr-ink)]">
+                                {{ t('partnership.acceptedMatrix') }}
+                            </h3>
+                            <p class="mt-1 text-sm leading-6 text-[var(--pbr-muted)]">
+                                {{ t('partnership.acceptedMatrixHelp') }}
+                            </p>
+                        </div>
+
+                        <div class="overflow-x-auto rounded-[18px] border border-[#dce6de]">
+                            <table class="min-w-[820px] w-full text-left text-sm">
+                                <thead class="bg-[#f6f8f6] text-[#66736a]">
+                                    <tr>
+                                        <th class="px-4 py-3 font-black">Partner</th>
+                                        <th class="px-4 py-3 font-black">Cash</th>
+                                        <th class="px-4 py-3 font-black">Time & Skill</th>
+                                        <th class="px-4 py-3 font-black">Property & Asset</th>
+                                        <th class="px-4 py-3 font-black">IP & Intangible</th>
+                                        <th class="px-4 py-3 font-black">
+                                            {{ t('partnership.acceptedTotal') }}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-[#e4ebe5] bg-white">
+                                    <tr v-for="row in acceptedMatrix" :key="row.partner.id">
+                                        <td class="px-4 py-3 font-black text-[var(--pbr-ink)]">
+                                            {{ row.partner.display_name }}
+                                        </td>
+                                        <td class="px-4 py-3">{{ row.cash }}</td>
+                                        <td class="px-4 py-3">{{ row.timeSkill }}</td>
+                                        <td class="px-4 py-3">{{ row.propertyAsset }}</td>
+                                        <td class="px-4 py-3">{{ row.intangible }}</td>
+                                        <td class="px-4 py-3 font-black text-[var(--pbr-green-dark)]">
+                                            {{ row.total }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
                     <div
-                        class="mt-4 flex flex-wrap items-center justify-between gap-3 border border-slate-200 bg-slate-50 p-4"
+                        class="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-[#dce6de] bg-[#f8faf8] p-4"
                     >
                         <p class="text-sm text-slate-600">
                             Evidence stays canonical in Document Vault and is
@@ -575,6 +770,14 @@ const createPartner = () => {
                         <p class="mt-1 text-sm text-slate-600">
                             {{ t('partnership.scenarioNotice') }}
                         </p>
+                    </div>
+
+                    <div class="mt-5">
+                        <GuidedJourneyStepper
+                            :steps="ownershipSteps"
+                            :label="t('partnership.ownershipJourney')"
+                            @select="() => undefined"
+                        />
                     </div>
 
                     <div
@@ -736,6 +939,7 @@ const createPartner = () => {
                         </Link>
                     </div>
                 </section>
+            </div>
             </div>
         </main>
     </AuthenticatedLayout>
