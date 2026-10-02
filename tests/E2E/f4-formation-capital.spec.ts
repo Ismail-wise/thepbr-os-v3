@@ -143,6 +143,38 @@ test(
             })
             .click();
 
+        const capitalJourney = page.getByRole('navigation', {
+            name: 'Capital Planning Workflow',
+            exact: true,
+        });
+
+        for (const step of [
+            'Startup Cost Plan',
+            'Initial Assets & Opening Inventory',
+            'Working Capital Forecast',
+            'Contingency Reserve',
+            'Funding Position & Gap',
+            'Capital Rule & Allocation',
+        ]) {
+            await expect(
+                capitalJourney.getByRole('button', {
+                    name: step,
+                    exact: true,
+                }),
+            ).toBeVisible();
+        }
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'Live Capital Position',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            page.getByText('38.46%', { exact: true }),
+        ).toBeVisible();
+
         await expect(
             page.getByText('6500.00', { exact: true }),
         ).toBeVisible();
