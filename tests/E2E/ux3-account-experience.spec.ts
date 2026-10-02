@@ -65,8 +65,12 @@ test('UX-3 account experience is action-first, cross-Business safe and responsiv
         }),
     ).toBeVisible();
 
-    await expect(page.getByText(PRIMARY_BUSINESS, { exact: true })).toBeVisible();
-    await expect(page.getByText(SECONDARY_BUSINESS, { exact: true })).toBeVisible();
+    await expect(
+        page.getByRole('heading', { name: PRIMARY_BUSINESS, exact: true }),
+    ).toBeVisible();
+    await expect(
+        page.getByRole('heading', { name: SECONDARY_BUSINESS, exact: true }),
+    ).toBeVisible();
     await expect(
         page.getByText('Nothing needs your attention right now', {
             exact: true,
@@ -88,8 +92,12 @@ test('UX-3 account experience is action-first, cross-Business safe and responsiv
             exact: true,
         }),
     ).toBeVisible();
-    await expect(page.getByText(PRIMARY_BUSINESS, { exact: true })).toBeVisible();
-    await expect(page.getByText(SECONDARY_BUSINESS, { exact: true })).toBeVisible();
+    await expect(
+        page.getByRole('heading', { name: PRIMARY_BUSINESS, exact: true }),
+    ).toBeVisible();
+    await expect(
+        page.getByRole('heading', { name: SECONDARY_BUSINESS, exact: true }),
+    ).toBeVisible();
 
     await page
         .getByRole('link', {
