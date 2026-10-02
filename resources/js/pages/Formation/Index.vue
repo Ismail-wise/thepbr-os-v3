@@ -1567,7 +1567,6 @@ const selectFormationStep = (key: string) => {
                     <div class="mt-6 flex items-end justify-between gap-4">
                         <div>
                             <h3 class="font-black text-[var(--pbr-ink)]">{{ c.planComparison }}</h3>
-                            <p class="mt-1 text-xs leading-5 text-[var(--pbr-muted)]">{{ formation.capital.scenario_notice }}</p>
                         </div>
                     </div>
 
