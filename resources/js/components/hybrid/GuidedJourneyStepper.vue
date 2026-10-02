@@ -10,7 +10,7 @@ type JourneyStep = {
 
 defineProps<{
     steps: JourneyStep[];
-    ariaLabel: string;
+    label: string;
 }>();
 
 const emit = defineEmits<{
@@ -20,7 +20,7 @@ const emit = defineEmits<{
 
 <template>
     <nav
-        :aria-label="ariaLabel"
+        :aria-label="label"
         class="overflow-hidden rounded-[22px] border border-[#d4e2d7] bg-white/90 shadow-[0_12px_30px_rgb(16_35_26_/_5%)]"
     >
         <ol

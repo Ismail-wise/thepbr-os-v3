@@ -894,7 +894,7 @@ const selectFormationStep = (key: string) => {
                     </div>
                     <GuidedJourneyStepper
                         :steps="formationSteps"
-                        :aria-label="c.journeyTitle"
+                        :label="c.journeyTitle"
                         @select="selectFormationStep"
                     />
                 </section>
