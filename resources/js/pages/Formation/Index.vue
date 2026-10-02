@@ -3,6 +3,7 @@ import OptionalTemporalInput from '../../components/OptionalTemporalInput.vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
+import GuidedJourneyStepper from '../../components/hybrid/GuidedJourneyStepper.vue';
 
 type LanguageMode = 'en' | 'my' | 'mixed';
 type Journey = 'new' | 'existing';
@@ -108,6 +109,7 @@ const copy = {
         method: 'Method',
         result: 'Result summary',
         evidenceId: 'Evidence ID from Document Vault',
+        evidenceAdvanced: 'Advanced: link existing evidence',
         linkEvidence: 'Link Evidence',
         monthlyRevenue: 'Projected monthly revenue',
         monthlyCost: 'Projected monthly cost',
@@ -166,6 +168,21 @@ const copy = {
         version: 'Revision',
         history: 'Promotion History',
         noRows: 'No records yet.',
+        journeyTitle: 'Guided setup journey',
+        journeyHelp: 'Work from left to right. A check means information has been recorded; it does not mean Governance approval.',
+        stepIdea: 'Idea',
+        stepCurrentBmc: 'Current BMC',
+        stepFinancial: 'Financial Baseline',
+        stepAssets: 'Assets & Liabilities',
+        stepValuation: 'Valuation',
+        stepOwners: 'Existing Owners',
+        stepObligationsRisks: 'Obligations & Risks',
+        stepGap: 'PBR Gap',
+        stepConversion: 'Conversion Plan',
+        stepDirection: 'Go / Revise / Hold / No-Go',
+        stepPartnerSetup: 'Partner Setup',
+        recorded: 'Information recorded',
+        continueSetup: 'Continue setup',
     },
     my: {
         title: 'လုပ်ငန်းဖွဲ့စည်းမှုနှင့် အရင်းအနှီး',
@@ -198,6 +215,7 @@ const copy = {
         method: 'စမ်းသပ်နည်း',
         result: 'ရလဒ်အနှစ်ချုပ်',
         evidenceId: 'Document Vault မှ Evidence ID',
+        evidenceAdvanced: 'အဆင့်မြင့်: ရှိပြီးသား Evidence ချိတ်ရန်',
         linkEvidence: 'Evidence ချိတ်မည်',
         monthlyRevenue: 'ခန့်မှန်း လစဉ်ဝင်ငွေ',
         monthlyCost: 'ခန့်မှန်း လစဉ်ကုန်ကျစရိတ်',
@@ -256,6 +274,21 @@ const copy = {
         version: 'Revision',
         history: 'Promotion History',
         noRows: 'မှတ်တမ်း မရှိသေးပါ။',
+        journeyTitle: 'အဆင့်လိုက် Setup လမ်းကြောင်း',
+        journeyHelp: 'ဘယ်မှညာသို့ အဆင့်လိုက်လုပ်ပါ။ Check သင်္ကေတသည် အချက်အလက်မှတ်တမ်းရှိပြီးဖြစ်သည်ကိုသာ ဆိုလိုပြီး Governance approval မဟုတ်ပါ။',
+        stepIdea: 'လုပ်ငန်းအကြံ',
+        stepCurrentBmc: 'လက်ရှိ BMC',
+        stepFinancial: 'ဘဏ္ဍာရေးအခြေခံ',
+        stepAssets: 'ပိုင်ဆိုင်မှုနှင့် ပေးဆပ်ရန်များ',
+        stepValuation: 'တန်ဖိုးသတ်မှတ်မှု',
+        stepOwners: 'လက်ရှိပိုင်ရှင်များ',
+        stepObligationsRisks: 'တာဝန်များနှင့် Risk များ',
+        stepGap: 'PBR Gap',
+        stepConversion: 'Conversion Plan',
+        stepDirection: 'Go / Revise / Hold / No-Go',
+        stepPartnerSetup: 'Partner Setup',
+        recorded: 'အချက်အလက် မှတ်တမ်းရှိပြီး',
+        continueSetup: 'Setup ဆက်လုပ်ရန်',
     },
     mixed: {
         title: 'Formation & Capital · လုပ်ငန်းဖွဲ့စည်းမှုနှင့် အရင်းအနှီး',
@@ -288,6 +321,7 @@ const copy = {
         method: 'Method',
         result: 'Result summary',
         evidenceId: 'Document Vault Evidence ID',
+        evidenceAdvanced: 'Advanced: existing Evidence link',
         linkEvidence: 'Link Evidence',
         monthlyRevenue: 'Projected monthly revenue',
         monthlyCost: 'Projected monthly cost',
@@ -346,11 +380,26 @@ const copy = {
         version: 'Revision',
         history: 'Promotion History',
         noRows: 'No records yet.',
+        journeyTitle: 'Guided Setup Journey',
+        journeyHelp: 'ဘယ်မှညာသို့ step-by-step လုပ်ပါ။ Check က information recorded ဖြစ်တာကိုသာပြပြီး Governance approval မဟုတ်ပါ။',
+        stepIdea: 'Idea',
+        stepCurrentBmc: 'Current BMC',
+        stepFinancial: 'Financial Baseline',
+        stepAssets: 'Assets & Liabilities',
+        stepValuation: 'Valuation',
+        stepOwners: 'Existing Owners',
+        stepObligationsRisks: 'Obligations & Risks',
+        stepGap: 'PBR Gap',
+        stepConversion: 'Conversion Plan',
+        stepDirection: 'Go / Revise / Hold / No-Go',
+        stepPartnerSetup: 'Partner Setup',
+        recorded: 'Information recorded',
+        continueSetup: 'Continue setup',
     },
 } as const;
 
 const c = computed(() => copy[mode.value]);
-const active = ref<'overview' | 'bmc' | 'validation' | 'feasibility' | 'fit' | 'baseline' | 'capital'>(
+const active = ref<'overview' | 'bmc' | 'validation' | 'feasibility' | 'fit' | 'direction' | 'baseline' | 'capital'>(
     props.formation.journey === 'new' ? 'overview' : 'baseline',
 );
 
@@ -649,22 +698,178 @@ const sectionButton = (key: typeof active.value) =>
             ? 'border-slate-950 text-slate-950'
             : 'border-transparent text-slate-500',
     ];
+
+const existingFocus = ref('profile');
+
+const newStepTarget: Record<string, typeof active.value | 'partnership'> = {
+    idea: 'overview',
+    bmc: 'bmc',
+    validation: 'validation',
+    feasibility: 'feasibility',
+    fit: 'fit',
+    direction: 'direction',
+    partner_setup: 'partnership',
+};
+
+const formationSteps = computed(() => {
+    if (props.formation.journey === 'new') {
+        const sources: Record<string, boolean> = {
+            idea: props.formation.new_business?.idea !== null,
+            bmc: props.formation.bmc !== null,
+            validation:
+                (props.formation.new_business?.validations ?? []).length > 0,
+            feasibility:
+                (props.formation.new_business?.feasibility ?? []).length > 0,
+            fit: props.formation.new_business?.partnership_fit !== null,
+            direction:
+                (props.formation.new_business?.directions ?? []).length > 0,
+            partner_setup: false,
+        };
+        const labels: Record<string, string> = {
+            idea: c.value.stepIdea,
+            bmc: c.value.bmc,
+            validation: c.value.validation,
+            feasibility: c.value.feasibility,
+            fit: c.value.fit,
+            direction: c.value.stepDirection,
+            partner_setup: c.value.stepPartnerSetup,
+        };
+
+        return Object.keys(labels).map((key) => {
+            const target = newStepTarget[key];
+            const isCurrent =
+                target !== 'partnership' && active.value === target;
+
+            return {
+                key,
+                label: labels[key],
+                helper: sources[key]
+                    ? c.value.recorded
+                    : c.value.continueSetup,
+                state: isCurrent
+                    ? 'current' as const
+                    : sources[key]
+                      ? 'recorded' as const
+                      : key === 'partner_setup'
+                        ? 'next' as const
+                        : 'available' as const,
+            };
+        });
+    }
+
+    const sources: Record<string, boolean> = {
+        profile: props.formation.existing_business?.profile !== null,
+        bmc: props.formation.bmc !== null,
+        financial:
+            (props.formation.existing_business?.financial_snapshots ?? [])
+                .length > 0,
+        assets:
+            (props.formation.existing_business?.assets ?? []).length > 0
+            || (props.formation.existing_business?.liabilities ?? []).length > 0,
+        valuation:
+            (props.formation.existing_business?.valuations ?? []).length > 0,
+        owners:
+            (props.formation.existing_business?.owner_positions ?? []).length > 0,
+        obligations_risks:
+            (props.formation.existing_business?.obligations ?? []).length > 0
+            || (props.formation.existing_business?.risks ?? []).length > 0
+            || (props.formation.existing_business?.constraints ?? []).length > 0,
+        gap: props.formation.existing_business?.gap_assessment !== null,
+        conversion:
+            props.formation.existing_business?.conversion_plan !== null,
+        partner_setup: false,
+    };
+    const labels: Record<string, string> = {
+        profile: c.value.profile,
+        bmc: c.value.stepCurrentBmc,
+        financial: c.value.stepFinancial,
+        assets: c.value.stepAssets,
+        valuation: c.value.stepValuation,
+        owners: c.value.stepOwners,
+        obligations_risks: c.value.stepObligationsRisks,
+        gap: c.value.stepGap,
+        conversion: c.value.stepConversion,
+        partner_setup: c.value.stepPartnerSetup,
+    };
+
+    return Object.keys(labels).map((key) => {
+        const isCurrent =
+            key === 'bmc'
+                ? active.value === 'bmc'
+                : active.value === 'baseline'
+                  && existingFocus.value === key;
+
+        return {
+            key,
+            label: labels[key],
+            helper: sources[key]
+                ? c.value.recorded
+                : c.value.continueSetup,
+            state: isCurrent
+                ? 'current' as const
+                : sources[key]
+                  ? 'recorded' as const
+                  : key === 'partner_setup'
+                    ? 'next' as const
+                    : 'available' as const,
+        };
+    });
+});
+
+const selectFormationStep = (key: string) => {
+    if (props.formation.journey === 'new') {
+        const target = newStepTarget[key];
+
+        if (target === 'partnership') {
+            router.visit('/partnership');
+
+            return;
+        }
+
+        if (target) {
+            active.value = target;
+        }
+
+        return;
+    }
+
+    if (key === 'partner_setup') {
+        router.visit('/partnership');
+
+        return;
+    }
+
+    if (key === 'bmc') {
+        active.value = 'bmc';
+
+        return;
+    }
+
+    existingFocus.value = key;
+    active.value = 'baseline';
+
+    window.setTimeout(() => {
+        document
+            .getElementById('formation-existing-' + key)
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
+};
 </script>
 
 <template>
     <AuthenticatedLayout>
-        <main class="min-h-screen bg-white px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
-            <section class="mx-auto max-w-7xl">
-                <header class="border-b border-slate-200 pb-5">
+        <main class="min-h-screen bg-[radial-gradient(circle_at_92%_0%,rgb(210_167_67_/_9%),transparent_25rem),linear-gradient(180deg,#f7f9f6_0%,#f1f5f1_100%)] px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-7 lg:py-7">
+            <section class="mx-auto max-w-[1500px]">
+                <header class="relative overflow-hidden rounded-[26px] border border-[#cfe0d4] bg-[linear-gradient(145deg,#ffffff_0%,#f4f9f5_64%,#fbf7eb_100%)] p-5 shadow-[0_18px_46px_rgb(16_35_26_/_7%)] sm:p-7">
                     <div class="flex flex-wrap items-start justify-between gap-4">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--pbr-green)]">
                                 {{ formation.journey === 'new' ? c.newJourney : c.existingJourney }}
                             </p>
-                            <h1 class="mt-2 text-2xl font-semibold tracking-tight">
+                            <h1 class="mt-2 text-2xl font-black tracking-[-0.03em] sm:text-3xl">
                                 {{ c.title }}
                             </h1>
-                            <p class="mt-2 max-w-4xl text-sm leading-6 text-slate-600">
+                            <p class="mt-2 max-w-4xl text-sm leading-6 text-[var(--pbr-muted)]">
                                 {{ c.description }}
                             </p>
                         </div>
@@ -673,12 +878,28 @@ const sectionButton = (key: typeof active.value) =>
                             <p>{{ formation.business.base_currency }} · {{ formation.business.business_stage }}</p>
                         </div>
                     </div>
-                    <p class="mt-4 border-l-4 border-slate-800 bg-slate-50 px-4 py-3 text-sm leading-6">
+                    <p class="mt-5 rounded-[16px] border border-[#d9e5dc] bg-white/80 px-4 py-3 text-sm leading-6 text-[var(--pbr-ink-soft)]">
                         {{ c.notice }}
                     </p>
                 </header>
 
-                <nav class="mt-4 flex gap-1 overflow-x-auto border-b border-slate-200" aria-label="Formation sections">
+                <section class="mt-5">
+                    <div class="mb-3">
+                        <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--pbr-green)]">
+                            {{ c.journeyTitle }}
+                        </p>
+                        <p class="mt-1 max-w-4xl text-sm leading-6 text-[var(--pbr-muted)]">
+                            {{ c.journeyHelp }}
+                        </p>
+                    </div>
+                    <GuidedJourneyStepper
+                        :steps="formationSteps"
+                        :aria-label="c.journeyTitle"
+                        @select="selectFormationStep"
+                    />
+                </section>
+
+                <nav class="mt-5 flex gap-1 overflow-x-auto rounded-[16px] border border-[#d9e5dc] bg-white/80 p-1.5 shadow-[0_8px_24px_rgb(16_35_26_/_3%)]" aria-label="Formation sections">
                     <button v-if="formation.journey === 'new'" type="button" :class="sectionButton('overview')" @click="active = 'overview'">
                         {{ c.overview }}
                     </button>
@@ -693,6 +914,9 @@ const sectionButton = (key: typeof active.value) =>
                     </button>
                     <button v-if="formation.journey === 'new'" type="button" :class="sectionButton('fit')" @click="active = 'fit'">
                         {{ c.fit }}
+                    </button>
+                    <button v-if="formation.journey === 'new'" type="button" :class="sectionButton('direction')" @click="active = 'direction'">
+                        {{ c.direction }}
                     </button>
                     <button v-if="formation.journey === 'existing'" type="button" :class="sectionButton('baseline')" @click="active = 'baseline'">
                         {{ c.baseline }}
@@ -727,35 +951,6 @@ const sectionButton = (key: typeof active.value) =>
                             </button>
                         </form>
 
-                        <div>
-                            <h2 class="text-lg font-semibold">{{ c.direction }}</h2>
-                            <p class="mt-2 text-sm text-slate-600">
-                                The OS supports evidence-based human judgment; it does not choose Go / Revise / Hold / No-Go for the owners.
-                            </p>
-                            <form class="mt-4 space-y-3" @submit.prevent="post('/formation/new/direction', direction)">
-                                <select v-model="direction.direction" class="min-h-11 w-full border border-slate-300 bg-white px-3">
-                                    <option value="go">Go</option>
-                                    <option value="revise">Revise</option>
-                                    <option value="hold">Hold</option>
-                                    <option value="no_go">No-Go</option>
-                                </select>
-                                <textarea v-model="direction.rationale" :placeholder="c.rationale" class="min-h-28 w-full border border-slate-300 p-3" required />
-                                <button v-if="formation.permissions.can_manage_formation" class="min-h-11 border border-slate-950 px-4 text-sm font-semibold" type="submit">
-                                    {{ c.add }}
-                                </button>
-                            </form>
-                            <table class="mt-6 w-full text-left text-sm">
-                                <thead class="border-b border-slate-300 text-slate-500">
-                                    <tr><th class="py-2">Decision</th><th class="py-2">{{ c.rationale }}</th></tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="row in formation.new_business?.directions ?? []" :key="row.id" class="border-b border-slate-200">
-                                        <td class="py-3 font-semibold">{{ row.direction }}</td>
-                                        <td class="py-3">{{ row.rationale }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
                 </section>
 
@@ -859,14 +1054,21 @@ const sectionButton = (key: typeof active.value) =>
                                 <div v-for="row in formation.new_business?.validations ?? []" :key="row.id" class="py-4">
                                     <p class="font-semibold">{{ row.method }} · {{ row.status }}</p>
                                     <p class="mt-1 text-sm text-slate-600">{{ row.result_summary || '—' }}</p>
-                                    <form
+                                    <details
                                         v-if="formation.permissions.can_manage_formation"
-                                        class="mt-3 flex gap-2"
-                                        @submit.prevent="linkValidationEvidence(row.id)"
+                                        class="mt-3 rounded-xl border border-[#dfe7e1] bg-[#f8faf8] px-3 py-2.5"
                                     >
-                                        <input v-model="validationEvidenceIds[row.id]" class="min-h-10 min-w-0 flex-1 border border-slate-300 px-3 text-xs" :placeholder="c.evidenceId" required>
-                                        <button class="border border-slate-300 px-3 text-xs font-semibold">{{ c.linkEvidence }}</button>
-                                    </form>
+                                        <summary class="cursor-pointer text-xs font-extrabold text-[var(--pbr-green-dark)]">
+                                            {{ c.evidenceAdvanced }}
+                                        </summary>
+                                        <form
+                                            class="mt-3 flex gap-2"
+                                            @submit.prevent="linkValidationEvidence(row.id)"
+                                        >
+                                            <input v-model="validationEvidenceIds[row.id]" class="min-h-10 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 text-xs" :placeholder="c.evidenceId" required>
+                                            <button class="rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold">{{ c.linkEvidence }}</button>
+                                        </form>
+                                    </details>
                                 </div>
                             </div>
                         </div>
@@ -909,6 +1111,50 @@ const sectionButton = (key: typeof active.value) =>
                     </form>
                 </section>
 
+                <section
+                    v-if="formation.journey === 'new' && active === 'direction'"
+                    class="py-6"
+                >
+                    <div class="rounded-[22px] border border-[#d8e4db] bg-white p-5 shadow-[0_12px_30px_rgb(16_35_26_/_5%)] sm:p-6">
+                        <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--pbr-green)]">
+                            6 · {{ c.direction }}
+                        </p>
+                        <h2 class="mt-1 text-xl font-black tracking-[-0.02em]">
+                            {{ c.stepDirection }}
+                        </h2>
+                        <p class="mt-2 max-w-3xl text-sm leading-6 text-[var(--pbr-muted)]">
+                            The OS supports evidence-based human judgment. It does not choose the direction for the owners.
+                        </p>
+
+                        <form class="mt-5 grid gap-3 lg:grid-cols-[15rem_1fr_auto]" @submit.prevent="post('/formation/new/direction', direction)">
+                            <select v-model="direction.direction" class="pbr-input-control min-h-11 bg-white px-3">
+                                <option value="go">Go</option>
+                                <option value="revise">Revise</option>
+                                <option value="hold">Hold</option>
+                                <option value="no_go">No-Go</option>
+                            </select>
+                            <textarea v-model="direction.rationale" :placeholder="c.rationale" class="pbr-input-control min-h-24 p-3" required />
+                            <button v-if="formation.permissions.can_manage_formation" class="min-h-11 rounded-xl bg-[var(--pbr-green-dark)] px-4 text-sm font-black text-white" type="submit">
+                                {{ c.add }}
+                            </button>
+                        </form>
+
+                        <div class="mt-5 space-y-2">
+                            <article
+                                v-for="row in formation.new_business?.directions ?? []"
+                                :key="row.id"
+                                class="rounded-[16px] border border-[#e0e8e2] bg-[#f9fbf9] p-4"
+                            >
+                                <p class="font-black">{{ String(row.direction).replace('_', '-') }}</p>
+                                <p class="mt-1 text-sm leading-6 text-[var(--pbr-muted)]">{{ row.rationale }}</p>
+                            </article>
+                            <p v-if="(formation.new_business?.directions ?? []).length === 0" class="text-sm text-[var(--pbr-muted)]">
+                                {{ c.noRows }}
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
                 <section v-if="formation.journey === 'existing' && active === 'baseline'" class="py-6">
                     <header>
                         <h2 class="text-lg font-semibold">{{ c.existingJourney }}</h2>
@@ -916,7 +1162,7 @@ const sectionButton = (key: typeof active.value) =>
                     </header>
 
                     <div class="mt-6 grid gap-8 xl:grid-cols-2">
-                        <form class="space-y-3" @submit.prevent="saveExistingProfile">
+                        <form id="formation-existing-profile" class="scroll-mt-24 space-y-3 rounded-[18px] border border-[#dce6de] bg-white p-5 shadow-[0_8px_22px_rgb(16_35_26_/_3%)]" @submit.prevent="saveExistingProfile">
                             <h3 class="font-semibold">{{ c.profile }}</h3>
                             <OptionalTemporalInput v-model="existingProfile.operating_since" type="date" class="min-h-11 w-full border border-slate-300 px-3" />
                             <textarea v-model="existingProfile.summary" class="min-h-24 w-full border border-slate-300 p-3" :placeholder="c.summary" />
@@ -924,7 +1170,7 @@ const sectionButton = (key: typeof active.value) =>
                             <button v-if="formation.permissions.can_manage_formation" class="min-h-11 border border-slate-950 px-4 text-sm font-semibold">{{ c.save }}</button>
                         </form>
 
-                        <form class="grid gap-3" @submit.prevent="post('/formation/existing/financial-snapshots', financial)">
+                        <form id="formation-existing-financial" class="scroll-mt-24 grid gap-3 rounded-[18px] border border-[#dce6de] bg-white p-5 shadow-[0_8px_22px_rgb(16_35_26_/_3%)]" @submit.prevent="post('/formation/existing/financial-snapshots', financial)">
                             <h3 class="font-semibold">{{ c.financialSnapshot }}</h3>
                             <input v-model="financial.as_of_date" type="date" class="min-h-11 border border-slate-300 px-3" required>
                             <div class="grid grid-cols-2 gap-2">
@@ -937,7 +1183,7 @@ const sectionButton = (key: typeof active.value) =>
                             <button v-if="formation.permissions.can_manage_formation" class="min-h-11 border border-slate-950 px-4 text-sm font-semibold">{{ c.add }}</button>
                         </form>
 
-                        <div class="space-y-4 border-t border-slate-200 pt-5">
+                        <div id="formation-existing-assets" class="scroll-mt-24 space-y-4 rounded-[18px] border border-[#dce6de] bg-white p-5 shadow-[0_8px_22px_rgb(16_35_26_/_3%)]">
                             <h3 class="font-semibold">{{ c.assets }} / {{ c.liabilities }}</h3>
                             <form class="grid grid-cols-[1fr_10rem_auto] gap-2" @submit.prevent="post('/formation/existing/assets', asset)">
                                 <input v-model="asset.name" class="min-h-10 border border-slate-300 px-2" :placeholder="c.assets" required>
@@ -955,60 +1201,7 @@ const sectionButton = (key: typeof active.value) =>
                             </p>
                         </div>
 
-                        <div class="space-y-4 border-t border-slate-200 pt-5">
-                            <h3 class="font-semibold">{{ c.ownerPositions }}</h3>
-                            <form class="grid gap-2 sm:grid-cols-[1fr_8rem_auto]" @submit.prevent="post('/formation/existing/owner-positions', owner)">
-                                <input v-model="owner.owner_name" class="min-h-10 border border-slate-300 px-2" :placeholder="c.name" required>
-                                <input v-model="owner.baseline_percent" class="min-h-10 border border-slate-300 px-2" :placeholder="c.percent">
-                                <button class="border border-slate-300 px-3 text-xs font-semibold">{{ c.add }}</button>
-                            </form>
-                            <div v-for="row in formation.existing_business?.owner_positions ?? []" :key="row.id" class="text-sm">
-                                <span class="font-semibold">{{ row.owner_name }}</span>
-                                <span class="ml-2 text-slate-500">{{ row.baseline_percent ?? '—' }}%</span>
-                            </div>
-                        </div>
-
-                        <div class="space-y-4 border-t border-slate-200 pt-5">
-                            <h3 class="font-semibold">{{ c.obligations }}</h3>
-                            <form class="grid gap-2" @submit.prevent="post('/formation/existing/obligations', obligation)">
-                                <input v-model="obligation.title" class="min-h-10 border border-slate-300 px-2" :placeholder="c.name" required>
-                                <textarea v-model="obligation.details" class="min-h-20 border border-slate-300 p-2" :placeholder="c.notes" />
-                                <button class="min-h-10 border border-slate-300 px-3 text-xs font-semibold">{{ c.add }}</button>
-                            </form>
-                        </div>
-
-                        <div class="space-y-4 border-t border-slate-200 pt-5">
-                            <h3 class="font-semibold">{{ c.risks }}</h3>
-                            <form class="grid gap-2" @submit.prevent="post('/formation/existing/risks', risk)">
-                                <input v-model="risk.risk" class="min-h-10 border border-slate-300 px-2" :placeholder="c.risks" required>
-                                <input v-model="risk.control_status" class="min-h-10 border border-slate-300 px-2" :placeholder="c.controlStatus" required>
-                                <button class="min-h-10 border border-slate-300 px-3 text-xs font-semibold">{{ c.add }}</button>
-                            </form>
-                        </div>
-
-                        <div class="space-y-4 border-t border-slate-200 pt-5">
-                            <h3 class="font-semibold">{{ c.constraints }}</h3>
-                            <form class="grid gap-2" @submit.prevent="post('/formation/existing/constraints', constraint)">
-                                <input v-model="constraint.title" class="min-h-10 border border-slate-300 px-2" :placeholder="c.name" required>
-                                <textarea v-model="constraint.details" class="min-h-20 border border-slate-300 p-2" :placeholder="c.notes" />
-                                <button class="min-h-10 border border-slate-300 px-3 text-xs font-semibold">{{ c.add }}</button>
-                            </form>
-                        </div>
-
-                        <form class="space-y-3 border-t border-slate-200 pt-5" @submit.prevent="saveGap">
-                            <h3 class="font-semibold">{{ c.gapAssessment }}</h3>
-                            <textarea v-model="gapAssessment.gaps" class="min-h-24 w-full border border-slate-300 p-3" :placeholder="c.gapAssessment" />
-                            <textarea v-model="gapAssessment.priorities" class="min-h-24 w-full border border-slate-300 p-3" :placeholder="c.priorities" />
-                            <button class="min-h-10 border border-slate-950 px-3 text-xs font-semibold">{{ c.save }}</button>
-                        </form>
-
-                        <form class="space-y-3 border-t border-slate-200 pt-5" @submit.prevent="saveConversion">
-                            <h3 class="font-semibold">{{ c.conversionPlan }}</h3>
-                            <textarea v-model="conversion.plan" class="min-h-40 w-full border border-slate-300 p-3" :placeholder="c.plan" required />
-                            <button class="min-h-10 border border-slate-950 px-3 text-xs font-semibold">{{ c.save }}</button>
-                        </form>
-
-                        <div class="space-y-4 border-t border-slate-200 pt-5 xl:col-span-2">
+                        <div id="formation-existing-valuation" class="scroll-mt-24 space-y-4 rounded-[18px] border border-[#dce6de] bg-white p-5 shadow-[0_8px_22px_rgb(16_35_26_/_3%)] xl:col-span-2">
                             <h3 class="font-semibold">{{ c.valuations }}</h3>
                             <p class="text-sm text-slate-600">{{ c.valuationNotice }}</p>
                             <form class="grid gap-2 lg:grid-cols-[10rem_12rem_1fr_9rem_auto]" @submit.prevent="post('/formation/existing/valuations', valuation)">
@@ -1032,6 +1225,62 @@ const sectionButton = (key: typeof active.value) =>
                                 </tbody>
                             </table>
                         </div>
+
+                        <div id="formation-existing-owners" class="scroll-mt-24 space-y-4 rounded-[18px] border border-[#dce6de] bg-white p-5 shadow-[0_8px_22px_rgb(16_35_26_/_3%)]">
+                            <h3 class="font-semibold">{{ c.ownerPositions }}</h3>
+                            <form class="grid gap-2 sm:grid-cols-[1fr_8rem_auto]" @submit.prevent="post('/formation/existing/owner-positions', owner)">
+                                <input v-model="owner.owner_name" class="min-h-10 border border-slate-300 px-2" :placeholder="c.name" required>
+                                <input v-model="owner.baseline_percent" class="min-h-10 border border-slate-300 px-2" :placeholder="c.percent">
+                                <button class="border border-slate-300 px-3 text-xs font-semibold">{{ c.add }}</button>
+                            </form>
+                            <div v-for="row in formation.existing_business?.owner_positions ?? []" :key="row.id" class="text-sm">
+                                <span class="font-semibold">{{ row.owner_name }}</span>
+                                <span class="ml-2 text-slate-500">{{ row.baseline_percent ?? '—' }}%</span>
+                            </div>
+                        </div>
+
+                        <section id="formation-existing-obligations_risks" class="scroll-mt-24 space-y-5 rounded-[18px] border border-[#dce6de] bg-white p-5 shadow-[0_8px_22px_rgb(16_35_26_/_3%)]">
+                            <div class="space-y-4">
+                            <h3 class="font-semibold">{{ c.obligations }}</h3>
+                            <form class="grid gap-2" @submit.prevent="post('/formation/existing/obligations', obligation)">
+                                <input v-model="obligation.title" class="min-h-10 border border-slate-300 px-2" :placeholder="c.name" required>
+                                <textarea v-model="obligation.details" class="min-h-20 border border-slate-300 p-2" :placeholder="c.notes" />
+                                <button class="min-h-10 border border-slate-300 px-3 text-xs font-semibold">{{ c.add }}</button>
+                            </form>
+                            </div>
+
+                            <div class="space-y-4 border-t border-slate-200 pt-5">
+                            <h3 class="font-semibold">{{ c.risks }}</h3>
+                            <form class="grid gap-2" @submit.prevent="post('/formation/existing/risks', risk)">
+                                <input v-model="risk.risk" class="min-h-10 border border-slate-300 px-2" :placeholder="c.risks" required>
+                                <input v-model="risk.control_status" class="min-h-10 border border-slate-300 px-2" :placeholder="c.controlStatus" required>
+                                <button class="min-h-10 border border-slate-300 px-3 text-xs font-semibold">{{ c.add }}</button>
+                            </form>
+                        </div>
+
+                        <div class="space-y-4 border-t border-slate-200 pt-5">
+                            <h3 class="font-semibold">{{ c.constraints }}</h3>
+                            <form class="grid gap-2" @submit.prevent="post('/formation/existing/constraints', constraint)">
+                                <input v-model="constraint.title" class="min-h-10 border border-slate-300 px-2" :placeholder="c.name" required>
+                                <textarea v-model="constraint.details" class="min-h-20 border border-slate-300 p-2" :placeholder="c.notes" />
+                                <button class="min-h-10 border border-slate-300 px-3 text-xs font-semibold">{{ c.add }}</button>
+                            </form>
+                            </div>
+                        </section>
+
+                        <form id="formation-existing-gap" class="scroll-mt-24 space-y-3 rounded-[18px] border border-[#dce6de] bg-white p-5 shadow-[0_8px_22px_rgb(16_35_26_/_3%)]" @submit.prevent="saveGap">
+                            <h3 class="font-semibold">{{ c.gapAssessment }}</h3>
+                            <textarea v-model="gapAssessment.gaps" class="min-h-24 w-full border border-slate-300 p-3" :placeholder="c.gapAssessment" />
+                            <textarea v-model="gapAssessment.priorities" class="min-h-24 w-full border border-slate-300 p-3" :placeholder="c.priorities" />
+                            <button class="min-h-10 border border-slate-950 px-3 text-xs font-semibold">{{ c.save }}</button>
+                        </form>
+
+                        <form id="formation-existing-conversion" class="scroll-mt-24 space-y-3 rounded-[18px] border border-[#dce6de] bg-white p-5 shadow-[0_8px_22px_rgb(16_35_26_/_3%)]" @submit.prevent="saveConversion">
+                            <h3 class="font-semibold">{{ c.conversionPlan }}</h3>
+                            <textarea v-model="conversion.plan" class="min-h-40 w-full border border-slate-300 p-3" :placeholder="c.plan" required />
+                            <button class="min-h-10 border border-slate-950 px-3 text-xs font-semibold">{{ c.save }}</button>
+                        </form>
+
                     </div>
                 </section>
 

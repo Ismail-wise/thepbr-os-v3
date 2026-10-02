@@ -78,10 +78,43 @@ test(
             }),
         ).toBeVisible();
 
-        await page
+        const newBusinessJourney = page.getByRole('navigation', {
+            name: 'Guided setup journey',
+            exact: true,
+        });
+
+        for (const step of [
+            'Idea',
+            'Business Model Canvas',
+            'Validation',
+            'Feasibility',
+            'Partnership Fit',
+            'Go / Revise / Hold / No-Go',
+            'Partner Setup',
+        ]) {
+            await expect(
+                newBusinessJourney.getByRole('button', {
+                    name: new RegExp(step.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+                }),
+            ).toBeVisible();
+        }
+
+        await newBusinessJourney
             .getByRole('button', {
-                name: 'Business Model Canvas',
+                name: /Go \/ Revise \/ Hold \/ No-Go/,
+            })
+            .click();
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'Go / Revise / Hold / No-Go',
                 exact: true,
+            }),
+        ).toBeVisible();
+
+        await newBusinessJourney
+            .getByRole('button', {
+                name: /Business Model Canvas/,
             })
             .click();
 
@@ -133,10 +166,33 @@ test(
             }).first(),
         ).toBeVisible();
 
-        await page
+        const existingBusinessJourney = page.getByRole('navigation', {
+            name: 'Guided setup journey',
+            exact: true,
+        });
+
+        for (const step of [
+            'Business Profile',
+            'Current BMC',
+            'Financial Baseline',
+            'Assets & Liabilities',
+            'Valuation',
+            'Existing Owners',
+            'Obligations & Risks',
+            'PBR Gap',
+            'Conversion Plan',
+            'Partner Setup',
+        ]) {
+            await expect(
+                existingBusinessJourney.getByRole('button', {
+                    name: new RegExp(step.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+                }),
+            ).toBeVisible();
+        }
+
+        await existingBusinessJourney
             .getByRole('button', {
-                name: 'Business Model Canvas',
-                exact: true,
+                name: /Current BMC/,
             })
             .click();
 
