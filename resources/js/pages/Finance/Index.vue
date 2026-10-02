@@ -87,30 +87,52 @@ const pendingCount = computed(() => props.finance.payments.filter((row) => !['co
 <template>
     <Head :title="t('finance.title')" />
     <AuthenticatedLayout>
-        <main class="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
-            <header class="border-b border-slate-200 pb-5">
+        <main class="min-h-screen bg-[radial-gradient(circle_at_88%_0%,rgb(210_167_67_/_8%),transparent_26rem),linear-gradient(180deg,#f7f9f6_0%,#f1f5f1_100%)] px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <div class="mx-auto w-full max-w-[1500px]">
+            <header class="rounded-[24px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_14px_34px_rgb(16_35_26_/_5%)] sm:p-6">
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">{{ finance.business.name }}</p>
-                        <h1 class="mt-2 text-2xl font-bold text-slate-950">{{ t('finance.title') }}</h1>
-                        <p class="mt-2 max-w-4xl text-sm leading-6 text-slate-600">{{ t('finance.description') }}</p>
+                        <h1 class="mt-2 text-2xl font-black tracking-[-0.02em] text-[var(--pbr-ink)]">{{ t('finance.title') }}</h1>
+                        <p class="mt-2 max-w-4xl text-sm leading-6 text-[var(--pbr-muted)]">{{ t('finance.description') }}</p>
                     </div>
-                    <div class="flex gap-2">
-                        <Link href="/records/documents" class="inline-flex min-h-11 items-center border border-slate-300 px-4 text-sm font-semibold">Document Vault</Link>
-                        <Link href="/governance" class="inline-flex min-h-11 items-center border border-slate-300 px-4 text-sm font-semibold">Governance</Link>
+                    <div class="flex flex-wrap gap-2">
+                        <Link href="/records/documents" class="inline-flex min-h-11 items-center rounded-xl border border-[#d8e4da] bg-white px-4 text-sm font-bold text-slate-800">Document Vault</Link>
+                        <Link href="/governance" class="inline-flex min-h-11 items-center rounded-xl border border-[#d8e4da] bg-white px-4 text-sm font-bold text-slate-800">Governance</Link>
                     </div>
                 </div>
-                <p class="mt-5 border-l-4 border-slate-800 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-800">{{ t('finance.boundary') }}</p>
+                <p class="mt-5 rounded-[16px] border border-[#cfe1d3] bg-[#f3f8f4] px-4 py-3 text-sm font-bold text-[var(--pbr-green-dark)]">{{ t('finance.boundary') }}</p>
             </header>
 
-            <section class="mt-6 grid gap-4 md:grid-cols-3">
-                <div class="border border-slate-200 p-4"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Needs attention</p><p class="mt-2 text-2xl font-bold">{{ pendingCount }}</p><p class="mt-1 text-xs text-slate-500">Open payments + exceptions</p></div>
-                <div class="border border-slate-200 p-4"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Effective policy</p><p class="mt-2 font-bold">{{ finance.current ? finance.current.header.fiscal_period : 'Not effective' }}</p><p class="mt-1 text-xs text-slate-500">{{ finance.current?.header.accounting_method ?? 'Create and govern a policy first.' }}</p></div>
-                <div class="border border-slate-200 p-4"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Completed reconciliations</p><p class="mt-2 text-2xl font-bold">{{ completedReconciliations.length }}</p><p class="mt-1 text-xs text-slate-500">Canonical period verification</p></div>
+            <section class="mt-5 rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
+                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--pbr-green)]">{{ t('finance.controlFlowTitle') }}</p>
+                <p class="mt-2 max-w-4xl text-sm leading-6 text-[var(--pbr-muted)]">{{ t('finance.controlFlowHelp') }}</p>
+                <div class="mt-4 grid gap-2 sm:grid-cols-5">
+                    <div
+                        v-for="(label, index) in [
+                            t('finance.stepRequest'),
+                            t('finance.stepApprove'),
+                            t('finance.stepPay'),
+                            t('finance.stepEvidence'),
+                            t('finance.stepReconcile'),
+                        ]"
+                        :key="label"
+                        class="rounded-[16px] border border-[#dde7df] bg-[#f8faf8] px-3 py-3"
+                    >
+                        <span class="text-[10px] font-black text-[#829087]">{{ index + 1 }}</span>
+                        <p class="mt-1 text-sm font-black text-[var(--pbr-ink)]">{{ label }}</p>
+                    </div>
+                </div>
             </section>
 
-            <section class="mt-8">
-                <div class="flex items-end justify-between gap-4">
+            <section class="mt-5 grid gap-3 md:grid-cols-3">
+                <div class="rounded-[18px] border border-[#dde7df] bg-white/90 p-4 shadow-[0_8px_22px_rgb(16_35_26_/_3%)]"><p class="text-xs font-bold uppercase tracking-wide text-[var(--pbr-muted)]">Needs attention</p><p class="mt-2 text-2xl font-black">{{ pendingCount }}</p><p class="mt-1 text-xs text-[var(--pbr-muted)]">Open payments + exceptions</p></div>
+                <div class="rounded-[18px] border border-[#dde7df] bg-white/90 p-4 shadow-[0_8px_22px_rgb(16_35_26_/_3%)]"><p class="text-xs font-bold uppercase tracking-wide text-[var(--pbr-muted)]">Effective policy</p><p class="mt-2 font-black">{{ finance.current ? finance.current.header.fiscal_period : 'Not effective' }}</p><p class="mt-1 text-xs text-[var(--pbr-muted)]">{{ finance.current?.header.accounting_method ?? 'Create and govern a policy first.' }}</p></div>
+                <div class="rounded-[18px] border border-[#e8d9ab] bg-[#fffaf0] p-4 shadow-[0_8px_22px_rgb(16_35_26_/_3%)]"><p class="text-xs font-bold uppercase tracking-wide text-[#7d672d]">Completed reconciliations</p><p class="mt-2 text-2xl font-black text-[#66531f]">{{ completedReconciliations.length }}</p><p class="mt-1 text-xs text-[#7d672d]">Canonical period verification</p></div>
+            </section>
+
+            <section class="mt-6 rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)] sm:p-6">
+                <div class="flex flex-wrap items-start justify-between gap-4">
                     <div><h2 class="text-lg font-bold">Current Effective Finance Policy</h2><p class="mt-1 text-sm text-slate-600">Only the Effective version controls Finance. Draft/Review versions cannot authorize money.</p></div>
                     <span v-if="finance.current" class="text-xs font-semibold text-slate-500">{{ finance.current.header.base_currency }}</span>
                 </div>
@@ -141,8 +163,8 @@ const pendingCount = computed(() => props.finance.payments.filter((row) => !['co
                 </template>
             </section>
 
-            <section class="mt-8">
-                <h2 class="text-lg font-bold">Finance Policy History</h2>
+            <section class="mt-6 rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
+                <h2 class="text-lg font-black text-[var(--pbr-ink)]">Finance Policy History</h2>
                 <div class="mt-3 overflow-x-auto border border-slate-200">
                     <table class="min-w-full text-left text-sm">
                         <thead><tr class="border-b border-slate-200 bg-slate-50"><th class="px-3 py-3">Version</th><th class="px-3 py-3">State</th><th class="px-3 py-3">Effective from</th><th class="px-3 py-3">Action</th></tr></thead>
@@ -156,7 +178,7 @@ const pendingCount = computed(() => props.finance.payments.filter((row) => !['co
                 </div>
             </section>
 
-            <details v-if="finance.permissions.manage" class="mt-8 border border-slate-200">
+            <details v-if="finance.permissions.manage" class="mt-6 rounded-[20px] border border-[#d8e4da] bg-white/90 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
                 <summary class="cursor-pointer px-5 py-4 font-semibold">Create Finance Policy Draft / Amendment</summary>
                 <form class="space-y-6 border-t border-slate-200 p-5" @submit.prevent="policy.post('/finance/policy', { preserveScroll: true })">
                     <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -185,9 +207,9 @@ const pendingCount = computed(() => props.finance.payments.filter((row) => !['co
                 </form>
             </details>
 
-            <section class="mt-8 grid gap-6 xl:grid-cols-2">
-                <div>
-                    <h2 class="text-lg font-bold">Reconciliation Register</h2>
+            <section class="mt-6 grid gap-5 xl:grid-cols-2">
+                <div class="rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
+                    <h2 class="text-lg font-black text-[var(--pbr-ink)]">Reconciliation Register</h2>
                     <div class="mt-3 overflow-x-auto border border-slate-200"><table class="min-w-full text-left text-sm"><thead><tr class="border-b bg-slate-50"><th class="px-3 py-3">Period</th><th class="px-3 py-3">Cash</th><th class="px-3 py-3">Status</th><th class="px-3 py-3">Action</th></tr></thead><tbody><tr v-for="row in finance.reconciliations" :key="row.id" class="border-b border-slate-100"><td class="px-3 py-3">{{ row.period_start }} → {{ row.period_end }}</td><td class="px-3 py-3">{{ money(row.closing_cash_minor_units, row.currency) }}</td><td class="px-3 py-3">{{ row.status }}<span v-if="row.unreconciled_items_count" class="block text-xs text-amber-700">{{ row.unreconciled_items_count }} unreconciled</span></td><td class="px-3 py-3"><button v-if="finance.permissions.manage && row.status === 'open'" class="text-xs font-semibold underline" @click="post('/finance/reconciliations/' + row.id + '/complete', { expected_revision: row.revision })">Complete review</button></td></tr><tr v-if="finance.reconciliations.length === 0"><td colspan="4" class="px-3 py-5 text-slate-500">No reconciliation records.</td></tr></tbody></table></div>
                     <details v-if="finance.permissions.manage && finance.current" class="mt-3 border border-slate-200">
                         <summary class="cursor-pointer px-4 py-3 text-sm font-semibold">New reconciliation</summary>
@@ -207,15 +229,15 @@ const pendingCount = computed(() => props.finance.payments.filter((row) => !['co
                         </form>
                     </details>
                 </div>
-                <div>
-                    <h2 class="text-lg font-bold">Exceptions & Compensating Review</h2>
+                <div class="rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
+                    <h2 class="text-lg font-black text-[var(--pbr-ink)]">Exceptions & Compensating Review</h2>
                     <div class="mt-3 space-y-2"><article v-for="row in finance.exceptions" :key="row.id" class="border border-slate-200 p-4"><div class="flex items-start justify-between gap-3"><div><p class="font-semibold">{{ row.exception_type }}</p><p class="mt-1 text-xs text-slate-600">{{ row.reason }}</p></div><span class="border border-slate-300 px-2 py-1 text-xs">{{ row.status }}</span></div><div v-if="finance.permissions.manage && row.status === 'compensating_review'" class="mt-3 flex flex-wrap gap-2"><input v-model="exceptionNotes[row.id]" class="min-h-9 flex-1 border border-slate-300 px-2 text-xs" placeholder="Review note" /><button class="text-xs font-semibold underline" @click="post('/finance/exceptions/' + row.id + '/review', { result: 'cleared', note: exceptionNotes[row.id] ?? '' })">Clear</button><button class="text-xs font-semibold text-red-700 underline" @click="post('/finance/exceptions/' + row.id + '/review', { result: 'blocked', note: exceptionNotes[row.id] ?? '' })">Block</button></div></article><p v-if="finance.exceptions.length === 0" class="text-sm text-slate-500">No Finance exceptions.</p></div>
                     <details v-if="finance.permissions.manage && finance.current" class="mt-3 border border-slate-200"><summary class="cursor-pointer px-4 py-3 text-sm font-semibold">Open exception</summary><form class="grid gap-2 border-t border-slate-200 p-4" @submit.prevent="exceptionForm.post('/finance/exceptions', { preserveScroll: true })"><input v-model="exceptionForm.exception_type" required class="min-h-10 border border-slate-300 px-2" placeholder="Exception type" /><textarea v-model="exceptionForm.reason" required class="border border-slate-300 p-2" placeholder="Reason" /><select v-model="exceptionForm.finance_payment_id" class="min-h-10 border border-slate-300 px-2"><option value="">No payment binding</option><option v-for="p in finance.payments" :key="p.id" :value="p.id">{{ p.payee_reference }} · {{ p.status }}</option></select><button type="submit" class="min-h-10 bg-slate-950 px-4 text-sm font-semibold text-white">Open</button></form></details>
                 </div>
             </section>
 
-            <section class="mt-8">
-                <div><h2 class="text-lg font-bold">Payment Register</h2><p class="mt-1 text-sm text-slate-600">Requester, Governance authorization, Payer and payment evidence remain distinct.</p></div>
+            <section class="mt-6 rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
+                <div><h2 class="text-lg font-black text-[var(--pbr-ink)]">Payment Register</h2><p class="mt-1 text-sm text-slate-600">Requester, Governance authorization, Payer and payment evidence remain distinct.</p></div>
                 <div class="mt-3 overflow-x-auto border border-slate-200"><table class="min-w-full text-left text-sm"><thead><tr class="border-b bg-slate-50"><th class="px-3 py-3">Payment</th><th class="px-3 py-3">Amount</th><th class="px-3 py-3">Status</th><th class="px-3 py-3">Context action</th></tr></thead><tbody>
                     <tr v-for="row in finance.payments" :key="row.id" class="border-b border-slate-100 align-top"><td class="px-3 py-3"><p class="font-semibold">{{ row.payee_reference }}</p><p class="text-xs text-slate-500">{{ row.transaction_type }}<span v-if="row.related_party"> · related party</span></p></td><td class="px-3 py-3">{{ money(row.amount_minor_units, row.currency) }}</td><td class="px-3 py-3"><span class="border border-slate-300 px-2 py-1 text-xs">{{ row.status }}</span></td><td class="min-w-72 px-3 py-3">
                         <div v-if="row.status === 'draft' && finance.permissions.manage" class="flex gap-2"><input v-model="evidenceIds[row.id]" class="min-h-9 flex-1 border border-slate-300 px-2 text-xs" placeholder="Verified request Evidence ID" /><button class="text-xs font-semibold underline" @click="evidenceIds[row.id] && post('/finance/payments/' + row.id + '/evidence', { evidence_id: evidenceIds[row.id], purpose: 'request_support' })">Attach</button><button class="text-xs font-semibold underline" @click="post('/finance/payments/' + row.id + '/verify', { expected_revision: row.revision })">Finance verify</button></div>
@@ -226,6 +248,7 @@ const pendingCount = computed(() => props.finance.payments.filter((row) => !['co
                 </tbody></table></div>
                 <details v-if="finance.permissions.manage && finance.current" class="mt-3 border border-slate-200"><summary class="cursor-pointer px-4 py-3 font-semibold">Create Payment Request</summary><form class="grid gap-3 border-t border-slate-200 p-4 md:grid-cols-2 xl:grid-cols-4" @submit.prevent="payment.post('/finance/payments', { preserveScroll: true })"><select v-model="payment.transaction_type" class="min-h-10 border border-slate-300 px-2"><option v-for="rule in finance.current.payment_rules" :key="rule.id" :value="rule.transaction_type">{{ rule.transaction_type }}</option></select><input v-model.number="payment.amount_minor_units" type="number" min="1" required class="min-h-10 border border-slate-300 px-2" placeholder="Amount minor units" /><select v-model="payment.bank_account_reference_id" class="min-h-10 border border-slate-300 px-2"><option v-for="bank in finance.current.bank_accounts" :key="bank.id" :value="bank.id">{{ bankLabel(bank.id) }}</option></select><input v-model="payment.payee_reference" required class="min-h-10 border border-slate-300 px-2" placeholder="Payee" /><input v-model="payment.description" class="min-h-10 border border-slate-300 px-2 md:col-span-2" placeholder="Purpose / description" /><label class="flex items-center gap-2 text-sm"><input v-model="payment.related_party" type="checkbox" /> Related party</label><button type="submit" class="min-h-10 bg-slate-950 px-4 text-sm font-semibold text-white">Create Draft</button></form></details>
             </section>
+            </div>
         </main>
     </AuthenticatedLayout>
 </template>

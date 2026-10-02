@@ -82,6 +82,10 @@ test(
             }),
         ).toBeVisible();
 
+        await expect(
+            page.getByText('Delivery Control', { exact: true }),
+        ).toBeVisible();
+
         const versionRow = page
             .getByRole('row')
             .filter({

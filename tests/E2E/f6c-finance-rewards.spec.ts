@@ -105,6 +105,10 @@ test(
         ).toBeVisible();
 
         await expect(
+            page.getByText('Controlled money flow', { exact: true }),
+        ).toBeVisible();
+
+        await expect(
             page.getByText(
                 'System permission never creates Finance or Governance authority. Requester, Governance approval and Payer remain separately controlled.',
                 { exact: true },
@@ -147,6 +151,12 @@ test(
         await expect(
             page.getByRole('heading', {
                 name: 'Rewards & Distribution',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            page.getByText('Compensation is not Ownership', {
                 exact: true,
             }),
         ).toBeVisible();

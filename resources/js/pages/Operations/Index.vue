@@ -177,6 +177,19 @@ const roleName = (id: string) =>
 const raciFor = (itemId: string) =>
     props.operations.current?.raci_assignments.filter((row) => row.operations_raci_item_id === itemId) ?? [];
 
+const openActionsCount = computed(
+    () =>
+        props.operations.current?.actions.filter(
+            (row) => !['completed', 'cancelled'].includes(row.status),
+        ).length ?? 0,
+);
+const atRiskKpiCount = computed(
+    () =>
+        props.operations.current?.kpis.filter((row) =>
+            ['at_risk', 'off_track'].includes(row.current_status),
+        ).length ?? 0,
+);
+
 type PostData = NonNullable<Parameters<typeof router.post>[1]>;
 
 const post = (url: string, data: PostData = {}) =>
@@ -189,30 +202,60 @@ const formError = (errors: object, key: string) =>
 <template>
     <Head :title="t('operations.title')" />
     <AuthenticatedLayout>
-        <main class="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
-            <header class="border-b border-slate-200 pb-5">
+        <main class="min-h-screen bg-[radial-gradient(circle_at_88%_0%,rgb(210_167_67_/_8%),transparent_26rem),linear-gradient(180deg,#f7f9f6_0%,#f1f5f1_100%)] px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <div class="mx-auto w-full max-w-[1500px]">
+            <header class="rounded-[24px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_14px_34px_rgb(16_35_26_/_5%)] sm:p-6">
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">{{ operations.business.name }}</p>
-                        <h1 class="mt-2 text-2xl font-bold">{{ t('operations.title') }}</h1>
-                        <p class="mt-2 max-w-4xl text-sm leading-6 text-slate-600">{{ t('operations.description') }}</p>
+                        <h1 class="mt-2 text-2xl font-black tracking-[-0.02em] text-[var(--pbr-ink)]">{{ t('operations.title') }}</h1>
+                        <p class="mt-2 max-w-4xl text-sm leading-6 text-[var(--pbr-muted)]">{{ t('operations.description') }}</p>
                     </div>
-                    <Link href="/governance" class="inline-flex min-h-11 items-center border border-slate-300 px-4 text-sm font-semibold">
+                    <Link href="/governance" class="inline-flex min-h-11 items-center rounded-xl border border-[#d8e4da] bg-white px-4 text-sm font-bold text-slate-800 hover:bg-[#f6f8f6]">
                         Governance
                     </Link>
                 </div>
-                <p class="mt-5 border-l-4 border-slate-800 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-800">
+                <p class="mt-5 rounded-[16px] border border-[#cfe1d3] bg-[#f3f8f4] px-4 py-3 text-sm font-bold text-[var(--pbr-green-dark)]">
                     {{ t('operations.boundary') }}
                 </p>
             </header>
 
-            <section class="mt-6">
-                <div class="flex items-end justify-between">
-                    <div>
-                        <h2 class="text-lg font-bold">{{ t('operations.currentRegister') }}</h2>
-                        <p class="mt-1 text-sm text-slate-600">Effective record only. Drafts and proposals never change current responsibility.</p>
+            <section class="mt-5 rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
+                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--pbr-green)]">
+                    {{ t('operations.deliveryControlTitle') }}
+                </p>
+                <p class="mt-2 max-w-4xl text-sm leading-6 text-[var(--pbr-muted)]">
+                    {{ t('operations.deliveryControlHelp') }}
+                </p>
+                <dl class="mt-4 grid gap-3 sm:grid-cols-3">
+                    <div class="rounded-[16px] border border-[#dde7df] bg-[#f8faf8] p-4">
+                        <dt class="text-xs font-bold text-[var(--pbr-muted)]">{{ t('operations.rolesCount') }}</dt>
+                        <dd class="mt-2 text-2xl font-black text-[var(--pbr-ink)]">{{ roles.length }}</dd>
                     </div>
-                    <span v-if="operations.current" class="text-xs font-semibold text-slate-500">Version {{ operations.current.version_number }}</span>
+                    <div class="rounded-[16px] border border-[#dde7df] bg-[#f8faf8] p-4">
+                        <dt class="text-xs font-bold text-[var(--pbr-muted)]">{{ t('operations.openActions') }}</dt>
+                        <dd class="mt-2 text-2xl font-black text-[var(--pbr-ink)]">{{ openActionsCount }}</dd>
+                    </div>
+                    <div class="rounded-[16px] border border-[#e8d9ab] bg-[#fffaf0] p-4">
+                        <dt class="text-xs font-bold text-[#7d672d]">{{ t('operations.kpisAtRisk') }}</dt>
+                        <dd class="mt-2 text-2xl font-black text-[#66531f]">{{ atRiskKpiCount }}</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section class="mt-6 rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)] sm:p-6">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-black text-[var(--pbr-ink)]">{{ t('operations.currentRegister') }}</h2>
+                        <p class="mt-1 text-sm leading-6 text-[var(--pbr-muted)]">{{ t('operations.currentTruthHelp') }}</p>
+                    </div>
+                    <details
+                        v-if="operations.current"
+                        class="rounded-xl border border-[#d8e4da] bg-[#f8faf8] px-3 py-2 text-xs text-slate-600"
+                    >
+                        <summary class="cursor-pointer font-bold">Advanced Details</summary>
+                        <p class="mt-2">Version {{ operations.current.version_number }}</p>
+                    </details>
                 </div>
 
                 <div v-if="!operations.current" class="mt-4 border border-dashed border-slate-300 p-5 text-sm text-slate-500">
@@ -234,9 +277,9 @@ const formError = (errors: object, key: string) =>
                 </div>
             </section>
 
-            <section v-if="operations.current" class="mt-8 grid gap-6 xl:grid-cols-2">
-                <div>
-                    <h2 class="text-lg font-bold">RACI</h2>
+            <section v-if="operations.current" class="mt-6 grid gap-5 xl:grid-cols-2">
+                <div class="rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
+                    <h2 class="text-lg font-black text-[var(--pbr-ink)]">RACI</h2>
                     <div class="mt-3 space-y-3">
                         <article v-for="item in operations.current.raci_items" :key="item.id" class="border border-slate-200 p-4">
                             <p class="font-semibold">{{ item.activity }}</p>
@@ -250,8 +293,8 @@ const formError = (errors: object, key: string) =>
                         <p v-if="operations.current.raci_items.length === 0" class="text-sm text-slate-500">No RACI items.</p>
                     </div>
                 </div>
-                <div>
-                    <h2 class="text-lg font-bold">KPI Register</h2>
+                <div class="rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
+                    <h2 class="text-lg font-black text-[var(--pbr-ink)]">KPI Register</h2>
                     <div class="mt-3 overflow-x-auto">
                         <table class="min-w-full text-left text-sm">
                             <thead><tr class="border-b border-slate-300 text-slate-600"><th class="px-3 py-3">KPI</th><th class="px-3 py-3">Owner</th><th class="px-3 py-3">Target</th><th class="px-3 py-3">Status</th></tr></thead>
@@ -264,7 +307,7 @@ const formError = (errors: object, key: string) =>
                 </div>
             </section>
 
-            <details v-if="operations.permissions.manage" class="mt-8 border border-slate-200">
+            <details v-if="operations.permissions.manage" class="mt-6 rounded-[20px] border border-[#d8e4da] bg-white/90 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
                 <summary class="cursor-pointer px-5 py-4 font-semibold">Create Operations Register Draft / Amendment</summary>
                 <form class="space-y-6 border-t border-slate-200 p-5" @submit.prevent="draft.post('/operations/register', { preserveScroll: true })">
                     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -336,8 +379,8 @@ const formError = (errors: object, key: string) =>
                 </form>
             </details>
 
-            <section class="mt-8 border-t border-slate-200 pt-6">
-                <h2 class="text-lg font-bold">Operations Version Workflow</h2>
+            <section class="mt-6 rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
+                <h2 class="text-lg font-black text-[var(--pbr-ink)]">Operations Version Workflow</h2>
                 <div class="mt-4 overflow-x-auto">
                     <table class="min-w-full text-left text-sm">
                         <thead><tr class="border-b border-slate-300 text-slate-600"><th class="px-3 py-3">Version</th><th class="px-3 py-3">State</th><th class="px-3 py-3">Controls</th></tr></thead>
@@ -441,8 +484,8 @@ const formError = (errors: object, key: string) =>
                 </div>
             </section>
 
-            <section v-if="operations.current" class="mt-8 border-t border-slate-200 pt-6">
-                <h2 class="text-lg font-bold">Operational Actions</h2>
+            <section v-if="operations.current" class="mt-6 rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
+                <h2 class="text-lg font-black text-[var(--pbr-ink)]">Operational Actions</h2>
                 <form v-if="operations.permissions.manage" class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5" @submit.prevent="actionForm.post('/operations/actions', { preserveScroll: true, onSuccess: () => actionForm.reset('title', 'description', 'due_at') })">
                     <label class="text-sm font-medium text-slate-700">{{ t('operations.actionRole') }}<select v-model="actionForm.operations_role_id" class="mt-1 min-h-11 w-full border border-slate-300 px-3"><option v-for="r in roles" :key="r.id" :value="r.id">{{ r.name }}</option></select></label>
                     <label class="text-sm font-medium text-slate-700">{{ t('operations.actionAssignee') }}<select v-model="actionForm.assigned_membership_id" class="mt-1 min-h-11 w-full border border-slate-300 px-3"><option v-for="m in operations.memberships" :key="m.id" :value="m.id">{{ m.email }}</option></select></label>
@@ -460,6 +503,7 @@ const formError = (errors: object, key: string) =>
                     </table>
                 </div>
             </section>
+            </div>
         </main>
     </AuthenticatedLayout>
 </template>

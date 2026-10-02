@@ -123,23 +123,43 @@ const attentionCount = computed(() => props.rewards.distribution_runs.filter((ro
 <template>
     <Head :title="t('rewards.title')" />
     <AuthenticatedLayout>
-        <main class="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
-            <header class="border-b border-slate-200 pb-5">
+        <main class="min-h-screen bg-[radial-gradient(circle_at_88%_0%,rgb(210_167_67_/_8%),transparent_26rem),linear-gradient(180deg,#f7f9f6_0%,#f1f5f1_100%)] px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <div class="mx-auto w-full max-w-[1500px]">
+            <header class="rounded-[24px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_14px_34px_rgb(16_35_26_/_5%)] sm:p-6">
                 <div class="flex flex-wrap items-start justify-between gap-4">
-                    <div><p class="text-xs font-semibold uppercase tracking-wider text-slate-500">{{ rewards.business.name }}</p><h1 class="mt-2 text-2xl font-bold">{{ t('rewards.title') }}</h1><p class="mt-2 max-w-4xl text-sm leading-6 text-slate-600">{{ t('rewards.description') }}</p></div>
-                    <div class="flex gap-2"><Link href="/finance" class="inline-flex min-h-11 items-center border border-slate-300 px-4 text-sm font-semibold">Finance</Link><Link href="/governance" class="inline-flex min-h-11 items-center border border-slate-300 px-4 text-sm font-semibold">Governance</Link></div>
+                    <div><p class="text-xs font-semibold uppercase tracking-wider text-slate-500">{{ rewards.business.name }}</p><h1 class="mt-2 text-2xl font-black tracking-[-0.02em] text-[var(--pbr-ink)]">{{ t('rewards.title') }}</h1><p class="mt-2 max-w-4xl text-sm leading-6 text-[var(--pbr-muted)]">{{ t('rewards.description') }}</p></div>
+                    <div class="flex flex-wrap gap-2"><Link href="/finance" class="inline-flex min-h-11 items-center rounded-xl border border-[#d8e4da] bg-white px-4 text-sm font-bold text-slate-800">Finance</Link><Link href="/governance" class="inline-flex min-h-11 items-center rounded-xl border border-[#d8e4da] bg-white px-4 text-sm font-bold text-slate-800">Governance</Link></div>
                 </div>
-                <p class="mt-5 border-l-4 border-slate-800 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-800">{{ t('rewards.boundary') }}</p>
+                <p class="mt-5 rounded-[16px] border border-[#cfe1d3] bg-[#f3f8f4] px-4 py-3 text-sm font-bold text-[var(--pbr-green-dark)]">{{ t('rewards.boundary') }}</p>
             </header>
 
-            <section class="mt-6 grid gap-4 md:grid-cols-3">
-                <div class="border border-slate-200 p-4"><p class="text-xs font-semibold uppercase text-slate-500">Needs attention</p><p class="mt-2 text-2xl font-bold">{{ attentionCount }}</p><p class="text-xs text-slate-500">Open rewards + Distribution Runs</p></div>
-                <div class="border border-slate-200 p-4"><p class="text-xs font-semibold uppercase text-slate-500">Effective policy</p><p class="mt-2 font-bold">{{ rewards.current ? rewards.current.header.payment_frequency : 'Not effective' }}</p><p class="text-xs text-slate-500">Role compensation is not ownership.</p></div>
-                <div class="border border-slate-200 p-4"><p class="text-xs font-semibold uppercase text-slate-500">Distribution basis</p><p class="mt-2 font-bold">{{ rewards.current?.distribution_rule?.distribution_basis ?? 'Not configured' }}</p><p class="text-xs text-slate-500">Exact historical Ownership source at record date.</p></div>
+            <section class="mt-5 rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
+                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--pbr-green)]">{{ t('rewards.separationTitle') }}</p>
+                <p class="mt-2 max-w-4xl text-sm leading-6 text-[var(--pbr-muted)]">{{ t('rewards.separationHelp') }}</p>
+                <div class="mt-4 grid gap-3 md:grid-cols-3">
+                    <div class="rounded-[16px] border border-[#dde7df] bg-[#f8faf8] p-4">
+                        <p class="text-sm font-black text-[var(--pbr-ink)]">{{ t('rewards.compensationLane') }}</p>
+                        <p class="mt-1 text-xs leading-5 text-[var(--pbr-muted)]">{{ t('rewards.compensationLaneHelp') }}</p>
+                    </div>
+                    <div class="rounded-[16px] border border-[#dde7df] bg-[#f8faf8] p-4">
+                        <p class="text-sm font-black text-[var(--pbr-ink)]">{{ t('rewards.entitlementLane') }}</p>
+                        <p class="mt-1 text-xs leading-5 text-[var(--pbr-muted)]">{{ t('rewards.entitlementLaneHelp') }}</p>
+                    </div>
+                    <div class="rounded-[16px] border border-[#e8d9ab] bg-[#fffaf0] p-4">
+                        <p class="text-sm font-black text-[#66531f]">{{ t('rewards.distributionLane') }}</p>
+                        <p class="mt-1 text-xs leading-5 text-[#7d672d]">{{ t('rewards.distributionLaneHelp') }}</p>
+                    </div>
+                </div>
             </section>
 
-            <section class="mt-8">
-                <h2 class="text-lg font-bold">Current Effective Reward Policy</h2>
+            <section class="mt-5 grid gap-3 md:grid-cols-3">
+                <div class="rounded-[18px] border border-[#dde7df] bg-white/90 p-4 shadow-[0_8px_22px_rgb(16_35_26_/_3%)]"><p class="text-xs font-bold uppercase text-[var(--pbr-muted)]">Needs attention</p><p class="mt-2 text-2xl font-black">{{ attentionCount }}</p><p class="text-xs text-[var(--pbr-muted)]">Open rewards + Distribution Runs</p></div>
+                <div class="rounded-[18px] border border-[#dde7df] bg-white/90 p-4 shadow-[0_8px_22px_rgb(16_35_26_/_3%)]"><p class="text-xs font-bold uppercase text-[var(--pbr-muted)]">Effective policy</p><p class="mt-2 font-black">{{ rewards.current ? rewards.current.header.payment_frequency : 'Not effective' }}</p><p class="text-xs text-[var(--pbr-muted)]">Role compensation is not ownership.</p></div>
+                <div class="rounded-[18px] border border-[#e8d9ab] bg-[#fffaf0] p-4 shadow-[0_8px_22px_rgb(16_35_26_/_3%)]"><p class="text-xs font-bold uppercase text-[#7d672d]">Distribution basis</p><p class="mt-2 font-black text-[#66531f]">{{ rewards.current?.distribution_rule?.distribution_basis ?? 'Not configured' }}</p><p class="text-xs text-[#7d672d]">Exact historical Ownership source at record date.</p></div>
+            </section>
+
+            <section class="mt-6 rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)] sm:p-6">
+                <h2 class="text-lg font-black text-[var(--pbr-ink)]">Current Effective Reward Policy</h2>
                 <p class="mt-1 text-sm text-slate-600">Salary/service fee, reimbursement, bonus, loan repayment and profit distribution remain separate records and rules.</p>
                 <div v-if="!rewards.current" class="mt-4 border border-dashed border-slate-300 p-5 text-sm text-slate-500">No Effective Reward Policy yet. Effective Finance + Operations must exist first.</div>
                 <template v-else>
@@ -154,12 +174,12 @@ const attentionCount = computed(() => props.rewards.distribution_runs.filter((ro
                 </template>
             </section>
 
-            <section class="mt-8">
-                <h2 class="text-lg font-bold">Reward Policy History</h2>
+            <section class="mt-6 rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
+                <h2 class="text-lg font-black text-[var(--pbr-ink)]">Reward Policy History</h2>
                 <div class="mt-3 overflow-x-auto border border-slate-200"><table class="min-w-full text-left text-sm"><thead><tr class="border-b bg-slate-50"><th class="px-3 py-3">Version</th><th class="px-3 py-3">State</th><th class="px-3 py-3">Effective</th><th class="px-3 py-3">Action</th></tr></thead><tbody><tr v-for="version in rewards.versions" :key="version.id" class="border-b border-slate-100"><td class="px-3 py-3 font-semibold">v{{ version.version_number }}</td><td class="px-3 py-3"><span class="border border-slate-300 px-2 py-1 text-xs">{{ version.state }}</span></td><td class="px-3 py-3">{{ version.effective_from ?? '—' }}</td><td class="px-3 py-3"><div v-if="rewards.permissions.manage" class="flex gap-2"><button v-if="version.state === 'draft'" class="text-xs font-semibold underline" @click="post('/rewards/policy/' + version.id + '/submit', { expected_revision: version.revision })">Submit</button><button v-if="version.state === 'ready_for_review'" class="text-xs font-semibold underline" @click="post('/rewards/policy/' + version.id + '/content-review', { target: 'under_review' })">Start review</button><button v-if="version.state === 'under_review'" class="text-xs font-semibold underline" @click="post('/rewards/policy/' + version.id + '/content-review', { target: 'approved' })">Approve content</button></div></td></tr></tbody></table></div>
             </section>
 
-            <details v-if="rewards.permissions.manage" class="mt-8 border border-slate-200">
+            <details v-if="rewards.permissions.manage" class="mt-6 rounded-[20px] border border-[#d8e4da] bg-white/90 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
                 <summary class="cursor-pointer px-5 py-4 font-semibold">Create Reward Policy Draft / Amendment</summary>
                 <form class="space-y-6 border-t border-slate-200 p-5" @submit.prevent="policy.post('/rewards/policy', { preserveScroll: true })">
                     <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -209,9 +229,9 @@ const attentionCount = computed(() => props.rewards.distribution_runs.filter((ro
                 </form>
             </details>
 
-            <section class="mt-8 grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-                <div>
-                    <h2 class="text-lg font-bold">Distribution Run Register</h2>
+            <section class="mt-6 grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+                <div class="rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
+                    <h2 class="text-lg font-black text-[var(--pbr-ink)]">Distribution Run Register</h2>
                     <p class="mt-1 text-sm text-slate-600">Calculated does not mean payable. Completion follows Finance verification, Governance approval, scheduled payments and verified payment evidence.</p>
                     <div class="mt-3 space-y-3">
                         <article v-for="run in rewards.distribution_runs" :key="run.id" class="border border-slate-200 p-4">
@@ -240,8 +260,8 @@ const attentionCount = computed(() => props.rewards.distribution_runs.filter((ro
                     </details>
                 </div>
 
-                <aside>
-                    <h2 class="text-lg font-bold">Distribution Scenario</h2>
+                <aside class="rounded-[22px] border border-[#e8d9ab] bg-[#fffaf0] p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
+                    <h2 class="text-lg font-black text-[#66531f]">Distribution Scenario</h2>
                     <p class="mt-1 text-sm text-slate-600">Pure calculation only. This never changes live Finance or Ownership truth.</p>
                     <div class="mt-3 grid gap-3 border border-dashed border-slate-300 p-4">
                         <label class="text-sm font-medium text-slate-700">
@@ -274,11 +294,12 @@ const attentionCount = computed(() => props.rewards.distribution_runs.filter((ro
                 </aside>
             </section>
 
-            <section class="mt-8">
-                <h2 class="text-lg font-bold">Reward Payments</h2>
+            <section class="mt-6 rounded-[22px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
+                <h2 class="text-lg font-black text-[var(--pbr-ink)]">Reward Payments</h2>
                 <div class="mt-3 overflow-x-auto border border-slate-200"><table class="min-w-full text-left text-sm"><thead><tr class="border-b bg-slate-50"><th class="px-3 py-3">Type</th><th class="px-3 py-3">Payee</th><th class="px-3 py-3">Amount</th><th class="px-3 py-3">Status</th><th class="px-3 py-3">Source date</th></tr></thead><tbody><tr v-for="row in rewards.reward_payments" :key="row.id" class="border-b border-slate-100"><td class="px-3 py-3 font-semibold">{{ row.reward_payment_type }}</td><td class="px-3 py-3">{{ row.payee_reference }}</td><td class="px-3 py-3">{{ money(row.amount_minor_units, row.currency) }}</td><td class="px-3 py-3">{{ row.status }}</td><td class="px-3 py-3">{{ row.entitlement_source_date ?? '—' }}</td></tr><tr v-if="rewards.reward_payments.length === 0"><td colspan="5" class="px-3 py-5 text-slate-500">No Reward Payments.</td></tr></tbody></table></div>
                 <details v-if="rewards.permissions.manage && rewards.current" class="mt-3 border border-slate-200"><summary class="cursor-pointer px-4 py-3 font-semibold">Create Reward Payment Request</summary><form class="grid gap-3 border-t border-slate-200 p-4 md:grid-cols-2 xl:grid-cols-4" @submit.prevent="rewardPayment.post('/rewards/payments', { preserveScroll: true })"><select v-model="rewardPayment.type" class="min-h-10 border border-slate-300 px-2" @change="rewardPayment.rule_id = ''"><option value="salary_service_fee">Salary / service fee</option><option value="reimbursement">Reimbursement</option><option value="bonus">Bonus</option><option value="loan_repayment">Loan repayment</option></select><select v-model="rewardPayment.rule_id" required class="min-h-10 border border-slate-300 px-2"><option value="">Choose rule</option><option v-for="rule in rewardRules" :key="rule.id" :value="rule.id">{{ rule.label }}</option></select><select v-model="rewardPayment.bank_account_reference_id" required class="min-h-10 border border-slate-300 px-2"><option v-for="bank in rewards.bank_accounts" :key="bank.id" :value="bank.id">{{ bank.bank_name }} · {{ bank.account_reference }}</option></select><select v-if="rewardPayment.type === 'reimbursement'" v-model="rewardPayment.partner_id" class="min-h-10 border border-slate-300 px-2"><option v-for="partner in rewards.partners" :key="partner.id" :value="partner.id">{{ partner.display_name }}</option></select><input v-if="rewardPayment.type === 'reimbursement' || rewardPayment.type === 'bonus'" v-model.number="rewardPayment.amount_minor_units" type="number" min="1" class="min-h-10 border border-slate-300 px-2" placeholder="Amount minor units" /><OptionalTemporalInput v-if="rewardPayment.type === 'reimbursement'" v-model="rewardPayment.expense_date" type="date" class="min-h-10 border border-slate-300 px-2" /><button type="submit" class="min-h-10 bg-slate-950 px-4 text-sm font-semibold text-white">Create controlled payment</button></form></details>
             </section>
+            </div>
         </main>
     </AuthenticatedLayout>
 </template>
