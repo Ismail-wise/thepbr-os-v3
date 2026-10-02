@@ -76,6 +76,20 @@ test(
 
         await expect(page).toHaveURL(/\/governance$/);
 
+        await expect(
+            page.getByRole('heading', {
+                name: 'Decision Center',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            page.getByRole('link', {
+                name: 'Meetings',
+                exact: true,
+            }),
+        ).toBeVisible();
+
         const governanceRulesLink = page.getByRole('link', {
             name: 'Rules & Authority',
             exact: true,
@@ -94,6 +108,28 @@ test(
                 name: 'Governance Rules & Authority',
                 exact: true,
             }),
+        ).toBeVisible();
+
+        await expect(
+            page.getByText('Current Authority', { exact: true }).first(),
+        ).toBeVisible();
+
+        await page
+            .getByRole('link', {
+                name: 'Governance Meetings',
+                exact: true,
+            })
+            .click();
+
+        await expect(page).toHaveURL(/\/governance\/meetings$/);
+        await expect(
+            page.getByRole('heading', {
+                name: 'Governance Meetings',
+                exact: true,
+            }),
+        ).toBeVisible();
+        await expect(
+            page.getByText('Governed Meeting Flow', { exact: true }),
         ).toBeVisible();
 
         await navigation

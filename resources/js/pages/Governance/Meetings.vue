@@ -90,8 +90,9 @@ const formError = (errors: object, key: string) =>
 <template>
     <Head :title="t('governance.meetingsTitle')" />
     <AuthenticatedLayout>
-        <main class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-            <header class="border-b border-slate-200 pb-5">
+        <main class="min-h-screen bg-[radial-gradient(circle_at_88%_0%,rgb(210_167_67_/_8%),transparent_26rem),linear-gradient(180deg,#f7f9f6_0%,#f1f5f1_100%)] px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <div class="mx-auto w-full max-w-[1500px]">
+            <header class="rounded-[24px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_14px_34px_rgb(16_35_26_/_5%)] sm:p-6">
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">{{ meetingWorkspace.business.name }}</p>
@@ -99,19 +100,50 @@ const formError = (errors: object, key: string) =>
                         <p class="mt-2 max-w-4xl text-sm leading-6 text-slate-600">{{ t('governance.meetingsDescription') }}</p>
                     </div>
                     <div class="flex gap-2">
-                        <Link href="/governance/rules" class="inline-flex min-h-11 items-center border border-slate-300 px-4 text-sm font-semibold">Rules & Authority</Link>
-                        <Link href="/governance" class="inline-flex min-h-11 items-center bg-slate-950 px-4 text-sm font-semibold text-white">Decision Register</Link>
+                        <Link href="/governance/rules" class="inline-flex min-h-11 items-center rounded-xl border border-[#d8e4da] bg-white px-4 text-sm font-bold text-slate-800">Rules & Authority</Link>
+                        <Link href="/governance" class="inline-flex min-h-11 items-center rounded-xl bg-[var(--pbr-green-dark)] px-4 text-sm font-bold text-white">{{ t('governance.decisionCenterNav') }}</Link>
                     </div>
                 </div>
             </header>
 
-            <section class="mt-5 border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                Authority source:
-                <strong>{{ meetingWorkspace.current_source?.kind ?? 'none' }}</strong>.
-                A meeting-required Decision may open only from a Held meeting using this same authority source and meeting quorum.
+            <section class="mt-5 rounded-[20px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]">
+                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--pbr-green)]">
+                    {{ t('governance.meetingFlow') }}
+                </p>
+                <p class="mt-2 max-w-4xl text-sm leading-6 text-[var(--pbr-muted)]">
+                    {{ t('governance.meetingFlowHelp') }}
+                </p>
+                <div class="mt-4 grid gap-2 sm:grid-cols-5">
+                    <div
+                        v-for="(label, index) in [
+                            t('governance.scheduleMeeting'),
+                            t('governance.attendance'),
+                            t('governance.quorum'),
+                            t('governance.minutes'),
+                            t('governance.decision'),
+                        ]"
+                        :key="label"
+                        class="rounded-[16px] border border-[#dde7df] bg-[#f8faf8] px-3 py-3"
+                    >
+                        <span class="text-[10px] font-black text-[#829087]">{{ index + 1 }}</span>
+                        <p class="mt-1 text-sm font-black text-[var(--pbr-ink)]">{{ label }}</p>
+                    </div>
+                </div>
             </section>
 
-            <details v-if="meetingWorkspace.permissions.manage" class="mt-6 border border-slate-200" open>
+            <section class="mt-4 rounded-[18px] border border-[#cfe1d3] bg-[#f3f8f4] p-4 text-sm text-slate-700">
+                <p class="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--pbr-green)]">
+                    {{ t('governance.currentAuthority') }}
+                </p>
+                <p class="mt-1 font-black text-[var(--pbr-ink)]">
+                    {{ meetingWorkspace.current_source?.kind ?? 'none' }}
+                </p>
+                <p class="mt-2 max-w-4xl leading-6 text-[var(--pbr-muted)]">
+                    A meeting-required Decision may open only from a Held meeting using this same authority source and meeting quorum.
+                </p>
+            </section>
+
+            <details v-if="meetingWorkspace.permissions.manage" class="mt-6 rounded-[20px] border border-[#d8e4da] bg-white/90 shadow-[0_10px_28px_rgb(16_35_26_/_4%)]" open>
                 <summary class="cursor-pointer px-5 py-4 font-semibold">Schedule Meeting</summary>
                 <form class="grid gap-4 border-t border-slate-200 p-5 md:grid-cols-2" @submit.prevent="schedule.post('/governance/meetings', { preserveScroll: true })">
                     <label class="text-sm font-medium">Title
@@ -154,7 +186,7 @@ const formError = (errors: object, key: string) =>
             </details>
 
             <section class="mt-8">
-                <h2 class="text-lg font-bold">Scheduled Meetings</h2>
+                <h2 class="text-lg font-black text-[var(--pbr-ink)]">{{ t('governance.scheduledMeetings') }}</h2>
                 <div class="mt-4 space-y-4">
                     <article v-for="meeting in scheduled" :key="meeting.id" class="border border-slate-200 p-5">
                         <div class="flex flex-wrap justify-between gap-3">
@@ -185,12 +217,12 @@ const formError = (errors: object, key: string) =>
                             </button>
                         </div>
                     </article>
-                    <p v-if="scheduled.length === 0" class="border border-dashed border-slate-300 p-5 text-sm text-slate-500">No scheduled meetings.</p>
+                    <p v-if="scheduled.length === 0" class="rounded-[18px] border border-dashed border-[#cfd9d1] bg-white/70 p-5 text-sm text-[var(--pbr-muted)]">{{ t('governance.noScheduledMeetings') }}</p>
                 </div>
             </section>
 
-            <section class="mt-8 border-t border-slate-200 pt-6">
-                <h2 class="text-lg font-bold">Meeting History</h2>
+            <section class="mt-8 border-t border-[#d8e4da] pt-6">
+                <h2 class="text-lg font-black text-[var(--pbr-ink)]">{{ t('governance.meetingHistory') }}</h2>
                 <div class="mt-4 overflow-x-auto">
                     <table class="min-w-full border-collapse text-left text-sm">
                         <thead><tr class="border-b border-slate-300 text-slate-600"><th class="px-3 py-3">Meeting</th><th class="px-3 py-3">State</th><th class="px-3 py-3">Quorum</th><th class="px-3 py-3">Minutes</th></tr></thead>
@@ -206,6 +238,7 @@ const formError = (errors: object, key: string) =>
                     </table>
                 </div>
             </section>
+            </div>
         </main>
     </AuthenticatedLayout>
 </template>

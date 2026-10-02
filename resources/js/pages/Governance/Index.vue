@@ -252,6 +252,7 @@ const copy = {
         resolve: 'Resolve decision',
         signatureRequired: 'Signature required',
         documentVersion: 'Document Version ID',
+        document: 'Document',
         createSignature: 'Create signature request',
         send: 'Send',
         sign: 'Sign exact version',
@@ -287,6 +288,20 @@ const copy = {
         decisionAmount: 'Decision amount (optional)',
         createRecordReview: 'Create post-effect review',
         noRows: 'No authorized records are visible.',
+        meetings: 'Meetings',
+        decisionCenter: 'Decision Center',
+        decisionCenterHelp: 'See what needs a decision, why you are involved and what action is available now. Technical identifiers stay under Advanced Details.',
+        whyAsked: 'Why am I being asked?',
+        whyApprove: 'You are an eligible approver captured for this decision.',
+        whyVote: 'You are an eligible voter captured for this decision.',
+        whySign: 'You are an eligible signer captured for this decision.',
+        whyRecuse: 'You may disclose a conflict and recuse from this decision.',
+        whyAdmin: 'You can administer this decision workflow.',
+        whyObserver: 'You can view this decision, but no participant action is currently assigned to you.',
+        advancedDetails: 'Advanced Details',
+        technicalTrail: 'Technical / audit trail',
+        secondaryWork: 'Follow-up work',
+        authorityMatrix: 'Authority Matrix',
     },
     my: {
         title: 'အုပ်ချုပ်ဆုံးဖြတ်မှု Command Center',
@@ -320,6 +335,7 @@ const copy = {
         resolve: 'ဆုံးဖြတ်ချက် ပိတ်မည်',
         signatureRequired: 'လက်မှတ်လိုအပ်သည်',
         documentVersion: 'Document Version ID',
+        document: 'Document',
         createSignature: 'လက်မှတ်တောင်းခံမှု ဖန်တီးမည်',
         send: 'ပို့မည်',
         sign: 'ဤ Version ကို လက်မှတ်ထိုးမည်',
@@ -355,6 +371,20 @@ const copy = {
         decisionAmount: 'ဆုံးဖြတ်မည့်ပမာဏ (ရှိလျှင်)',
         createRecordReview: 'Effective record ကို ပြန်လည်သုံးသပ်မည်',
         noRows: 'သင်ကြည့်ရှုခွင့်ရှိသော မှတ်တမ်း မရှိသေးပါ။',
+        meetings: 'အစည်းအဝေးများ',
+        decisionCenter: 'ဆုံးဖြတ်ချက် Center',
+        decisionCenterHelp: 'ဘာကို ဆုံးဖြတ်ရမလဲ၊ ဘာကြောင့် သင်ပါဝင်နေရတာလဲ၊ အခု ဘာလုပ်နိုင်လဲကို ကြည့်ပါ။ Technical identifier များကို Advanced Details ထဲမှာပဲ ထားပါသည်။',
+        whyAsked: 'ဘာကြောင့် ကျွန်ုပ်ကို လုပ်ဆောင်ခိုင်းထားတာလဲ?',
+        whyApprove: 'ဤဆုံးဖြတ်ချက်အတွက် သင်သည် captured eligible approver ဖြစ်သည်။',
+        whyVote: 'ဤဆုံးဖြတ်ချက်အတွက် သင်သည် captured eligible voter ဖြစ်သည်။',
+        whySign: 'ဤဆုံးဖြတ်ချက်အတွက် သင်သည် captured eligible signer ဖြစ်သည်။',
+        whyRecuse: 'Conflict ရှိပါက ဖော်ပြပြီး ဤဆုံးဖြတ်ချက်မှ recuse လုပ်နိုင်သည်။',
+        whyAdmin: 'ဤဆုံးဖြတ်ချက် workflow ကို စီမံခန့်ခွဲနိုင်သည်။',
+        whyObserver: 'ဤဆုံးဖြတ်ချက်ကို ကြည့်နိုင်သော်လည်း လက်ရှိ participant action တာဝန်မရှိပါ။',
+        advancedDetails: 'Advanced Details',
+        technicalTrail: 'Technical / audit trail',
+        secondaryWork: 'နောက်ဆက်တွဲ လုပ်ငန်းများ',
+        authorityMatrix: 'Authority Matrix',
     },
     mixed: {
         title: 'Governance Command Center · အုပ်ချုပ်ဆုံးဖြတ်မှု',
@@ -388,6 +418,7 @@ const copy = {
         resolve: 'Resolve decision',
         signatureRequired: 'Signature required · လက်မှတ်လိုအပ်',
         documentVersion: 'Document Version ID',
+        document: 'Document',
         createSignature: 'Create signature request',
         send: 'Send · ပို့',
         sign: 'Sign exact version · လက်မှတ်ထိုး',
@@ -423,6 +454,20 @@ const copy = {
         decisionAmount: 'Decision amount · ပမာဏ',
         createRecordReview: 'Create post-effect review',
         noRows: 'No authorized records are visible.',
+        meetings: 'Meetings · အစည်းအဝေးများ',
+        decisionCenter: 'Decision Center · ဆုံးဖြတ်ချက်',
+        decisionCenterHelp: 'ဘာကို decide လုပ်ရမလဲ၊ why you are involved နဲ့ available action ကို အရင်ကြည့်ပါ။ Technical identifiers ကို Advanced Details ထဲမှာပဲထားပါတယ်။',
+        whyAsked: 'Why am I being asked? · ဘာကြောင့်လဲ?',
+        whyApprove: 'You are a captured eligible approver for this decision.',
+        whyVote: 'You are a captured eligible voter for this decision.',
+        whySign: 'You are a captured eligible signer for this decision.',
+        whyRecuse: 'Conflict ရှိရင် disclose လုပ်ပြီး recuse လုပ်နိုင်တယ်။',
+        whyAdmin: 'You can administer this decision workflow.',
+        whyObserver: 'View access ရှိပေမယ့် current participant action မရှိပါ။',
+        advancedDetails: 'Advanced Details',
+        technicalTrail: 'Technical / audit trail',
+        secondaryWork: 'Follow-up work · နောက်ဆက်တွဲ',
+        authorityMatrix: 'Authority Matrix',
     },
 } as const;
 
@@ -456,6 +501,28 @@ const authorityLabel = computed(() => {
 
     return c.value.noAuthority;
 });
+
+const decisionReasons = (decision: DecisionRow): string[] => {
+    const reasons: string[] = [];
+
+    if (decision.myParticipant?.capacity) {
+        reasons.push(decision.myParticipant.capacity);
+    }
+    if (decision.actions.canApprove) reasons.push(c.value.whyApprove);
+    if (decision.actions.canVote) reasons.push(c.value.whyVote);
+    if (decision.myParticipant?.canSign) reasons.push(c.value.whySign);
+    if (decision.actions.canRecuse) reasons.push(c.value.whyRecuse);
+    if (decision.actions.canAdminister) reasons.push(c.value.whyAdmin);
+
+    return reasons.length > 0 ? reasons : [c.value.whyObserver];
+};
+
+const signatureReason = (row: SignatureRow): string => {
+    if (row.canSign) return c.value.whySign;
+    if (row.canSend || row.canComplete) return c.value.whyAdmin;
+
+    return c.value.whyObserver;
+};
 
 const selectedRule = (proposalId: string) => {
     const type =
@@ -520,8 +587,9 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
 
 <template>
     <AuthenticatedLayout>
-        <main class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-            <header class="border-b border-slate-200 pb-6">
+        <main class="min-h-screen bg-[radial-gradient(circle_at_88%_0%,rgb(210_167_67_/_8%),transparent_26rem),linear-gradient(180deg,#f7f9f6_0%,#f1f5f1_100%)] px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <div class="mx-auto w-full max-w-[1500px]">
+            <header class="rounded-[24px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_14px_34px_rgb(16_35_26_/_5%)] sm:p-6">
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -538,9 +606,15 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                     <div class="flex flex-wrap items-center gap-2">
                         <Link
                             href="/governance/rules"
-                            class="inline-flex min-h-8 items-center border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+                            class="inline-flex min-h-10 items-center rounded-xl border border-[#d8e4da] bg-white px-3 text-xs font-bold text-slate-800 hover:bg-[#f6f8f6]"
                         >
                             {{ c.rulesAuthority }}
+                        </Link>
+                        <Link
+                            href="/governance/meetings"
+                            class="inline-flex min-h-10 items-center rounded-xl border border-[#d8e4da] bg-white px-3 text-xs font-bold text-slate-800 hover:bg-[#f6f8f6]"
+                        >
+                            {{ c.meetings }}
                         </Link>
 
                         <span
@@ -682,20 +756,23 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                             >
                                 <td class="min-w-72 px-3 py-4">
                                     <p class="font-semibold text-slate-950">
-                                        v{{ row.versionNumber }}
-                                        · revision {{ row.proposalRevision }}
-                                    </p>
-                                    <code
-                                        class="mt-1 block break-all text-[10px] text-slate-500"
-                                    >
-                                        {{ row.id }}
-                                    </code>
-                                    <p class="mt-2 break-all font-mono text-[10px] text-slate-500">
-                                        SHA-256 {{ row.proposalContentHash }}
+                                        Frozen proposal
                                     </p>
                                     <p class="mt-1 text-xs text-slate-500">
                                         {{ formatDate(row.frozenAt) }}
                                     </p>
+                                    <details class="mt-3 text-xs text-slate-600">
+                                        <summary class="cursor-pointer font-semibold text-slate-700">
+                                            {{ c.advancedDetails }}
+                                        </summary>
+                                        <div class="mt-2 space-y-1 border-l-2 border-slate-200 pl-3">
+                                            <p>Proposal version {{ row.versionNumber }} · revision {{ row.proposalRevision }}</p>
+                                            <code class="block break-all text-[10px]">{{ row.id }}</code>
+                                            <p class="break-all font-mono text-[10px]">
+                                                SHA-256 {{ row.proposalContentHash }}
+                                            </p>
+                                        </div>
+                                    </details>
                                 </td>
 
                                 <td class="min-w-48 px-3 py-4">
@@ -719,14 +796,8 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                         :key="recordVersion.id"
                                         class="mb-2"
                                     >
-                                        <code
-                                            class="block break-all text-[10px] text-slate-500"
-                                        >
-                                            {{ recordVersion.id }}
-                                        </code>
-                                        <span class="text-xs font-semibold text-slate-700">
-                                            v{{ recordVersion.versionNumber }}
-                                            · {{ recordVersion.state ?? '—' }}
+                                        <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                                            {{ recordVersion.state ?? '—' }}
                                         </span>
                                     </div>
 
@@ -900,16 +971,24 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
             </section>
 
             <section class="border-b border-slate-200 py-6">
-                <div class="flex items-center justify-between gap-4">
-                    <h2 class="text-lg font-semibold text-slate-950">
-                        {{ c.decisions }}
-                    </h2>
-                    <span class="text-xs font-semibold text-slate-500">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--pbr-green)]">
+                            {{ c.decisions }}
+                        </p>
+                        <h2 class="mt-1 text-xl font-black tracking-[-0.02em] text-[var(--pbr-ink)]">
+                            {{ c.decisionCenter }}
+                        </h2>
+                        <p class="mt-1 max-w-4xl text-sm leading-6 text-[var(--pbr-muted)]">
+                            {{ c.decisionCenterHelp }}
+                        </p>
+                    </div>
+                    <span class="rounded-full bg-[#eef4ef] px-3 py-1 text-xs font-black text-[#476052]">
                         {{ governance.decisions.length }}
                     </span>
                 </div>
 
-                <div class="mt-4 overflow-x-auto">
+                <div class="mt-4 overflow-x-auto rounded-[18px] border border-[#d8e4da] bg-white">
                     <table class="min-w-full border-collapse text-left text-sm">
                         <thead>
                             <tr class="border-b border-slate-300 text-slate-600">
@@ -930,9 +1009,14 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                     <p class="font-semibold text-slate-950">
                                         {{ decision.type }}
                                     </p>
-                                    <p class="mt-1 break-all font-mono text-[11px] text-slate-500">
-                                        {{ decision.id }}
-                                    </p>
+                                    <details class="mt-2 text-xs text-slate-600">
+                                        <summary class="cursor-pointer font-semibold text-slate-700">
+                                            {{ c.advancedDetails }}
+                                        </summary>
+                                        <code class="mt-2 block break-all font-mono text-[10px] text-slate-500">
+                                            {{ decision.id }}
+                                        </code>
+                                    </details>
                                     <p
                                         v-if="decision.reservedMatter"
                                         class="mt-2 text-xs font-semibold text-slate-700"
@@ -965,7 +1049,7 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                         }}
                                     </p>
                                 </td>
-                                <td class="min-w-44 px-3 py-4 text-slate-700">
+                                <td class="min-w-56 px-3 py-4 text-slate-700">
                                     <template v-if="decision.myParticipant">
                                         <p class="font-medium">
                                             {{ decision.myParticipant.capacity }}
@@ -975,6 +1059,20 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                         </p>
                                     </template>
                                     <span v-else>—</span>
+
+                                    <details class="mt-3 rounded-lg bg-[#f5f8f5] px-3 py-2 text-xs">
+                                        <summary class="cursor-pointer font-black text-[var(--pbr-green-dark)]">
+                                            {{ c.whyAsked }}
+                                        </summary>
+                                        <ul class="mt-2 space-y-1.5 leading-5 text-slate-600">
+                                            <li
+                                                v-for="reason in decisionReasons(decision)"
+                                                :key="reason"
+                                            >
+                                                {{ reason }}
+                                            </li>
+                                        </ul>
+                                    </details>
                                 </td>
                                 <td class="min-w-80 px-3 py-4">
                                     <div class="flex flex-wrap gap-2">
@@ -1087,6 +1185,26 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                             {{ c.recuse }}
                                         </button>
                                     </div>
+
+                                    <details
+                                        v-if="
+                                            (
+                                                decision.signatureRequired
+                                                && decision.status === 'decided'
+                                                && decision.outcome === 'approved'
+                                                && decision.actions.canAdminister
+                                            )
+                                            || (
+                                                decision.actions.canAdminister
+                                                && decision.status === 'decided'
+                                                && decision.outcome === 'approved'
+                                            )
+                                        "
+                                        class="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3"
+                                    >
+                                        <summary class="cursor-pointer text-xs font-black text-slate-700">
+                                            {{ c.advancedDetails }}
+                                        </summary>
 
                                     <div
                                         v-if="
@@ -1269,6 +1387,7 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                             </button>
                                         </div>
                                     </div>
+                                    </details>
                                 </td>
                             </tr>
                             <tr v-if="governance.decisions.length === 0">
@@ -1291,7 +1410,7 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                         <thead>
                             <tr class="border-b border-slate-300 text-slate-600">
                                 <th class="px-3 py-3 font-semibold">{{ c.state }}</th>
-                                <th class="px-3 py-3 font-semibold">{{ c.documentVersion }}</th>
+                                <th class="px-3 py-3 font-semibold">{{ c.document }}</th>
                                 <th class="px-3 py-3 font-semibold">{{ c.progress }}</th>
                                 <th class="px-3 py-3 font-semibold">{{ c.controls }}</th>
                             </tr>
@@ -1306,9 +1425,27 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                     {{ row.status }}
                                 </td>
                                 <td class="max-w-md px-3 py-4">
-                                    <code class="break-all text-xs">{{ row.documentVersionId }}</code>
-                                    <p class="mt-1 break-all font-mono text-[10px] text-slate-500">
-                                        {{ row.documentHash }}
+                                    <p class="font-medium text-slate-800">
+                                        Exact document locked for signature
+                                    </p>
+                                    <p class="mt-1 text-xs text-slate-500">
+                                        {{ formatDate(row.requestedAt) }}
+                                    </p>
+                                    <details class="mt-2 text-xs text-slate-600">
+                                        <summary class="cursor-pointer font-semibold text-slate-700">
+                                            {{ c.advancedDetails }}
+                                        </summary>
+                                        <div class="mt-2 space-y-1 border-l-2 border-slate-200 pl-3">
+                                            <code class="block break-all text-[10px]">{{ row.documentVersionId }}</code>
+                                            <p class="break-all font-mono text-[10px]">{{ row.documentHash }}</p>
+                                        </div>
+                                    </details>
+                                    <p
+                                        v-if="row.canSign || row.canSend || row.canComplete"
+                                        class="mt-3 rounded-lg bg-[#f5f8f5] px-3 py-2 text-xs leading-5 text-slate-600"
+                                    >
+                                        <strong class="text-[var(--pbr-green-dark)]">{{ c.whyAsked }}</strong>
+                                        {{ signatureReason(row) }}
                                     </p>
                                 </td>
                                 <td class="px-3 py-4 text-slate-700">
@@ -1496,9 +1633,14 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                                 >
                                     <td class="px-3 py-4">
                                         <p class="font-semibold">{{ row.status }}</p>
-                                        <code class="mt-1 block break-all text-[10px] text-slate-500">
-                                            {{ row.formalRecordVersionId }}
-                                        </code>
+                                        <details class="mt-2 text-xs text-slate-600">
+                                            <summary class="cursor-pointer font-semibold text-slate-700">
+                                                {{ c.advancedDetails }}
+                                            </summary>
+                                            <code class="mt-2 block break-all text-[10px] text-slate-500">
+                                                {{ row.formalRecordVersionId }}
+                                            </code>
+                                        </details>
                                     </td>
                                     <td class="px-3 py-4">
                                         <div v-if="row.canComplete" class="flex flex-wrap gap-2">
@@ -1658,6 +1800,7 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
                     </p>
                 </div>
             </section>
+            </div>
         </main>
     </AuthenticatedLayout>
 </template>
