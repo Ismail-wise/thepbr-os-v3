@@ -267,12 +267,11 @@ final class GetBusinessControlCenter
         }
 
         collect($requirements)
-            ->whereIn('status', ['blocked', 'review', 'setup_needed'])
+            ->whereIn('status', ['blocked', 'review'])
             ->sortBy(
                 static fn (array $row): int => match ($row['status']) {
                     'blocked' => 0,
-                    'review' => 1,
-                    default => 2,
+                    default => 1,
                 },
             )
             ->each(function (array $row) use ($items): void {
@@ -284,11 +283,25 @@ final class GetBusinessControlCenter
                 ]);
             });
 
+        if ($items->isEmpty()) {
+            $setupItem = collect($requirements)
+                ->firstWhere('status', 'setup_needed');
+
+            if (is_array($setupItem)) {
+                $items->push([
+                    'key' => 'health.'.$setupItem['area'],
+                    'count' => 1,
+                    'route' => $setupItem['route'] ?? '/health',
+                    'state' => 'setup_needed',
+                ]);
+            }
+        }
+
         return $items
             ->unique(
                 static fn (array $item): string => $item['key'].'|'.$item['route'],
             )
-            ->take(4)
+            ->take(3)
             ->values()
             ->all();
     }

@@ -78,6 +78,12 @@ final class BusinessControlCenterTest extends TestCase
         $payload = $response->viewData('page')['props']['controlCenter'];
         $encoded = json_encode($payload, JSON_THROW_ON_ERROR);
 
+        self::assertLessThanOrEqual(
+            3,
+            count($payload['nextActions']),
+            'Next Best Actions must stay focused on at most three items.',
+        );
+
         foreach ([
             'sourceId',
             'source_id',
@@ -224,6 +230,39 @@ final class BusinessControlCenterTest extends TestCase
         ] as $forbidden) {
             self::assertStringNotContainsString($forbidden, $source);
         }
+
+        $catalog = file_get_contents(
+            base_path('resources/js/i18n/catalog.ts'),
+        );
+        $statusTags = file_get_contents(
+            base_path(
+                'resources/js/components/control-center/BusinessStatusTags.vue',
+            ),
+        );
+
+        self::assertIsString($catalog);
+        self::assertIsString($statusTags);
+
+        foreach ([
+            'authorized Current Effective source',
+            'source workspace',
+            'requirements you are authorized to see',
+            'deterministic list',
+        ] as $technicalCopy) {
+            self::assertStringNotContainsString(
+                $technicalCopy,
+                $catalog,
+            );
+        }
+
+        self::assertStringContainsString(
+            'controlCenter.status.businessStage',
+            $statusTags,
+        );
+        self::assertStringContainsString(
+            'controlCenter.status.pbrSetup',
+            $statusTags,
+        );
     }
 
     public function test_overview_route_remains_current_business_scoped_and_home_is_unchanged(): void

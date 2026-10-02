@@ -110,9 +110,29 @@ test('UX-2 Business Control Center is guided, tenant-contextual and free of tech
         /authority_snapshot/i,
         /proposal[_ ]?id/i,
         /source[_ ]?id/i,
+        /authorized Current Effective source/i,
+        /source workspace/i,
+        /requirements you are authorized to see/i,
+        /deterministic/i,
     ]) {
         expect(mainText).not.toMatch(forbidden);
     }
+
+    await expect(page.getByText('Business Stage: Operating', { exact: true }))
+        .toBeVisible();
+    await expect(page.getByText('PBR Setup: Not started', { exact: true }))
+        .toBeVisible();
+
+    const nextActionsSection = page
+        .locator('section')
+        .filter({
+            has: page.locator('h2').filter({ hasText: 'Next Best Actions' }),
+        })
+        .first();
+
+    expect(
+        await nextActionsSection.locator('a').count(),
+    ).toBeLessThanOrEqual(3);
 
     const dimensions = await page.evaluate(() => ({
         innerWidth: window.innerWidth,
