@@ -123,6 +123,8 @@ final class LegalArchitectureTest extends TestCase
 
     public function test_legal_architecture_is_tenant_scoped_permission_filtered_and_route_backed(): void
     {
+        $this->withoutVite();
+
         $owner = $this->context('legal-a');
         $other = $this->context('legal-b');
         $workflow = $this->app->make(LegalArchitectureWorkflow::class);
@@ -167,7 +169,7 @@ final class LegalArchitectureTest extends TestCase
         $this
             ->actingAs($owner['user'])
             ->withSession($session)
-            ->get('/business/legal-structure')
+            ->get('/legal-structure')
             ->assertOk()
             ->assertInertia(
                 fn (Assert $page) => $page
@@ -182,7 +184,7 @@ final class LegalArchitectureTest extends TestCase
         $this
             ->actingAs($viewer)
             ->withSession($session)
-            ->get('/business/legal-structure')
+            ->get('/legal-structure')
             ->assertNotFound();
     }
 
