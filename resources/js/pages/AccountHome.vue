@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useI18n } from '../i18n/useI18n';
 import AuthenticatedLayout from '../layouts/AuthenticatedLayout.vue';
 import AccountNav from '../components/account/AccountNav.vue';
 import AccountPageHeader from '../components/account/AccountPageHeader.vue';
@@ -28,6 +29,7 @@ const props = defineProps<{
 }>();
 
 const { c } = useAccountCopy();
+const { t } = useI18n();
 const logoutForm = useForm({});
 
 const greetingName = computed(
@@ -54,6 +56,7 @@ const logout = () => {
 <template>
     <AuthenticatedLayout>
         <main
+            :aria-label="t('nav.home')"
             class="min-h-screen bg-[radial-gradient(circle_at_90%_0%,rgb(210_167_67_/_9%),transparent_24rem),linear-gradient(180deg,#f7f9f6_0%,#f1f5f1_100%)] px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-7 lg:py-7"
         >
             <div class="mx-auto max-w-[1500px] space-y-5 sm:space-y-6">
