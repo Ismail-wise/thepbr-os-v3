@@ -16,6 +16,7 @@ const sectionLabel = computed(() => {
     const path = currentPath.value;
 
     if (path === '/') return t('nav.home');
+    if (path.startsWith('/overview')) return t('nav.businessControlCenter');
     if (path.startsWith('/formation')) return t('nav.formationCapital');
     if (path.startsWith('/business/legal-structure')) return t('nav.legalStructure');
     if (path.startsWith('/partnership')) return t('nav.partnership');

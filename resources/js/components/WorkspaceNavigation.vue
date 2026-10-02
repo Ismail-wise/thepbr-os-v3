@@ -43,6 +43,7 @@ const groups: NavGroup[] = [
         label: 'nav.group.workspace',
         items: [
             { href: '/', label: 'nav.home' },
+            { href: '/overview', label: 'nav.businessControlCenter' },
             { href: '/search', label: 'nav.search' },
             { href: '/ai', label: 'nav.ai' },
             { href: '/health', label: 'nav.health' },

@@ -12,6 +12,7 @@ use App\Presentation\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Presentation\Http\Controllers\Closure\ClosureWorkspaceController;
 use App\Presentation\Http\Controllers\Conflict\ConflictWorkspaceController;
 use App\Presentation\Http\Controllers\Continuity\ContinuityWorkspaceController;
+use App\Presentation\Http\Controllers\Dashboard\BusinessControlCenterController;
 use App\Presentation\Http\Controllers\Exit\ExitWorkspaceController;
 use App\Presentation\Http\Controllers\Finance\FinanceWorkspaceController;
 use App\Presentation\Http\Controllers\Formation\FormationController;
@@ -78,6 +79,9 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
 
     Route::middleware(EnsureCurrentBusinessContext::class)
         ->group(function (): void {
+            Route::get('/overview', BusinessControlCenterController::class)
+                ->name('business.control-center');
+
             Route::get('/search', SearchController::class)
                 ->name('search.index');
 
