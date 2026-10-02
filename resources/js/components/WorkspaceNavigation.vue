@@ -66,6 +66,11 @@ const isFormationCurrent = computed(
         currentPath.value.startsWith('/formation/'),
 );
 
+const isLegalCurrent = computed(
+    () =>
+        currentPath.value === '/business/legal-structure' ||
+        currentPath.value.startsWith('/business/legal-structure/'),
+);
 
 const isPartnershipCurrent = computed(
     () =>
@@ -260,6 +265,20 @@ const isClosureCurrent = computed(
             @click="emit('navigate')"
         >
             {{ t('nav.formationCapital') }}
+        </Link>
+
+        <Link
+            href="/business/legal-structure"
+            :aria-current="isLegalCurrent ? 'page' : undefined"
+            class="flex min-h-11 items-center border-l-2 px-3 py-3 text-sm font-semibold hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-500"
+            :class="
+                isLegalCurrent
+                    ? 'border-slate-950 bg-slate-100 text-slate-950'
+                    : 'border-transparent text-slate-700'
+            "
+            @click="emit('navigate')"
+        >
+            {{ t('nav.legalStructure') }}
         </Link>
 
         <Link

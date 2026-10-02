@@ -20,6 +20,7 @@ use App\Presentation\Http\Controllers\Governance\GovernanceRulesController;
 use App\Presentation\Http\Controllers\Governance\GovernanceWorkspaceController;
 use App\Presentation\Http\Controllers\Health\HealthController;
 use App\Presentation\Http\Controllers\Import\ImportController;
+use App\Presentation\Http\Controllers\Legal\LegalArchitectureController;
 use App\Presentation\Http\Controllers\Operations\OperationsWorkspaceController;
 use App\Presentation\Http\Controllers\PartnerChanges\PartnerChangesWorkspaceController;
 use App\Presentation\Http\Controllers\Partnership\PartnershipWorkflowController;
@@ -292,6 +293,31 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 '/formation/capital/scenarios/{kind}/export',
                 [FormationController::class, 'exportCapitalScenario'],
             )->name('formation.capital.scenarios.export');
+
+            Route::get(
+                '/business/legal-structure',
+                [LegalArchitectureController::class, 'index'],
+            )->name('legal.index');
+
+            Route::post(
+                '/business/legal-structure',
+                [LegalArchitectureController::class, 'create'],
+            )->name('legal.store');
+
+            Route::post(
+                '/business/legal-structure/{formalRecordVersion}/submit',
+                [LegalArchitectureController::class, 'submit'],
+            )->name('legal.submit');
+
+            Route::post(
+                '/business/legal-structure/{formalRecordVersion}/content-review',
+                [LegalArchitectureController::class, 'review'],
+            )->name('legal.content-review');
+
+            Route::post(
+                '/business/legal-structure/{formalRecordVersion}/sync-decision',
+                [LegalArchitectureController::class, 'syncDecision'],
+            )->name('legal.sync-decision');
 
             Route::get(
                 '/partnership',
