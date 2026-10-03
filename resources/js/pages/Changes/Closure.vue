@@ -159,6 +159,9 @@ const statusClass = (status: string): string => {
     return 'bg-slate-100 text-slate-700';
 };
 
+const humanize = (value: string | null): string =>
+    value ? value.replaceAll('_', ' ') : '—';
+
 const createForm = useForm({
     trigger: '',
     trigger_detail: '',
@@ -340,8 +343,8 @@ const transitionClaim = (claim: Claim, target: string): void => {
     <Head :title="t('closure.title')" />
 
     <AuthenticatedLayout>
-        <div class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-            <header class="border-b border-slate-200 pb-5">
+        <div class="mx-auto max-w-7xl space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <header class="pbr-surface p-5 sm:p-6">
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -362,7 +365,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
                         <span class="mx-2">·</span>
                         {{ t('closure.workspaceStatus') }}:
                         <span class="font-medium text-slate-900">
-                            {{ closureWorkspace.business.workspace_status }}
+                            {{ humanize(closureWorkspace.business.workspace_status) }}
                         </span>
                     </div>
                 </div>
@@ -377,7 +380,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
 
             <div class="grid gap-6 xl:grid-cols-[22rem_minmax(0,1fr)]">
                 <aside class="space-y-4">
-                    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                    <section class="overflow-hidden pbr-surface">
                         <div class="border-b border-slate-200 px-4 py-3">
                             <h2 class="text-sm font-semibold text-slate-950">
                                 {{ t('closure.registerTitle') }}
@@ -409,7 +412,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
                                     class="shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold"
                                     :class="statusClass(item.status)"
                                 >
-                                    {{ item.status }}
+                                    {{ humanize(item.status) }}
                                 </span>
                             </div>
                             <p class="mt-2 text-xs text-slate-500">
@@ -420,7 +423,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
 
                     <form
                         v-if="closureWorkspace.permissions.manage"
-                        class="space-y-3 rounded-xl border border-slate-200 bg-white p-4"
+                        class="space-y-3 pbr-surface p-4"
                         @submit.prevent="createCase"
                     >
                         <h2 class="text-sm font-semibold text-slate-950">
@@ -496,7 +499,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
                 </aside>
 
                 <main v-if="selectedCase" class="space-y-6">
-                    <section class="rounded-xl border border-slate-200 bg-white">
+                    <section class="pbr-surface">
                         <div class="flex flex-col gap-4 border-b border-slate-200 px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
                             <div>
                                 <div class="flex flex-wrap items-center gap-2">
@@ -507,7 +510,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
                                         class="rounded-full px-2.5 py-1 text-xs font-semibold"
                                         :class="statusClass(selectedCase.status)"
                                     >
-                                        {{ selectedCase.status }}
+                                        {{ humanize(selectedCase.status) }}
                                     </span>
                                 </div>
                                 <p class="mt-2 text-sm text-slate-600">
@@ -519,7 +522,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
                                 <div>{{ t('closure.revision') }} {{ selectedCase.revision }}</div>
                                 <div class="mt-1">
                                     {{ t('closure.residualStatus') }}:
-                                    {{ selectedCase.residual_distribution_status }}
+                                    {{ humanize(selectedCase.residual_distribution_status) }}
                                 </div>
                             </div>
                         </div>
@@ -568,7 +571,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
                         </dl>
                     </section>
 
-                    <section class="rounded-xl border border-slate-200 bg-white">
+                    <section class="pbr-surface">
                         <div class="border-b border-slate-200 px-5 py-4">
                             <h3 class="text-sm font-semibold text-slate-950">
                                 {{ t('closure.claimsTitle') }}
@@ -597,7 +600,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
                                                 {{ claim.claim_reference }}
                                             </p>
                                             <p class="mt-1 text-xs text-slate-500">
-                                                {{ claim.claim_type }}
+                                                {{ humanize(claim.claim_type) }}
                                                 <span v-if="claim.required"> · {{ t('closure.required') }}</span>
                                             </p>
                                         </td>
@@ -615,7 +618,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
                                                 class="rounded-full px-2 py-1 text-xs font-semibold"
                                                 :class="statusClass(claim.status)"
                                             >
-                                                {{ claim.status }}
+                                                {{ humanize(claim.status) }}
                                             </span>
                                         </td>
                                         <td class="px-4 py-3 align-top">
@@ -673,7 +676,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
                         class="grid gap-6 lg:grid-cols-2"
                     >
                         <form
-                            class="space-y-3 rounded-xl border border-slate-200 bg-white p-5"
+                            class="space-y-3 pbr-surface p-5"
                             @submit.prevent="recordRequirement"
                         >
                             <h3 class="text-sm font-semibold text-slate-950">
@@ -730,7 +733,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
                         </form>
 
                         <form
-                            class="space-y-3 rounded-xl border border-slate-200 bg-white p-5"
+                            class="space-y-3 pbr-surface p-5"
                             @submit.prevent="createClaim"
                         >
                             <h3 class="text-sm font-semibold text-slate-950">
@@ -810,7 +813,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
 
                         <form
                             v-if="closureWorkspace.permissions.finance_view"
-                            class="space-y-3 rounded-xl border border-slate-200 bg-white p-5"
+                            class="space-y-3 pbr-surface p-5"
                             @submit.prevent="linkFinance"
                         >
                             <h3 class="text-sm font-semibold text-slate-950">
@@ -820,14 +823,17 @@ const transitionClaim = (claim: Claim, target: string): void => {
                                 {{ t('closure.financeLinkHelp') }}
                             </p>
 
-                            <label class="block text-xs font-medium text-slate-700">
-                                {{ t('closure.financePaymentId') }}
-                                <input
-                                    v-model="financeForm.finance_payment_id"
-                                    required
-                                    class="mt-1 w-full rounded-lg border-slate-300 text-sm"
-                                />
-                            </label>
+                            <details class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                <summary class="cursor-pointer text-xs font-semibold text-slate-700">{{ t('governance.advancedDetails') }}</summary>
+                                <label class="mt-3 block text-xs font-medium text-slate-700">
+                                    {{ t('closure.financePaymentId') }}
+                                    <input
+                                        v-model="financeForm.finance_payment_id"
+                                        required
+                                        class="mt-1 w-full rounded-lg border-slate-300 text-sm"
+                                    />
+                                </label>
+                            </details>
 
                             <label class="block text-xs font-medium text-slate-700">
                                 {{ t('closure.purpose') }}
@@ -843,11 +849,16 @@ const transitionClaim = (claim: Claim, target: string): void => {
                             </label>
 
                             <label class="block text-xs font-medium text-slate-700">
-                                {{ t('closure.claimIdOptional') }}
-                                <input
+                                Claim / liability (optional)
+                                <select
                                     v-model="financeForm.claim_id"
                                     class="mt-1 w-full rounded-lg border-slate-300 text-sm"
-                                />
+                                >
+                                    <option value="">No claim binding</option>
+                                    <option v-for="claim in selectedCase.claims" :key="claim.id" :value="claim.id">
+                                        {{ claim.claim_reference }} · {{ claim.claimant_reference }}
+                                    </option>
+                                </select>
                             </label>
 
                             <button
@@ -860,7 +871,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
                         </form>
 
                         <form
-                            class="space-y-3 rounded-xl border border-slate-200 bg-white p-5"
+                            class="space-y-3 pbr-surface p-5"
                             @submit.prevent="recordResidual"
                         >
                             <h3 class="text-sm font-semibold text-slate-950">
@@ -919,7 +930,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
                         </form>
                     </div>
 
-                    <section class="rounded-xl border border-slate-200 bg-white">
+                    <section class="pbr-surface">
                         <div class="border-b border-slate-200 px-5 py-4">
                             <h3 class="text-sm font-semibold text-slate-950">
                                 {{ t('closure.governanceTitle') }}
@@ -932,24 +943,29 @@ const transitionClaim = (claim: Claim, target: string): void => {
                         <div class="space-y-4 px-5 py-5">
                             <div
                                 v-if="selectedCase.governance_submission"
-                                class="grid gap-3 rounded-lg bg-slate-50 p-4 text-xs text-slate-700 md:grid-cols-2"
+                                class="rounded-[16px] border border-[#dde7df] bg-[#f8faf8] p-4 text-xs text-slate-700"
                             >
-                                <div>
-                                    <span class="font-medium">{{ t('closure.proposalVersion') }}:</span>
-                                    {{ selectedCase.governance_submission.proposal_version_id }}
+                                <div class="grid gap-3 md:grid-cols-2">
+                                    <div>
+                                        <span class="font-medium">{{ t('closure.formalState') }}:</span>
+                                        {{ selectedCase.governance_submission.formal_record_state || '—' }}
+                                    </div>
+                                    <div>
+                                        <span class="font-medium">Decision:</span>
+                                        {{ selectedCase.governance_submission.decision_id ? 'Recorded' : 'Pending' }}
+                                    </div>
+                                    <div>
+                                        <span class="font-medium">{{ t('closure.authorizedAt') }}:</span>
+                                        {{ selectedCase.governance_submission.authorized_at || '—' }}
+                                    </div>
                                 </div>
-                                <div>
-                                    <span class="font-medium">{{ t('closure.decisionId') }}:</span>
-                                    {{ selectedCase.governance_submission.decision_id || '—' }}
-                                </div>
-                                <div>
-                                    <span class="font-medium">{{ t('closure.formalState') }}:</span>
-                                    {{ selectedCase.governance_submission.formal_record_state || '—' }}
-                                </div>
-                                <div>
-                                    <span class="font-medium">{{ t('closure.authorizedAt') }}:</span>
-                                    {{ selectedCase.governance_submission.authorized_at || '—' }}
-                                </div>
+                                <details class="mt-3 pbr-surface p-3">
+                                    <summary class="cursor-pointer font-semibold">{{ t('governance.advancedDetails') }}</summary>
+                                    <dl class="mt-3 grid gap-2 md:grid-cols-2">
+                                        <div><dt>{{ t('closure.proposalVersion') }}</dt><dd class="mt-1 break-all font-mono">{{ selectedCase.governance_submission.proposal_version_id }}</dd></div>
+                                        <div v-if="selectedCase.governance_submission.decision_id"><dt>{{ t('closure.decisionId') }}</dt><dd class="mt-1 break-all font-mono">{{ selectedCase.governance_submission.decision_id }}</dd></div>
+                                    </dl>
+                                </details>
                             </div>
 
                             <div
@@ -1086,7 +1102,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
                         </form>
                     </section>
 
-                    <section class="rounded-xl border border-slate-200 bg-white">
+                    <section class="pbr-surface">
                         <div class="border-b border-slate-200 px-5 py-4">
                             <h3 class="text-sm font-semibold text-slate-950">
                                 {{ t('closure.requirementRegister') }}
@@ -1103,7 +1119,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
                                         {{ requirement.requirement_key }}
                                     </p>
                                     <p class="mt-1 text-xs text-slate-500">
-                                        {{ requirement.requirement_type }}
+                                        {{ humanize(requirement.requirement_type) }}
                                     </p>
                                 </div>
                                 <div>
@@ -1111,7 +1127,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
                                         class="rounded-full px-2 py-1 text-xs font-semibold"
                                         :class="statusClass(requirement.status)"
                                     >
-                                        {{ requirement.status }}
+                                        {{ humanize(requirement.status) }}
                                     </span>
                                 </div>
                                 <p class="text-slate-600">
@@ -1129,7 +1145,7 @@ const transitionClaim = (claim: Claim, target: string): void => {
 
                     <section
                         v-if="closureWorkspace.permissions.finance_view"
-                        class="rounded-xl border border-slate-200 bg-white"
+                        class="pbr-surface"
                     >
                         <div class="border-b border-slate-200 px-5 py-4">
                             <h3 class="text-sm font-semibold text-slate-950">
@@ -1143,15 +1159,19 @@ const transitionClaim = (claim: Claim, target: string): void => {
                                 class="grid gap-2 px-5 py-4 text-sm md:grid-cols-[12rem_1fr_10rem]"
                             >
                                 <div class="font-medium text-slate-950">
-                                    {{ link.purpose }}
+                                    {{ humanize(link.purpose) }}
                                 </div>
                                 <div class="text-slate-600">
-                                    {{ link.finance_payment_id }}
+                                    <span>{{ humanize(link.status) }}</span>
+                                    <details class="mt-1 text-xs">
+                                        <summary class="cursor-pointer font-semibold">{{ t('governance.advancedDetails') }}</summary>
+                                        <code class="mt-1 block break-all">{{ link.finance_payment_id }}</code>
+                                    </details>
                                 </div>
                                 <div class="text-right">
                                     {{ money(link.amount_minor_units, link.currency) }}
                                     <span class="ml-2 text-xs text-slate-500">
-                                        {{ link.status }}
+                                        {{ humanize(link.status) }}
                                     </span>
                                 </div>
                             </div>

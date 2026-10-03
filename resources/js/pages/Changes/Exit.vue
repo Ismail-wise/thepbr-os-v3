@@ -446,8 +446,8 @@ watch(
     <Head :title="t('exit.title')" />
 
     <AuthenticatedLayout>
-        <div class="mx-auto max-w-[1600px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-            <header class="border-b border-slate-200 pb-5">
+        <div class="mx-auto max-w-[1600px] space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <header class="pbr-surface p-5 sm:p-6">
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -469,12 +469,12 @@ watch(
                     </Link>
                 </div>
 
-                <div class="mt-4 border-l-4 border-slate-900 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                <div class="mt-4 rounded-[16px] border border-[#cfe1d3] bg-[#f3f8f4] px-4 py-3 text-sm font-semibold text-[var(--pbr-green-dark)]">
                     {{ t('exit.boundary') }}
                 </div>
             </header>
 
-            <section class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+            <section class="overflow-hidden pbr-surface">
                 <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
                     <h2 class="font-semibold text-slate-950">
                         {{ t('exit.register') }}
@@ -543,7 +543,7 @@ watch(
             </section>
             <section
                 v-if="exitWorkspace.permissions.manage"
-                class="rounded-lg border border-slate-200 bg-white"
+                class="pbr-surface"
             >
                 <details>
                     <summary class="cursor-pointer px-4 py-4 font-semibold text-slate-950">
@@ -636,7 +636,7 @@ watch(
                 class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(380px,0.46fr)]"
             >
                 <div class="space-y-4">
-                    <div class="rounded-lg border border-slate-200 bg-white">
+                    <div class="pbr-surface">
                         <div class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 p-4">
                             <div>
                                 <p class="font-mono text-xs font-semibold text-slate-500">
@@ -666,8 +666,8 @@ watch(
                             </div>
                             <div>
                                 <dt class="text-slate-500">Ownership baseline</dt>
-                                <dd class="mt-1 break-all font-mono text-xs text-slate-700">
-                                    {{ selectedCase.source_ownership_register_version_id ?? 'No Effective Ownership Register' }}
+                                <dd class="mt-1 font-medium text-slate-900">
+                                    {{ selectedCase.source_ownership_register_version_id ? 'Captured from Current Effective Ownership' : 'No Effective Ownership Register' }}
                                 </dd>
                             </div>
                             <div>
@@ -779,7 +779,7 @@ watch(
                     <details
                         v-if="exitWorkspace.permissions.manage && selectedCase.status === 'draft'"
                         open
-                        class="rounded-lg border border-slate-200 bg-white"
+                        class="pbr-surface"
                     >
                         <summary class="cursor-pointer p-4 font-semibold text-slate-950">
                             {{ t('exit.notice') }}
@@ -836,7 +836,7 @@ watch(
                     <details
                         v-if="exitWorkspace.permissions.manage && selectedCase.status === 'notice_recorded'"
                         open
-                        class="rounded-lg border border-slate-200 bg-white"
+                        class="pbr-surface"
                     >
                         <summary class="cursor-pointer p-4 font-semibold text-slate-950">
                             {{ t('exit.shareTreatment') }}
@@ -894,21 +894,19 @@ watch(
                                 </select>
                             </label>
 
-                            <label class="space-y-1 text-sm">
-                                <span class="font-medium text-slate-700">Partner Change Case ID</span>
-                                <input
-                                    v-model="shareForm.partner_change_case_id"
-                                    class="min-h-11 w-full rounded-md border-slate-300 font-mono text-xs"
-                                />
-                            </label>
-
-                            <label class="space-y-1 text-sm">
-                                <span class="font-medium text-slate-700">Frozen Ownership Scenario ID</span>
-                                <input
-                                    v-model="shareForm.ownership_scenario_id"
-                                    class="min-h-11 w-full rounded-md border-slate-300 font-mono text-xs"
-                                />
-                            </label>
+                            <details class="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm md:col-span-2">
+                                <summary class="cursor-pointer font-semibold text-slate-700">{{ t('governance.advancedDetails') }}</summary>
+                                <div class="mt-3 grid gap-3 md:grid-cols-2">
+                                    <label class="space-y-1 text-sm">
+                                        <span class="font-medium text-slate-700">Partner Change case reference</span>
+                                        <input v-model="shareForm.partner_change_case_id" class="min-h-11 w-full rounded-md border-slate-300 font-mono text-xs" />
+                                    </label>
+                                    <label class="space-y-1 text-sm">
+                                        <span class="font-medium text-slate-700">Frozen Ownership scenario reference</span>
+                                        <input v-model="shareForm.ownership_scenario_id" class="min-h-11 w-full rounded-md border-slate-300 font-mono text-xs" />
+                                    </label>
+                                </div>
+                            </details>
 
                             <label class="space-y-1 text-sm">
                                 <span class="font-medium text-slate-700">Valuation method</span>
@@ -979,7 +977,7 @@ watch(
                     <details
                         v-if="exitWorkspace.permissions.manage && selectedCase.status === 'treatment_ready'"
                         open
-                        class="rounded-lg border border-slate-200 bg-white"
+                        class="pbr-surface"
                     >
                         <summary class="cursor-pointer p-4 font-semibold text-slate-950">
                             {{ t('exit.payment') }}
@@ -1087,7 +1085,7 @@ watch(
                         </form>
                     </details>
 
-                    <div class="rounded-lg border border-slate-200 bg-white">
+                    <div class="pbr-surface">
                         <div class="border-b border-slate-200 px-4 py-3">
                             <h3 class="font-semibold text-slate-950">
                                 {{ t('exit.sharePosition') }}
@@ -1138,7 +1136,7 @@ watch(
                 <aside class="space-y-4">
                     <details
                         v-if="exitWorkspace.permissions.manage && !['completed', 'rejected', 'withdrawn', 'cancelled'].includes(selectedCase.status)"
-                        class="rounded-lg border border-slate-200 bg-white"
+                        class="pbr-surface"
                     >
                         <summary class="cursor-pointer p-4 font-semibold text-slate-950">
                             {{ t('exit.handover') }}
@@ -1196,22 +1194,19 @@ watch(
                                     placeholder="Optional supporting context"
                                 />
                             </label>
-                            <label class="block space-y-1 text-sm">
-                                <span class="font-medium text-slate-700">{{ t('exit.requirementSourceType') }}</span>
-                                <input
-                                    v-model="requirementForm.source_type"
-                                    class="min-h-11 w-full rounded-md border-slate-300 text-sm"
-                                    placeholder="e.g. formal_record"
-                                />
-                            </label>
-                            <label class="block space-y-1 text-sm">
-                                <span class="font-medium text-slate-700">{{ t('exit.requirementSourceId') }}</span>
-                                <input
-                                    v-model="requirementForm.source_id"
-                                    class="min-h-11 w-full rounded-md border-slate-300 font-mono text-xs"
-                                    placeholder="Authorized source record ID"
-                                />
-                            </label>
+                            <details class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                <summary class="cursor-pointer text-sm font-semibold text-slate-700">{{ t('governance.advancedDetails') }}</summary>
+                                <div class="mt-3 space-y-3">
+                                    <label class="block space-y-1 text-sm">
+                                        <span class="font-medium text-slate-700">{{ t('exit.requirementSourceType') }}</span>
+                                        <input v-model="requirementForm.source_type" class="min-h-11 w-full rounded-md border-slate-300 text-sm" placeholder="e.g. formal_record" />
+                                    </label>
+                                    <label class="block space-y-1 text-sm">
+                                        <span class="font-medium text-slate-700">{{ t('exit.requirementSourceId') }}</span>
+                                        <input v-model="requirementForm.source_id" class="min-h-11 w-full rounded-md border-slate-300 font-mono text-xs" placeholder="Authorized source record ID" />
+                                    </label>
+                                </div>
+                            </details>
                             <button
                                 type="submit"
                                 class="min-h-10 rounded-md bg-slate-950 px-3 text-sm font-semibold text-white"
@@ -1221,7 +1216,7 @@ watch(
                         </form>
                     </details>
 
-                    <div class="rounded-lg border border-slate-200 bg-white p-4">
+                    <div class="pbr-surface p-4">
                         <h3 class="font-semibold text-slate-950">Requirements</h3>
                         <div
                             v-if="selectedCase.requirements.length === 0"
@@ -1258,7 +1253,7 @@ watch(
 
                     <div
                         v-if="selectedCase.governance_submission"
-                        class="rounded-lg border border-slate-200 bg-white p-4 text-sm"
+                        class="pbr-surface p-4 text-sm"
                     >
                         <h3 class="font-semibold text-slate-950">
                             {{ t('exit.governance') }}
@@ -1271,18 +1266,21 @@ watch(
                                 </dd>
                             </div>
                             <div>
-                                <dt class="text-slate-500">Proposal Version</dt>
-                                <dd class="mt-1 break-all font-mono text-xs text-slate-700">
-                                    {{ selectedCase.governance_submission.proposal_version_id }}
-                                </dd>
-                            </div>
-                            <div>
                                 <dt class="text-slate-500">Decision</dt>
-                                <dd class="mt-1 break-all font-mono text-xs text-slate-700">
-                                    {{ selectedCase.governance_submission.decision_id ?? 'Pending' }}
+                                <dd class="mt-1 font-medium text-slate-900">
+                                    {{ selectedCase.governance_submission.decision_id ? 'Recorded' : 'Pending' }}
                                 </dd>
                             </div>
                         </dl>
+                        <details class="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                            <summary class="cursor-pointer font-semibold">{{ t('governance.advancedDetails') }}</summary>
+                            <dl class="mt-3 space-y-2">
+                                <div><dt>Proposal version</dt><dd class="mt-1 break-all font-mono">{{ selectedCase.governance_submission.proposal_version_id }}</dd></div>
+                                <div><dt>Formal record version</dt><dd class="mt-1 break-all font-mono">{{ selectedCase.governance_submission.formal_record_version_id }}</dd></div>
+                                <div v-if="selectedCase.governance_submission.decision_id"><dt>Decision reference</dt><dd class="mt-1 break-all font-mono">{{ selectedCase.governance_submission.decision_id }}</dd></div>
+                                <div v-if="selectedCase.source_ownership_register_version_id"><dt>Ownership baseline version</dt><dd class="mt-1 break-all font-mono">{{ selectedCase.source_ownership_register_version_id }}</dd></div>
+                            </dl>
+                        </details>
                         <div
                             v-if="exitWorkspace.permissions.manage"
                             class="mt-3 flex flex-wrap gap-2"
@@ -1306,7 +1304,7 @@ watch(
 
                     <details
                         v-if="exitWorkspace.permissions.manage && exitWorkspace.permissions.finance_view"
-                        class="rounded-lg border border-slate-200 bg-white"
+                        class="pbr-surface"
                     >
                         <summary class="cursor-pointer p-4 font-semibold text-slate-950">
                             F6C Finance payment links
@@ -1358,7 +1356,7 @@ watch(
 
                     <div
                         v-if="exitWorkspace.permissions.finance_view"
-                        class="rounded-lg border border-slate-200 bg-white p-4"
+                        class="pbr-surface p-4"
                     >
                         <h3 class="font-semibold text-slate-950">
                             {{ t('exit.settlement') }}
@@ -1390,7 +1388,7 @@ watch(
 
                     <details
                         v-if="exitWorkspace.permissions.manage && exitWorkspace.permissions.access_admin && selectedCase.membership_id !== null && ['effective', 'settlement_pending'].includes(selectedCase.status)"
-                        class="rounded-lg border border-slate-200 bg-white"
+                        class="pbr-surface"
                     >
                         <summary class="cursor-pointer p-4 font-semibold text-slate-950">
                             {{ t('exit.access') }}

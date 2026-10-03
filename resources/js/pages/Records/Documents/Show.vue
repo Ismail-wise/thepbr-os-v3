@@ -179,9 +179,9 @@ const verifyEvidence = (): void => {
 
 <template>
     <AuthenticatedLayout>
-        <main class="min-h-screen bg-white px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
+        <main class="min-h-screen px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
             <div class="mx-auto max-w-7xl space-y-6">
-                <header class="border-b border-slate-200 pb-6">
+                <header class="pbr-surface p-5 sm:p-6">
                     <Link
                         href="/records/documents"
                         class="inline-flex min-h-11 items-center text-sm font-semibold text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
@@ -204,7 +204,7 @@ const verifyEvidence = (): void => {
                     </div>
                 </header>
 
-                <section class="overflow-hidden border border-slate-200 bg-white">
+                <section class="pbr-surface overflow-hidden">
                     <div class="border-b border-slate-200 px-5 py-4">
                         <h2 class="font-semibold">
                             {{ t('documents.history') }}
@@ -220,7 +220,7 @@ const verifyEvidence = (): void => {
                     </div>
 
                     <div v-else class="overflow-x-auto">
-                        <table class="w-full min-w-[1100px] text-left text-sm">
+                        <table class="w-full min-w-[920px] text-left text-sm">
                             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                                 <tr>
                                     <th class="px-5 py-3 font-semibold">
@@ -234,9 +234,6 @@ const verifyEvidence = (): void => {
                                     </th>
                                     <th class="px-5 py-3 font-semibold">
                                         {{ t('documents.size') }}
-                                    </th>
-                                    <th class="px-5 py-3 font-semibold">
-                                        {{ t('documents.sha256') }}
                                     </th>
                                     <th class="px-5 py-3 font-semibold">
                                         {{ t('documents.uploaded') }}
@@ -262,6 +259,13 @@ const verifyEvidence = (): void => {
 
                                     <td class="px-5 py-4">
                                         {{ version.filename }}
+                                        <details class="mt-2 text-xs text-slate-500">
+                                            <summary class="cursor-pointer font-semibold">{{ t('governance.advancedDetails') }}</summary>
+                                            <div class="mt-2">
+                                                <span class="font-medium">{{ t('documents.sha256') }}</span>
+                                                <code class="mt-1 block break-all text-[11px]">{{ version.sha256 }}</code>
+                                            </div>
+                                        </details>
                                     </td>
 
                                     <td class="px-5 py-4 text-slate-600">
@@ -270,12 +274,6 @@ const verifyEvidence = (): void => {
 
                                     <td class="px-5 py-4 text-slate-600">
                                         {{ formatBytes(version.sizeBytes) }}
-                                    </td>
-
-                                    <td class="px-5 py-4">
-                                        <code class="break-all text-xs text-slate-600">
-                                            {{ version.sha256 }}
-                                        </code>
                                     </td>
 
                                     <td class="px-5 py-4 text-slate-600">
@@ -389,7 +387,7 @@ const verifyEvidence = (): void => {
 
                 <section
                     v-if="canManage"
-                    class="overflow-hidden border border-slate-200 bg-white"
+                    class="pbr-surface overflow-hidden"
                 >
                     <div class="border-b border-slate-200 px-5 py-4">
                         <h2 class="font-semibold">
@@ -442,9 +440,11 @@ const verifyEvidence = (): void => {
                                     </td>
 
                                     <td class="px-5 py-4">
-                                        <code class="text-xs">
-                                            {{ item.submittedByMembershipId }}
-                                        </code>
+                                        <span class="text-sm text-slate-700">Authorized member</span>
+                                        <details class="mt-1 text-xs text-slate-500">
+                                            <summary class="cursor-pointer font-semibold">{{ t('governance.advancedDetails') }}</summary>
+                                            <code class="mt-1 block break-all">{{ item.submittedByMembershipId }}</code>
+                                        </details>
                                     </td>
 
                                     <td class="px-5 py-4">
@@ -537,18 +537,21 @@ const verifyEvidence = (): void => {
                                 </select>
                             </label>
 
-                            <label
+                            <details
                                 v-else
-                                class="block text-sm font-medium text-slate-700"
+                                class="rounded-lg border border-slate-200 bg-slate-50 p-3"
                             >
-                                {{ t('documents.targetId') }}
-                                <input
-                                    v-model="linkForm.target_id"
-                                    type="text"
-                                    required
-                                    class="mt-1 min-h-11 w-full border border-slate-300 bg-white px-3"
-                                />
-                            </label>
+                                <summary class="cursor-pointer text-sm font-semibold text-slate-700">{{ t('governance.advancedDetails') }}</summary>
+                                <label class="mt-3 block text-sm font-medium text-slate-700">
+                                    {{ t('documents.targetId') }}
+                                    <input
+                                        v-model="linkForm.target_id"
+                                        type="text"
+                                        required
+                                        class="mt-1 min-h-11 w-full border border-slate-300 bg-white px-3"
+                                    />
+                                </label>
+                            </details>
 
                             <button
                                 type="submit"

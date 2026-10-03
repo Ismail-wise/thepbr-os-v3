@@ -92,9 +92,9 @@ const submit = (): void => {
 
 <template>
     <AuthenticatedLayout>
-        <main class="min-h-screen bg-white px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
+        <main class="min-h-screen px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
             <div class="mx-auto max-w-7xl space-y-6">
-                <header class="border-b border-slate-200 pb-6">
+                <header class="pbr-surface p-5 sm:p-6">
                     <h1 class="text-2xl font-semibold tracking-tight">
                         {{ t('documents.title') }}
                     </h1>
@@ -105,7 +105,7 @@ const submit = (): void => {
                 </header>
 
                 <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-                    <section class="min-w-0 overflow-hidden border border-slate-200 bg-white">
+                    <section class="pbr-surface min-w-0 overflow-hidden">
                         <div class="border-b border-slate-200 px-5 py-4">
                             <h2 class="font-semibold">
                                 {{ t('documents.register') }}
@@ -200,7 +200,7 @@ const submit = (): void => {
                         </div>
                     </section>
 
-                    <aside class="self-start border border-slate-200 bg-slate-50 p-5">
+                    <aside class="pbr-surface self-start bg-[var(--pbr-surface-soft)] p-5">
                         <h2 class="font-semibold">
                             {{ t('documents.uploadDocument') }}
                         </h2>

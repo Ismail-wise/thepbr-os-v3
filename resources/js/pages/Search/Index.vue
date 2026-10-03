@@ -54,8 +54,8 @@ const sourceLabel = (sourceType: string): string =>
     <Head :title="t('search.title')" />
 
     <AuthenticatedLayout>
-        <div class="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-            <header class="border-b border-slate-200 pb-5">
+        <div class="mx-auto max-w-6xl space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <header class="pbr-surface p-5 sm:p-6">
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                     {{ t('search.eyebrow') }}
                 </p>
@@ -71,7 +71,7 @@ const sourceLabel = (sourceType: string): string =>
             </header>
 
             <form
-                class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5"
+                class="pbr-surface p-4 sm:p-5"
                 role="search"
                 @submit.prevent="submit"
             >
@@ -102,7 +102,7 @@ const sourceLabel = (sourceType: string): string =>
 
             <section
                 v-if="searchResults.suggestions.length > 0"
-                class="rounded-xl border border-slate-200 bg-white p-4"
+                class="pbr-surface p-4"
             >
                 <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     {{ t('search.suggestions') }}
@@ -122,7 +122,7 @@ const sourceLabel = (sourceType: string): string =>
 
             <section
                 v-if="searchResults.query !== ''"
-                class="overflow-hidden rounded-xl border border-slate-200 bg-white"
+                class="overflow-hidden pbr-surface"
             >
                 <div class="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
                     <div>

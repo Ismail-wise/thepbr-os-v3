@@ -64,8 +64,8 @@ const formatBytes = (bytes: number | null): string => {
     <Head :title="t('reports.title')" />
 
     <AuthenticatedLayout>
-        <div class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-            <header class="border-b border-slate-200 pb-5">
+        <div class="mx-auto max-w-7xl space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <header class="pbr-surface p-5 sm:p-6">
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                     {{ t('reports.eyebrow') }}
                 </p>
@@ -86,7 +86,7 @@ const formatBytes = (bytes: number | null): string => {
                         {{ t('reports.representation') }}
                     </p>
                 </div>
-                <div class="rounded-xl border border-slate-200 bg-white p-4">
+                <div class="pbr-surface p-4">
                     <p class="text-sm text-slate-700">
                         {{ t('reports.privacy') }}
                     </p>
@@ -95,7 +95,7 @@ const formatBytes = (bytes: number | null): string => {
 
             <form
                 v-if="reportsWorkspace.permissions.manage"
-                class="space-y-5 rounded-xl border border-slate-200 bg-white p-5"
+                class="pbr-surface space-y-5 p-5"
                 @submit.prevent="createPack"
             >
                 <h2 class="text-base font-semibold text-slate-950">
@@ -161,7 +161,7 @@ const formatBytes = (bytes: number | null): string => {
                 </div>
             </form>
 
-            <section class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <section class="pbr-surface overflow-hidden">
                 <div class="border-b border-slate-200 px-5 py-4">
                     <h2 class="text-base font-semibold text-slate-950">
                         {{ t('reports.exports') }}
@@ -176,7 +176,6 @@ const formatBytes = (bytes: number | null): string => {
                                 <th class="px-4 py-3">{{ t('reports.scope') }}</th>
                                 <th class="px-4 py-3">{{ t('reports.created') }}</th>
                                 <th class="px-4 py-3">{{ t('reports.asOf') }}</th>
-                                <th class="px-4 py-3">{{ t('reports.hash') }}</th>
                                 <th class="px-4 py-3">Size</th>
                                 <th class="px-4 py-3">Action</th>
                             </tr>
@@ -203,13 +202,15 @@ const formatBytes = (bytes: number | null): string => {
                                 <td class="px-4 py-3 align-top text-xs text-slate-600">
                                     {{ row.as_of_at || '—' }}
                                 </td>
-                                <td class="max-w-xs px-4 py-3 align-top">
-                                    <code class="break-all text-[11px] text-slate-600">
-                                        {{ row.manifest_hash || '—' }}
-                                    </code>
-                                </td>
                                 <td class="px-4 py-3 align-top text-xs text-slate-600">
                                     {{ formatBytes(row.size_bytes) }}
+                                    <details class="mt-2 text-slate-500">
+                                        <summary class="cursor-pointer font-semibold">{{ t('governance.advancedDetails') }}</summary>
+                                        <div class="mt-2 space-y-2">
+                                            <div><span class="font-medium">{{ t('reports.hash') }}</span><code class="mt-1 block break-all text-[11px]">{{ row.manifest_hash || '—' }}</code></div>
+                                            <div v-if="row.content_sha256"><span class="font-medium">Content SHA-256</span><code class="mt-1 block break-all text-[11px]">{{ row.content_sha256 }}</code></div>
+                                        </div>
+                                    </details>
                                 </td>
                                 <td class="px-4 py-3 align-top">
                                     <div class="flex flex-wrap gap-2">
@@ -238,7 +239,7 @@ const formatBytes = (bytes: number | null): string => {
 
                             <tr v-if="reportsWorkspace.exports.length === 0">
                                 <td
-                                    colspan="7"
+                                    colspan="6"
                                     class="px-5 py-10 text-center text-sm text-slate-500"
                                 >
                                     {{ t('reports.empty') }}

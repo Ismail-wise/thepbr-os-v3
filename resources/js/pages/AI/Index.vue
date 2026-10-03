@@ -36,8 +36,8 @@ const ask = (): void => {
     <Head :title="t('ai.title')" />
 
     <AuthenticatedLayout>
-        <div class="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-            <header class="border-b border-slate-200 pb-5">
+        <div class="mx-auto max-w-5xl space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <header class="pbr-surface p-5 sm:p-6">
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                     {{ t('ai.eyebrow') }}
                 </p>
@@ -72,7 +72,7 @@ const ask = (): void => {
             </section>
 
             <form
-                class="rounded-xl border border-slate-200 bg-white p-5"
+                class="pbr-surface p-5"
                 @submit.prevent="ask"
             >
                 <label
@@ -126,7 +126,7 @@ const ask = (): void => {
             </form>
 
             <section
-                class="rounded-xl border border-slate-200 bg-white p-5"
+                class="pbr-surface p-5"
                 aria-live="polite"
             >
                 <h2 class="text-sm font-semibold text-slate-950">

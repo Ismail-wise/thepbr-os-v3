@@ -136,8 +136,8 @@ const prettyPayload = (payload: Record<string, unknown>): string =>
     <Head :title="t('import.title')" />
 
     <AuthenticatedLayout>
-        <div class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-            <header class="border-b border-slate-200 pb-5">
+        <div class="mx-auto max-w-7xl space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <header class="pbr-surface p-5 sm:p-6">
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                     {{ t('import.eyebrow') }}
                 </p>
@@ -158,7 +158,7 @@ const prettyPayload = (payload: Record<string, unknown>): string =>
                         {{ t('import.observedOnly') }}
                     </p>
                 </div>
-                <div class="rounded-xl border border-slate-200 bg-white p-4">
+                <div class="pbr-surface p-4">
                     <p class="text-sm text-slate-700">
                         {{ t('import.reconcile') }}
                     </p>
@@ -167,7 +167,7 @@ const prettyPayload = (payload: Record<string, unknown>): string =>
 
             <form
                 v-if="importWorkspace.permissions.manage"
-                class="space-y-5 rounded-xl border border-slate-200 bg-white p-5"
+                class="pbr-surface space-y-5 p-5"
                 @submit.prevent="stageBatch"
             >
                 <h2 class="text-base font-semibold text-slate-950">
@@ -185,15 +185,18 @@ const prettyPayload = (payload: Record<string, unknown>): string =>
                         />
                     </label>
 
-                    <label class="text-sm font-medium text-slate-800">
-                        {{ t('import.schemaVersion') }}
-                        <input
-                            v-model="createForm.schema_version"
-                            type="text"
-                            maxlength="80"
-                            class="mt-2 min-h-11 w-full rounded-lg border-slate-300 text-sm"
-                        />
-                    </label>
+                    <details class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <summary class="cursor-pointer text-sm font-semibold text-slate-700">{{ t('governance.advancedDetails') }}</summary>
+                        <label class="mt-3 block text-sm font-medium text-slate-800">
+                            {{ t('import.schemaVersion') }}
+                            <input
+                                v-model="createForm.schema_version"
+                                type="text"
+                                maxlength="80"
+                                class="mt-2 min-h-11 w-full rounded-lg border-slate-300 text-sm"
+                            />
+                        </label>
+                    </details>
 
                     <label class="text-sm font-medium text-slate-800">
                         {{ t('import.target') }}
@@ -243,7 +246,7 @@ const prettyPayload = (payload: Record<string, unknown>): string =>
                 </button>
             </form>
 
-            <section class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <section class="pbr-surface overflow-hidden">
                 <div class="border-b border-slate-200 px-5 py-4">
                     <h2 class="text-base font-semibold text-slate-950">
                         {{ t('import.batches') }}
@@ -257,8 +260,7 @@ const prettyPayload = (payload: Record<string, unknown>): string =>
                                 <th class="px-4 py-3">{{ t('import.status') }}</th>
                                 <th class="px-4 py-3">{{ t('import.source') }}</th>
                                 <th class="px-4 py-3">{{ t('import.target') }}</th>
-                                <th class="px-4 py-3">{{ t('import.parser') }}</th>
-                                <th class="px-4 py-3">{{ t('import.fingerprint') }}</th>
+                                <th class="px-4 py-3">Details</th>
                                 <th class="px-4 py-3">Action</th>
                             </tr>
                         </thead>
@@ -275,19 +277,21 @@ const prettyPayload = (payload: Record<string, unknown>): string =>
                                 <td class="px-4 py-3 align-top text-slate-700">
                                     <div>{{ batch.source_filename }}</div>
                                     <div class="mt-1 text-xs text-slate-500">
-                                        {{ batch.source_system }} · {{ batch.source_type }} · schema {{ batch.schema_version }}
+                                        {{ batch.source_system }} · {{ batch.source_type }}
                                     </div>
                                 </td>
                                 <td class="px-4 py-3 align-top text-xs text-slate-700">
                                     {{ batch.intended_target }}
                                 </td>
                                 <td class="px-4 py-3 align-top text-xs text-slate-600">
-                                    {{ batch.parser_identity }}@{{ batch.parser_version }}
-                                </td>
-                                <td class="max-w-xs px-4 py-3 align-top">
-                                    <code class="break-all text-[11px] text-slate-600">
-                                        {{ batch.source_fingerprint }}
-                                    </code>
+                                    <details>
+                                        <summary class="cursor-pointer font-semibold">{{ t('governance.advancedDetails') }}</summary>
+                                        <dl class="mt-2 space-y-2">
+                                            <div><dt>{{ t('import.schemaVersion') }}</dt><dd>{{ batch.schema_version }}</dd></div>
+                                            <div><dt>{{ t('import.parser') }}</dt><dd>{{ batch.parser_identity }}@{{ batch.parser_version }}</dd></div>
+                                            <div><dt>{{ t('import.fingerprint') }}</dt><dd><code class="mt-1 block break-all text-[11px]">{{ batch.source_fingerprint }}</code></dd></div>
+                                        </dl>
+                                    </details>
                                 </td>
                                 <td class="px-4 py-3 align-top">
                                     <Link
@@ -301,7 +305,7 @@ const prettyPayload = (payload: Record<string, unknown>): string =>
 
                             <tr v-if="importWorkspace.batches.length === 0">
                                 <td
-                                    colspan="6"
+                                    colspan="5"
                                     class="px-5 py-10 text-center text-sm text-slate-500"
                                 >
                                     {{ t('import.empty') }}
@@ -314,7 +318,7 @@ const prettyPayload = (payload: Record<string, unknown>): string =>
 
             <section
                 v-if="importWorkspace.selected_batch"
-                class="space-y-4 rounded-xl border border-slate-200 bg-white p-5"
+                class="space-y-4 pbr-surface p-5"
             >
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <div>

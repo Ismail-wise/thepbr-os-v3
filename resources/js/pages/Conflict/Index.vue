@@ -324,8 +324,9 @@ const canEnterDirectDiscussion = computed(
     <Head :title="t('conflict.title')" />
 
     <AuthenticatedLayout>
-        <main class="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
-            <header class="border-b border-slate-200 pb-5">
+        <main class="min-h-screen px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <div class="mx-auto w-full max-w-[1500px]">
+            <header class="pbr-surface p-5 sm:p-6">
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -359,14 +360,14 @@ const canEnterDirectDiscussion = computed(
                         </Link>
                     </div>
                 </div>
-                <p class="mt-5 border-l-4 border-slate-800 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-800">
+                <p class="mt-5 rounded-[16px] border border-[#cfe1d3] bg-[#f3f8f4] px-4 py-3 text-sm font-bold text-[var(--pbr-green-dark)]">
                     {{ t('conflict.boundary') }}
                 </p>
             </header>
 
             <section class="mt-6 grid gap-4 md:grid-cols-3">
-                <div class="border border-slate-200 p-4">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <div class="pbr-surface p-4">
+                    <p class="text-xs font-bold uppercase tracking-wide text-[var(--pbr-muted)]">
                         {{ t('conflict.needsAttention') }}
                     </p>
                     <p class="mt-2 text-2xl font-bold" data-testid="conflict-attention-count">
@@ -374,16 +375,16 @@ const canEnterDirectDiscussion = computed(
                     </p>
                     <p class="mt-1 text-xs text-slate-500">Authorized cases only</p>
                 </div>
-                <div class="border border-slate-200 p-4">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <div class="pbr-surface p-4">
+                    <p class="text-xs font-bold uppercase tracking-wide text-[var(--pbr-muted)]">
                         {{ t('conflict.visibleCases') }}
                     </p>
                     <p class="mt-2 text-2xl font-bold" data-testid="conflict-visible-count">
                         {{ conflict.counts.visible_cases }}
                     </p>
                 </div>
-                <div class="border border-slate-200 p-4">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <div class="rounded-[18px] border border-[#e8d9ab] bg-[#fffaf0] p-4 shadow-[var(--pbr-shadow-xs)]">
+                    <p class="text-xs font-bold uppercase tracking-wide text-[#7d672d]">
                         {{ t('conflict.openCases') }}
                     </p>
                     <p class="mt-2 text-2xl font-bold">
@@ -1168,7 +1169,11 @@ const canEnterDirectDiscussion = computed(
                         <div class="divide-y divide-slate-100">
                             <div v-for="row in selected.participants" :key="row.id" class="px-4 py-3 text-sm">
                                 <span class="font-semibold">{{ row.participant_role }}</span>
-                                <span class="ml-2 text-slate-500">{{ row.membership_id ?? row.external_reference }}</span>
+                                <span class="ml-2 text-slate-500">{{ row.external_reference ?? 'Business member' }}</span>
+                                <details v-if="row.membership_id" class="mt-2 text-xs text-slate-500">
+                                    <summary class="cursor-pointer font-semibold">{{ t('governance.advancedDetails') }}</summary>
+                                    <code class="mt-1 block break-all">{{ row.membership_id }}</code>
+                                </details>
                             </div>
                         </div>
                     </div>
@@ -1267,6 +1272,7 @@ const canEnterDirectDiscussion = computed(
                     </div>
                 </section>
             </section>
+            </div>
         </main>
     </AuthenticatedLayout>
 </template>
