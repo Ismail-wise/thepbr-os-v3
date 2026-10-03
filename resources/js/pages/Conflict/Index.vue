@@ -289,7 +289,7 @@ const decisionForm = useForm({
 });
 
 const actionForm = useForm({
-    operations_role_id: '',
+    operations_role_id: firstRole,
     assigned_membership_id: props.conflict.current_membership_id,
     title: '',
     source_type: 'conflict_case',
@@ -1245,8 +1245,14 @@ const canEnterDirectDiscussion = computed(
                         @submit.prevent="actionForm.post('/conflict/cases/' + selected.id + '/actions', { preserveScroll: true })"
                     >
                         <h3 class="font-semibold">{{ t('conflict.followUp') }}</h3>
-                        <input v-model="actionForm.operations_role_id" required class="min-h-10 w-full border border-slate-300 px-2" placeholder="Current Operations Role ID" />
-                        <input v-model="actionForm.assigned_membership_id" required class="min-h-10 w-full border border-slate-300 px-2" placeholder="Assigned Membership ID" />
+                        <select v-model="actionForm.operations_role_id" required class="min-h-10 w-full border border-slate-300 px-2">
+                            <option value="" disabled>Choose Operations role</option>
+                            <option v-for="role in conflict.operations_roles" :key="role.id" :value="role.id">{{ role.name }}</option>
+                        </select>
+                        <select v-model="actionForm.assigned_membership_id" required class="min-h-10 w-full border border-slate-300 px-2">
+                            <option value="" disabled>Choose assignee</option>
+                            <option v-for="member in conflict.memberships" :key="member.id" :value="member.id">{{ member.email }}</option>
+                        </select>
                         <input v-model="actionForm.title" required class="min-h-10 w-full border border-slate-300 px-2" placeholder="Action title" />
                         <textarea v-model="actionForm.description" class="min-h-16 w-full border border-slate-300 p-2" placeholder="Description" />
                         <button type="submit" class="min-h-10 border border-slate-300 px-4 text-sm font-semibold">Create Operations Action</button>

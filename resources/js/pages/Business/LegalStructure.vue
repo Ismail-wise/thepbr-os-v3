@@ -288,8 +288,8 @@ const syncDecision = (versionId: string): void => {
     <Head :title="t('legal.title')" />
 
     <AuthenticatedLayout>
-        <main class="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
-            <header class="border-b border-slate-200 pb-5">
+        <main class="mx-auto min-h-screen w-full max-w-[1500px] px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <header class="pbr-surface p-5 sm:p-6">
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -319,19 +319,19 @@ const syncDecision = (versionId: string): void => {
                     </div>
                 </div>
 
-                <p class="mt-5 border-l-4 border-amber-600 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-950">
+                <p class="mt-5 rounded-[16px] border border-[#e8d9ab] bg-[#fffaf0] px-4 py-3 text-sm font-bold text-[#66531f]">
                     {{ t('legal.boundary') }}
                 </p>
             </header>
 
             <section class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Legal attention summary">
-                <div class="border border-slate-200 p-4">
+                <div class="pbr-surface p-4">
                     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                         {{ t('legal.needsAttention') }}
                     </p>
                     <p class="mt-2 text-2xl font-bold">{{ attentionTotal }}</p>
                 </div>
-                <div class="border border-slate-200 p-4">
+                <div class="pbr-surface p-4">
                     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                         {{ t('legal.blockedRequirements') }}
                     </p>
@@ -339,7 +339,7 @@ const syncDecision = (versionId: string): void => {
                         {{ legal.attention.blocked_requirements }}
                     </p>
                 </div>
-                <div class="border border-slate-200 p-4">
+                <div class="pbr-surface p-4">
                     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                         {{ t('legal.reviewRequired') }}
                     </p>
@@ -347,7 +347,7 @@ const syncDecision = (versionId: string): void => {
                         {{ legal.attention.review_required }}
                     </p>
                 </div>
-                <div class="border border-slate-200 p-4">
+                <div class="pbr-surface p-4">
                     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                         {{ t('legal.licensesDueSoon') }}
                     </p>
@@ -357,7 +357,7 @@ const syncDecision = (versionId: string): void => {
                 </div>
             </section>
 
-            <section class="mt-8">
+            <section class="pbr-surface mt-6 p-5 sm:p-6">
                 <div class="flex flex-wrap items-end justify-between gap-3">
                     <div>
                         <h2 class="text-lg font-bold">
@@ -423,7 +423,7 @@ const syncDecision = (versionId: string): void => {
                                 >
                                     <td class="px-3 py-3">
                                         <p class="font-semibold">{{ row.title }}</p>
-                                        <p class="mt-1 text-xs text-slate-500">{{ row.requirement_key }} · {{ row.category }}</p>
+                                        <p class="mt-1 text-xs capitalize text-slate-500">{{ row.requirement_key.replaceAll('_', ' ') }} · {{ row.category.replaceAll('_', ' ') }}</p>
                                         <p class="mt-1 max-w-xl text-xs text-slate-600">{{ row.description }}</p>
                                     </td>
                                     <td class="px-3 py-3">{{ row.jurisdiction_code }}</td>
@@ -497,7 +497,7 @@ const syncDecision = (versionId: string): void => {
                 </template>
             </section>
 
-            <section class="mt-8">
+            <section class="pbr-surface mt-6 p-5 sm:p-6">
                 <h2 class="text-lg font-bold">{{ t('legal.versionHistory') }}</h2>
                 <div class="mt-3 overflow-x-auto border border-slate-200">
                     <table class="min-w-full text-left text-sm">

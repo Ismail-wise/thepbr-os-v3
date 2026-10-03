@@ -1433,7 +1433,11 @@ const selectFormationStep = (key: string) => {
                         <div class="text-right text-sm">
                             <p class="font-semibold">{{ c.official }}</p>
                             <p class="mt-1 text-slate-600">
-                                {{ formation.capital.current_effective?.formal_record_version_id ?? c.none }}
+                                {{
+                                    formation.capital.current_effective
+                                        ? `${c.version} ${formation.capital.current_effective.scenario_revision}`
+                                        : c.none
+                                }}
                             </p>
                         </div>
                     </header>
@@ -1641,16 +1645,14 @@ const selectFormationStep = (key: string) => {
                         <table class="mt-4 w-full text-left text-sm">
                             <thead class="border-b border-slate-300 text-slate-500">
                                 <tr>
-                                    <th class="py-2">Proposal Version</th>
-                                    <th>{{ c.version }}</th>
+                                    <th class="py-2">{{ c.version }}</th>
                                     <th>{{ c.status }}</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="row in formation.capital.promotions" :key="row.id" class="border-b border-slate-200">
-                                    <td class="py-3 font-mono text-xs">{{ row.proposal_version_id }}</td>
-                                    <td>{{ row.scenario_revision }}</td>
+                                    <td class="py-3">{{ row.scenario_revision }}</td>
                                     <td class="font-semibold">{{ row.state }}</td>
                                     <td class="py-2">
                                         <button
@@ -1672,7 +1674,7 @@ const selectFormationStep = (key: string) => {
                                     </td>
                                 </tr>
                                 <tr v-if="formation.capital.promotions.length === 0">
-                                    <td colspan="4" class="py-5 text-slate-500">{{ c.noRows }}</td>
+                                    <td colspan="3" class="py-5 text-slate-500">{{ c.noRows }}</td>
                                 </tr>
                             </tbody>
                         </table>

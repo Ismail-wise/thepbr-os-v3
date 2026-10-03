@@ -56,6 +56,9 @@ const inviteForm = useForm({
 const effectLabel = (effect: string): string =>
     effect === 'deny' ? t('access.deny') : t('access.allow');
 
+const capabilityLabel = (capability: string): string =>
+    capability.replaceAll('.', ' ').replaceAll('_', ' ');
+
 const invitationError = (): string =>
     Object.values(inviteForm.errors)[0] ?? '';
 
@@ -87,8 +90,9 @@ const revokeInvitation = (invitationId: string) => {
 
 <template>
     <AuthenticatedLayout>
-        <main class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-            <header class="border-b border-slate-200 pb-6">
+        <main class="min-h-screen px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <div class="mx-auto w-full max-w-6xl space-y-5">
+            <header class="pbr-surface p-5 sm:p-6">
                 <h1 class="text-2xl font-semibold tracking-tight text-slate-950">
                     {{ t('access.title') }}
                 </h1>
@@ -105,7 +109,7 @@ const revokeInvitation = (invitationId: string) => {
                 </p>
             </header>
 
-            <section class="border-b border-slate-200 py-6">
+            <section class="pbr-surface p-5 sm:p-6">
                 <h2 class="text-lg font-semibold text-slate-950">
                     {{ t('access.membership') }}
                 </h2>
@@ -133,7 +137,7 @@ const revokeInvitation = (invitationId: string) => {
 
             <section
                 v-if="access.canManageInvitations"
-                class="border-b border-slate-200 py-6"
+                class="pbr-surface p-5 sm:p-6"
             >
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                     <div>
@@ -319,7 +323,7 @@ const revokeInvitation = (invitationId: string) => {
                 </div>
             </section>
 
-            <section class="border-b border-slate-200 py-6">
+            <section class="pbr-surface p-5 sm:p-6">
                 <h2 class="text-lg font-semibold text-slate-950">
                     {{ t('access.permissionProfiles') }}
                 </h2>
@@ -370,11 +374,9 @@ const revokeInvitation = (invitationId: string) => {
                                             v-for="capability in profile.capabilities"
                                             :key="capability"
                                         >
-                                            <code
-                                                class="break-all rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-800"
-                                            >
-                                                {{ capability }}
-                                            </code>
+                                            <span class="capitalize text-sm text-slate-700">
+                                                {{ capabilityLabel(capability) }}
+                                            </span>
                                         </li>
                                     </ul>
 
@@ -398,7 +400,7 @@ const revokeInvitation = (invitationId: string) => {
                 </div>
             </section>
 
-            <section class="py-6">
+            <section class="pbr-surface p-5 sm:p-6">
                 <h2 class="text-lg font-semibold text-slate-950">
                     {{ t('access.directGrants') }}
                 </h2>
@@ -434,11 +436,9 @@ const revokeInvitation = (invitationId: string) => {
                                 class="border-b border-slate-200"
                             >
                                 <td class="px-3 py-4">
-                                    <code
-                                        class="break-all rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-800"
-                                    >
-                                        {{ grant.capability }}
-                                    </code>
+                                    <span class="capitalize text-sm text-slate-700">
+                                        {{ capabilityLabel(grant.capability) }}
+                                    </span>
                                 </td>
                                 <td class="px-3 py-4 font-semibold text-slate-800">
                                     {{ effectLabel(grant.effect) }}
@@ -448,6 +448,7 @@ const revokeInvitation = (invitationId: string) => {
                     </table>
                 </div>
             </section>
+            </div>
         </main>
     </AuthenticatedLayout>
 </template>

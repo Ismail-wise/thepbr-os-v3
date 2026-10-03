@@ -66,9 +66,9 @@ const submit = () => {
 
 <template>
     <AuthenticatedLayout>
-        <main class="min-h-screen bg-white px-6 py-10 text-slate-950">
-            <section class="mx-auto max-w-3xl">
-                <header class="border-b border-slate-200 pb-6">
+        <main class="min-h-screen px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <section class="mx-auto max-w-3xl space-y-5">
+                <header class="pbr-surface p-5 sm:p-6">
                     <p class="text-sm font-semibold uppercase tracking-wider text-slate-500">
                         {{ t('common.brand') }}
                     </p>
@@ -101,7 +101,7 @@ const submit = () => {
                     {{ success }}
                 </div>
 
-                <form class="mt-8 space-y-8" @submit.prevent="submit">
+                <form class="pbr-surface space-y-8 p-5 sm:p-6" @submit.prevent="submit">
                     <section>
                         <label for="business-name" class="block text-sm font-semibold">
                             {{ t('businessCreate.name') }}

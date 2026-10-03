@@ -53,9 +53,9 @@ const submit = () => {
 
 <template>
     <AuthenticatedLayout>
-        <main class="min-h-screen bg-white px-6 py-12 text-slate-950">
-            <section class="mx-auto max-w-3xl">
-                <header class="flex flex-wrap items-start justify-between gap-6 border-b border-slate-200 pb-6">
+        <main class="min-h-screen px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <section class="mx-auto max-w-3xl space-y-5">
+                <header class="pbr-surface flex flex-wrap items-start justify-between gap-6 p-5 sm:p-6">
                     <div>
                         <p class="text-sm font-semibold uppercase tracking-wider text-slate-500">
                             {{ t('common.brand') }}
@@ -78,7 +78,7 @@ const submit = () => {
                     </Link>
                 </header>
 
-                <form class="space-y-8 py-8" @submit.prevent="submit">
+                <form class="pbr-surface space-y-8 p-5 sm:p-6" @submit.prevent="submit">
                     <div
                         v-if="saved"
                         role="status"

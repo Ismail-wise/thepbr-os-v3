@@ -60,10 +60,10 @@ const loadMore = () => {
 <template>
     <AuthenticatedLayout>
         <main
-            class="min-h-screen bg-white px-4 py-8 text-slate-950 sm:px-6 lg:px-8"
+            class="min-h-screen px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7"
         >
-            <section class="mx-auto max-w-5xl">
-                <header class="border-b border-slate-200 pb-6">
+            <section class="mx-auto max-w-5xl space-y-5">
+                <header class="pbr-surface p-5 sm:p-6">
                     <h1 class="text-2xl font-semibold tracking-tight">
                         {{ t('activity.title') }}
                     </h1>
@@ -73,7 +73,7 @@ const loadMore = () => {
                     </p>
                 </header>
 
-                <section class="py-6" aria-live="polite">
+                <section class="pbr-surface p-5 sm:p-6" aria-live="polite">
                     <ActivityTimeline :items="items" />
 
                     <div v-if="nextCursor !== null" class="mt-6">

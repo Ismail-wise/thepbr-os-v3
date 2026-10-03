@@ -158,8 +158,8 @@ const shortHash = (hash: string | null): string | null =>
     <Head :title="t('health.title')" />
 
     <AuthenticatedLayout>
-        <div class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-            <header class="border-b border-slate-200 pb-5">
+        <div class="mx-auto max-w-7xl space-y-5 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+            <header class="pbr-surface p-5 sm:p-6">
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                     {{ t('health.eyebrow') }}
                 </p>
@@ -184,7 +184,7 @@ const shortHash = (hash: string | null): string | null =>
 
             <section
                 aria-labelledby="health-summary-heading"
-                class="border-b border-slate-200 pb-5"
+                class="pbr-surface p-5 sm:p-6"
             >
                 <h2 id="health-summary-heading" class="text-sm font-semibold text-slate-950">
                     {{ t('health.summary') }}
@@ -229,7 +229,7 @@ const shortHash = (hash: string | null): string | null =>
                 </dl>
             </section>
 
-            <section class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <section class="pbr-surface overflow-hidden">
                 <div class="border-b border-slate-200 px-5 py-4">
                     <h2 class="text-sm font-semibold text-slate-950">
                         {{ t('health.register') }}
@@ -291,9 +291,10 @@ const shortHash = (hash: string | null): string | null =>
                                         <p v-if="requirement.source.version" class="mt-1">
                                             v{{ requirement.source.version }}
                                         </p>
-                                        <p v-if="shortHash(requirement.source.hash)" class="mt-1 font-mono">
-                                            {{ shortHash(requirement.source.hash) }}
-                                        </p>
+                                        <details v-if="shortHash(requirement.source.hash)" class="mt-2 text-slate-500">
+                                            <summary class="cursor-pointer font-semibold">{{ t('governance.advancedDetails') }}</summary>
+                                            <p class="mt-1 font-mono">{{ shortHash(requirement.source.hash) }}</p>
+                                        </details>
                                     </template>
                                     <span v-else>{{ t('health.notAvailable') }}</span>
                                 </td>

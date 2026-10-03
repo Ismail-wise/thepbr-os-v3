@@ -2130,6 +2130,7 @@ jobs:
 
           test -f tests/E2E/f7-lifecycle-intelligence.spec.ts
           test -f tests/E2E/ux3-account-experience.spec.ts
+          test -f tests/E2E/final-completion.spec.ts
           test -f tests/E2E/support/prepare-f7-e2e.php
 
           f7_e2e_password="PbrF7_$(openssl rand -hex 32)"
@@ -2197,7 +2198,8 @@ jobs:
           npm run test:e2e -- \
             --project=chromium-desktop \
             tests/E2E/f7-lifecycle-intelligence.spec.ts \
-            tests/E2E/ux3-account-experience.spec.ts
+            tests/E2E/ux3-account-experience.spec.ts \
+            tests/E2E/final-completion.spec.ts
 
           npm run test:e2e -- \
             --project=chromium-mobile \
@@ -2207,6 +2209,18 @@ jobs:
           unset f7_e2e_password
 
           echo "F7 lifecycle intelligence browser journey: PASS"
+
+      - name: Upload Final Hybrid UAT screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: final-hybrid-uat-evidence
+          path: |
+            test-results/final-*-overview.png
+            test-results/final-*-governance.png
+            test-results/final-*-exit.png
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Stop disposable Redis E2E service
         if: always()
