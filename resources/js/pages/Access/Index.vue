@@ -56,9 +56,6 @@ const inviteForm = useForm({
 const effectLabel = (effect: string): string =>
     effect === 'deny' ? t('access.deny') : t('access.allow');
 
-const capabilityLabel = (capability: string): string =>
-    capability.replaceAll('.', ' ').replaceAll('_', ' ');
-
 const invitationError = (): string =>
     Object.values(inviteForm.errors)[0] ?? '';
 
@@ -374,9 +371,11 @@ const revokeInvitation = (invitationId: string) => {
                                             v-for="capability in profile.capabilities"
                                             :key="capability"
                                         >
-                                            <span class="capitalize text-sm text-slate-700">
-                                                {{ capabilityLabel(capability) }}
-                                            </span>
+                                            <code
+                                                class="break-all rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-800"
+                                            >
+                                                {{ capability }}
+                                            </code>
                                         </li>
                                     </ul>
 
@@ -436,9 +435,11 @@ const revokeInvitation = (invitationId: string) => {
                                 class="border-b border-slate-200"
                             >
                                 <td class="px-3 py-4">
-                                    <span class="capitalize text-sm text-slate-700">
-                                        {{ capabilityLabel(grant.capability) }}
-                                    </span>
+                                    <code
+                                        class="break-all rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-800"
+                                    >
+                                        {{ grant.capability }}
+                                    </code>
                                 </td>
                                 <td class="px-3 py-4 font-semibold text-slate-800">
                                     {{ effectLabel(grant.effect) }}
