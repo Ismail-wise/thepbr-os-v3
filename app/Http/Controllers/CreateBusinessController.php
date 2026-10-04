@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Application\Businesses\CreateBusiness;
-use App\Application\Identity\HasBusinessCreationEntitlement;
 use App\Application\Businesses\ResolveCurrentBusiness;
+use App\Application\Identity\HasBusinessCreationEntitlement;
 use App\Domain\Businesses\Enums\BusinessOriginType;
 use App\Domain\Businesses\Enums\BusinessStage;
 use App\Http\Middleware\EnsureCurrentBusinessContext;

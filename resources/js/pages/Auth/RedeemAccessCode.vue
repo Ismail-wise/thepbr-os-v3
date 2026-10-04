@@ -28,7 +28,8 @@ const form = useForm({
 });
 
 const accessCodeErrors = (): string[] => {
-    const message = form.errors.access_code;
+    const message =
+        Object.entries(form.errors).find(([key]) => key === 'access_code')?.[1] ?? '';
 
     return message ? [message] : [];
 };
