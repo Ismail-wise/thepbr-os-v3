@@ -122,6 +122,8 @@ return new class extends Migration
                      AND redeemed_by_user_id IS NULL
                      AND redeemed_at IS NULL
                      AND revoked_at IS NOT NULL
+                     AND revoked_by_label IS NOT NULL
+                     AND revocation_reason IS NOT NULL
                      AND btrim(revoked_by_label) <> ''
                      AND btrim(revocation_reason) <> ''
                  )

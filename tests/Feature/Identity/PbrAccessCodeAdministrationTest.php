@@ -137,6 +137,32 @@ final class PbrAccessCodeAdministrationTest extends TestCase
         ]);
     }
 
+    public function test_database_rejects_revocation_without_auditable_evidence(): void
+    {
+        $result = $this->app
+            ->make(IssuePbrAccessCode::class)
+            ->handle(
+                boundEmail: null,
+                expiresInHours: 24,
+                clientReference: null,
+                batchReference: null,
+                notes: null,
+                actorLabel: 'PBR Administrator',
+                reason: 'Revocation constraint probe',
+            );
+
+        $this->expectException(QueryException::class);
+
+        DB::table('pbr_access_codes')
+            ->where('id', $result['id'])
+            ->update([
+                'status' => 'revoked',
+                'revoked_at' => now(),
+                'revoked_by_label' => null,
+                'revocation_reason' => null,
+            ]);
+    }
+
     public function test_admin_commands_exist_without_accepting_a_raw_token_argument(): void
     {
         foreach ([
