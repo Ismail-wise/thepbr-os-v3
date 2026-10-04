@@ -156,8 +156,8 @@ final class BusinessControlCenterTest extends TestCase
             ->firstWhere('key', 'partner_dynamics');
 
         self::assertIsArray($partnerDynamics);
-        self::assertTrue($partnerDynamics['disabled']);
-        self::assertNull($partnerDynamics['route']);
+        self::assertFalse($partnerDynamics['disabled']);
+        self::assertSame('/partner-dynamics', $partnerDynamics['route']);
     }
 
     public function test_existing_business_journey_includes_conditional_business_valuation(): void

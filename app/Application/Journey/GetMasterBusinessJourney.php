@@ -40,6 +40,7 @@ final class GetMasterBusinessJourney
         ?array $health,
     ): array {
         $businessId = (string) $business->getKey();
+        $userId = (string) $user->getKey();
         $existingBusiness = $business->origin_type
             === BusinessOriginType::ExistingBusinessImportedIntoPbr;
         $currentAreas = $this->currentEffectiveAreas($health);
@@ -62,7 +63,7 @@ final class GetMasterBusinessJourney
             ],
             [
                 'key' => 'partner_dynamics',
-                'route' => null,
+                'route' => '/partner-dynamics',
                 'capabilities' => [CapabilityCatalog::PARTNERS_VIEW],
                 'applicable' => true,
             ],
@@ -148,6 +149,7 @@ final class GetMasterBusinessJourney
             )
             ->map(function (array $step) use (
                 $businessId,
+                $userId,
                 $currentAreas,
             ): array {
                 return [
@@ -156,6 +158,7 @@ final class GetMasterBusinessJourney
                     'recorded' => $this->hasRecordedData(
                         $step['key'],
                         $businessId,
+                        $userId,
                         $currentAreas,
                     ),
                 ];
@@ -247,6 +250,7 @@ final class GetMasterBusinessJourney
     private function hasRecordedData(
         string $key,
         string $businessId,
+        string $userId,
         array $currentAreas,
     ): bool {
         return match ($key) {
@@ -256,8 +260,13 @@ final class GetMasterBusinessJourney
             'business_valuation' => DB::table('valuations')
                 ->where('business_id', $businessId)
                 ->exists(),
-            'partner_dynamics' => DB::table('partner_dynamics_assessment_references')
-                ->where('business_id', $businessId)
+            'partner_dynamics' => DB::table('partner_dynamics_personal_assessments')
+                ->where('user_id', $userId)
+                ->where('assessment_version', (string) config(
+                    'partner_dynamics.version',
+                    'v1',
+                ))
+                ->where('status', 'completed')
                 ->exists(),
             'capital' => $this->hasEffectiveCapitalPlan($businessId),
             'contributions' => DB::table('contributions')

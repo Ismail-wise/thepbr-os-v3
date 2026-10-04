@@ -15,6 +15,7 @@ const currentPath = computed(() => {
 const items = computed(() => [
     { href: '/', label: t('account.navHome') },
     { href: '/account/businesses', label: t('account.navBusinesses') },
+    { href: '/partner-dynamics', label: t('account.navPartnerDynamics') },
     { href: '/account/work', label: t('account.navWork') },
     { href: '/account/notifications', label: t('account.navNotifications') },
     { href: '/account/approvals', label: t('account.navApprovals') },

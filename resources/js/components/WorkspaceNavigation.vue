@@ -97,6 +97,7 @@ const groups: NavGroup[] = [
     {
         label: 'nav.group.account',
         items: [
+            { href: '/partner-dynamics', label: 'nav.partnerDynamics' },
             { href: '/account/settings', label: 'nav.profileSettings' },
         ],
     },

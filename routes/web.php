@@ -26,6 +26,7 @@ use App\Presentation\Http\Controllers\Import\ImportController;
 use App\Presentation\Http\Controllers\Legal\LegalArchitectureController;
 use App\Presentation\Http\Controllers\Operations\OperationsWorkspaceController;
 use App\Presentation\Http\Controllers\PartnerChanges\PartnerChangesWorkspaceController;
+use App\Presentation\Http\Controllers\PartnerDynamics\PartnerDynamicsController;
 use App\Presentation\Http\Controllers\Partnership\PartnershipWorkflowController;
 use App\Presentation\Http\Controllers\Partnership\PartnershipWorkspaceController;
 use App\Presentation\Http\Controllers\Portability\PortabilityController;
@@ -82,6 +83,30 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
         '/',
         [AccountExperienceController::class, 'home'],
     )->name('home');
+    Route::get(
+        '/partner-dynamics',
+        [PartnerDynamicsController::class, 'index'],
+    )->name('partner-dynamics.index');
+    Route::post(
+        '/partner-dynamics/start',
+        [PartnerDynamicsController::class, 'start'],
+    )->name('partner-dynamics.start');
+    Route::post(
+        '/partner-dynamics/retake',
+        [PartnerDynamicsController::class, 'retake'],
+    )->name('partner-dynamics.retake');
+    Route::get(
+        '/partner-dynamics/assessments/{assessment}/steps/{step}',
+        [PartnerDynamicsController::class, 'step'],
+    )->whereNumber('step')->name('partner-dynamics.assessment.step');
+    Route::put(
+        '/partner-dynamics/assessments/{assessment}/steps/{step}',
+        [PartnerDynamicsController::class, 'saveStep'],
+    )->whereNumber('step')->name('partner-dynamics.assessment.step.save');
+    Route::get(
+        '/partner-dynamics/results/{assessment}',
+        [PartnerDynamicsController::class, 'result'],
+    )->name('partner-dynamics.result');
     Route::get(
         '/account/businesses',
         [AccountExperienceController::class, 'businesses'],

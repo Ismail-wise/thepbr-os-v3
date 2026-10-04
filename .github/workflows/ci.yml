@@ -1281,6 +1281,10 @@ jobs:
             tests/E2E/f1-boss-uat.spec.ts
 
           npm run test:e2e -- \
+            --project=chromium-desktop \
+            tests/E2E/partner-dynamics-personal.spec.ts
+
+          npm run test:e2e -- \
             --project=chromium-mobile \
             tests/E2E/f1-boss-uat.spec.ts
 
