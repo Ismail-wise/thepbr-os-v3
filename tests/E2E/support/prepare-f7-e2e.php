@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use App\Application\Businesses\CreateBusiness;
 use App\Application\Identity\ChangeAccountStatus;
+use App\Application\Identity\IssuePbrAccessCode;
 use App\Application\Identity\ProvisionAccount;
+use App\Application\Identity\RedeemPbrAccessCode;
 use App\Application\Partnership\DueDiligenceWorkflow;
 use App\Application\Partnership\PartnerDirectory;
 use App\Domain\Businesses\Enums\BusinessOriginType;
@@ -111,6 +113,26 @@ $app->make(ChangeAccountStatus::class)->handle(
 );
 
 $owner = User::query()->where('email', $ownerEmail)->sole();
+
+$issued = $app->make(IssuePbrAccessCode::class)->handle(
+    boundEmail: $ownerEmail,
+    expiresInHours: 24,
+    clientReference: 'F7-E2E',
+    batchReference: null,
+    notes: 'Deterministic lifecycle UAT entitlement',
+    actorLabel: 'F7 E2E Fixture',
+    reason: 'Authorize create-business coverage in lifecycle UAT',
+);
+
+$app->make(RedeemPbrAccessCode::class)->handle(
+    $issued['token'],
+    $ownerEmail,
+    $owner,
+    '',
+    '',
+    LanguageMode::English,
+    'UTC',
+);
 
 $business = $app->make(CreateBusiness::class)->handle(
     $owner,
