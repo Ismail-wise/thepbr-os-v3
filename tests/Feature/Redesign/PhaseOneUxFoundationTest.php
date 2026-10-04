@@ -163,6 +163,57 @@ final class PhaseOneUxFoundationTest extends TestCase
         );
     }
 
+    public function test_responsive_multilingual_foundation_avoids_fixed_text_geometry(): void
+    {
+        $css = $this->source('resources/css/app.css');
+
+        foreach ([
+            '"Noto Sans Myanmar"',
+            '"Noto Sans Thai"',
+            '"Noto Sans SC"',
+            '"Noto Sans JP"',
+            '.pbr-reading-width',
+            '.pbr-form-grid',
+            'minmax(0, 1fr)',
+            '.pbr-action-row',
+            '.pbr-safe-copy',
+            'overflow-wrap: anywhere',
+            '.pbr-busy-spinner',
+            'prefers-reduced-motion',
+        ] as $contract) {
+            $this->assertStringContainsString($contract, $css);
+        }
+
+        foreach ([
+            'PbrFormSection.vue',
+            'PbrActionBar.vue',
+        ] as $component) {
+            $this->assertFileExists(
+                base_path('resources/js/components/ui/'.$component),
+            );
+        }
+    }
+
+    public function test_navigation_feedback_uses_inertia_lifecycle_without_owning_domain_state(): void
+    {
+        $source = $this->source(
+            'resources/js/composables/useNavigationFeedback.ts',
+        );
+
+        foreach ([
+            "router.on('start'",
+            "router.on('finish'",
+            'navigating.value = true',
+            'navigating.value = false',
+            'onBeforeUnmount',
+        ] as $contract) {
+            $this->assertStringContainsString($contract, $source);
+        }
+
+        $this->assertStringNotContainsString('fetch(', $source);
+        $this->assertStringNotContainsString('axios', $source);
+    }
+
     private function source(string $path): string
     {
         $source = file_get_contents(base_path($path));
