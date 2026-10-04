@@ -102,6 +102,67 @@ final class PhaseOneUxFoundationTest extends TestCase
         );
     }
 
+    public function test_autosave_foundation_preserves_dirty_state_when_new_changes_arrive_during_save(): void
+    {
+        $source = $this->source(
+            'resources/js/composables/useAutosaveDraft.ts',
+        );
+
+        foreach ([
+            "state.value = 'dirty'",
+            "state.value = 'saving'",
+            "state.value = 'saved'",
+            'savingRevision === revision',
+            'structuredClone(options.source())',
+            'onBeforeUnmount',
+        ] as $contract) {
+            $this->assertStringContainsString($contract, $source);
+        }
+
+        $this->assertFileExists(
+            base_path('resources/js/composables/useUnsavedChangesGuard.ts'),
+        );
+    }
+
+    public function test_loading_save_and_error_feedback_primitives_hide_technical_field_keys(): void
+    {
+        foreach ([
+            'PbrDraftStatus.vue',
+            'PbrBusyState.vue',
+            'PbrErrorSummary.vue',
+        ] as $component) {
+            $this->assertFileExists(
+                base_path('resources/js/components/ui/'.$component),
+            );
+        }
+
+        $button = $this->source(
+            'resources/js/components/ui/PbrButton.vue',
+        );
+
+        foreach ([
+            'busy?: boolean',
+            'busyLabel?: string',
+            ':aria-busy=',
+            'pbr-busy-spinner',
+        ] as $contract) {
+            $this->assertStringContainsString($contract, $button);
+        }
+
+        $errors = $this->source(
+            'resources/js/support/humanErrors.ts',
+        );
+
+        $this->assertStringContainsString(
+            'Object.values(errors)',
+            $errors,
+        );
+        $this->assertStringNotContainsString(
+            'Object.keys(errors)',
+            $errors,
+        );
+    }
+
     private function source(string $path): string
     {
         $source = file_get_contents(base_path($path));

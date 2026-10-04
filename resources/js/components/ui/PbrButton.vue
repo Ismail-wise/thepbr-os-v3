@@ -8,18 +8,24 @@ const props = withDefaults(
         type?: 'button' | 'submit' | 'reset';
         variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
         disabled?: boolean;
+        busy?: boolean;
+        busyLabel?: string;
     }>(),
     {
         href: undefined,
         type: 'button',
         variant: 'secondary',
         disabled: false,
+        busy: false,
+        busyLabel: 'Working...',
     },
 );
 
+const blocked = computed(() => props.disabled || props.busy);
+
 const classes = computed(() => {
     const base =
-        'pbr-touch inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-bold focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-55';
+        'pbr-touch inline-flex min-w-0 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-bold leading-5 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-55';
 
     const variants = {
         primary:
@@ -39,19 +45,38 @@ const classes = computed(() => {
 <template>
     <Link
         v-if="href"
-        :href="href"
+        :href="blocked ? undefined : href"
         :class="classes"
-        :aria-disabled="disabled ? 'true' : undefined"
+        :aria-disabled="blocked ? 'true' : undefined"
+        :aria-busy="busy ? 'true' : undefined"
+        :tabindex="blocked ? -1 : undefined"
     >
-        <slot />
+        <span
+            v-if="busy"
+            class="pbr-busy-spinner h-3.5 w-3.5 shrink-0 rounded-full border-2 border-current border-r-transparent"
+            aria-hidden="true"
+        />
+        <span class="min-w-0 break-words">
+            <template v-if="busy">{{ busyLabel }}</template>
+            <slot v-else />
+        </span>
     </Link>
 
     <button
         v-else
         :type="type"
-        :disabled="disabled"
+        :disabled="blocked"
         :class="classes"
+        :aria-busy="busy ? 'true' : undefined"
     >
-        <slot />
+        <span
+            v-if="busy"
+            class="pbr-busy-spinner h-3.5 w-3.5 shrink-0 rounded-full border-2 border-current border-r-transparent"
+            aria-hidden="true"
+        />
+        <span class="min-w-0 break-words">
+            <template v-if="busy">{{ busyLabel }}</template>
+            <slot v-else />
+        </span>
     </button>
 </template>
