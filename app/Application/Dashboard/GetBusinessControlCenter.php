@@ -7,6 +7,7 @@ namespace App\Application\Dashboard;
 use App\Application\Activity\ListAuthorizedBusinessActivity;
 use App\Application\Governance\GetGovernanceCommandCenter;
 use App\Application\Health\GetBusinessHealth;
+use App\Application\Journey\GetMasterBusinessJourney;
 use App\Domain\Access\ValueObjects\Capability;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
@@ -16,6 +17,7 @@ final class GetBusinessControlCenter
     public function __construct(
         private readonly GetBusinessHealth $health,
         private readonly GetGovernanceCommandCenter $governance,
+        private readonly GetMasterBusinessJourney $journey,
         private readonly ListAuthorizedBusinessActivity $activity,
     ) {}
 
@@ -49,6 +51,7 @@ final class GetBusinessControlCenter
                 'workspaceStatus' => $business->workspace_status->value,
                 'baseCurrency' => (string) $business->base_currency,
             ],
+            'journey' => $this->journey->execute($user, $business, $health),
             'attention' => $this->attention(
                 $requirements,
                 $governance,

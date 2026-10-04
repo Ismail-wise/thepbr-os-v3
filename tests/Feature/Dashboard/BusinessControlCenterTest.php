@@ -114,6 +114,79 @@ final class BusinessControlCenterTest extends TestCase
         ]);
     }
 
+    public function test_overview_exposes_the_authorized_master_journey_in_the_approved_order(): void
+    {
+        $user = $this->activeUser('overview-journey@example.test');
+        $business = $this->createOwnedBusiness(
+            $user,
+            'Journey Business',
+        );
+
+        $response = $this->actingAs($user)
+            ->withSession([
+                EnsureCurrentBusinessContext::SESSION_KEY => (string) $business->getKey(),
+            ])
+            ->get('/overview');
+
+        $response->assertOk();
+
+        $journey = $response->viewData('page')['props']['controlCenter']['journey'];
+        $keys = array_column($journey['steps'], 'key');
+
+        self::assertSame('new', $journey['variant']);
+        self::assertSame([
+            'business_model',
+            'partner_dynamics',
+            'capital',
+            'contributions',
+            'equity',
+            'governance',
+            'roles_operations',
+            'finance',
+            'rewards',
+            'transfer',
+            'exit',
+            'conflict',
+            'closure',
+        ], $keys);
+        self::assertNotContains('business_valuation', $keys);
+        self::assertSame('current', $journey['steps'][0]['state']);
+
+        $partnerDynamics = collect($journey['steps'])
+            ->firstWhere('key', 'partner_dynamics');
+
+        self::assertIsArray($partnerDynamics);
+        self::assertTrue($partnerDynamics['disabled']);
+        self::assertNull($partnerDynamics['route']);
+    }
+
+    public function test_existing_business_journey_includes_conditional_business_valuation(): void
+    {
+        $user = $this->activeUser('overview-existing-journey@example.test');
+        $business = $this->createOwnedBusiness(
+            $user,
+            'Existing Journey Business',
+            BusinessOriginType::ExistingBusinessImportedIntoPbr,
+        );
+
+        $response = $this->actingAs($user)
+            ->withSession([
+                EnsureCurrentBusinessContext::SESSION_KEY => (string) $business->getKey(),
+            ])
+            ->get('/overview');
+
+        $response->assertOk();
+
+        $journey = $response->viewData('page')['props']['controlCenter']['journey'];
+        $keys = array_column($journey['steps'], 'key');
+
+        self::assertSame('existing', $journey['variant']);
+        self::assertSame('business_model', $keys[0]);
+        self::assertSame('business_valuation', $keys[1]);
+        self::assertSame('partner_dynamics', $keys[2]);
+        self::assertCount(14, $keys);
+    }
+
     public function test_overview_is_tenant_scoped_to_selected_business(): void
     {
         $user = $this->activeUser('overview-tenant@example.test');
@@ -177,6 +250,8 @@ final class BusinessControlCenterTest extends TestCase
                     ->where('controlCenter.health', null)
                     ->where('controlCenter.governance', null)
                     ->where('controlCenter.recentActivity', null)
+                    ->where('controlCenter.journey.variant', 'new')
+                    ->has('controlCenter.journey.steps', 0)
                     ->has('controlCenter.attention', 0)
                     ->has('controlCenter.nextActions', 0)
                     ->has('controlCenter.upcoming', 0),
@@ -303,11 +378,12 @@ final class BusinessControlCenterTest extends TestCase
     private function createOwnedBusiness(
         User $user,
         string $name,
+        BusinessOriginType $origin = BusinessOriginType::StartedThroughPbr,
     ): Business {
         return $this->app->make(CreateBusiness::class)->handle(
             $user,
             $name,
-            BusinessOriginType::StartedThroughPbr,
+            $origin,
             BusinessStage::Planning,
             'USD',
         );

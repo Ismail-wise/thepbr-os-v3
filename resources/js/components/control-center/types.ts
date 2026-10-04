@@ -53,3 +53,15 @@ export type GovernanceSummary = {
     pendingSignatures: number;
     openActions: number;
 };
+
+export type MasterJourneyStep = {
+    key: string;
+    route: string | null;
+    state: 'recorded' | 'current' | 'next' | 'available';
+    disabled: boolean;
+};
+
+export type MasterJourneyPayload = {
+    variant: 'new' | 'existing';
+    steps: MasterJourneyStep[];
+};

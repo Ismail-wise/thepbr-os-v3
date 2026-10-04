@@ -268,6 +268,42 @@ final class PhaseOneUxFoundationTest extends TestCase
         );
     }
 
+    public function test_master_journey_shell_reuses_the_guided_stepper_without_owning_business_truth(): void
+    {
+        $component = $this->source(
+            'resources/js/components/journey/MasterBusinessJourney.vue',
+        );
+        $controlCenter = $this->source(
+            'resources/js/pages/Business/ControlCenter.vue',
+        );
+        $orchestrator = $this->source(
+            'app/Application/Journey/GetMasterBusinessJourney.php',
+        );
+
+        foreach ([
+            '<GuidedJourneyStepper',
+            '<details',
+            'currentStep',
+            'nextStep',
+            'router.visit',
+            "t('journey.crossCuttingNote')",
+        ] as $contract) {
+            $this->assertStringContainsString($contract, $component);
+        }
+
+        $this->assertStringContainsString(
+            '<MasterBusinessJourney',
+            $controlCenter,
+        );
+        $this->assertStringContainsString(
+            'Presentation-only orchestration over existing authorized truth.',
+            $orchestrator,
+        );
+        $this->assertStringNotContainsString('->insert(', $orchestrator);
+        $this->assertStringNotContainsString('->update(', $orchestrator);
+        $this->assertStringNotContainsString('->delete(', $orchestrator);
+    }
+
     private function source(string $path): string
     {
         $source = file_get_contents(base_path($path));

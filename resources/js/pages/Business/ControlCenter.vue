@@ -5,6 +5,7 @@ import AttentionQueue from '../../components/control-center/AttentionQueue.vue';
 import BusinessHero from '../../components/control-center/BusinessHero.vue';
 import BusinessSnapshotGrid from '../../components/control-center/BusinessSnapshotGrid.vue';
 import HealthReadinessStrip from '../../components/control-center/HealthReadinessStrip.vue';
+import MasterBusinessJourney from '../../components/journey/MasterBusinessJourney.vue';
 import NextBestActionCard from '../../components/control-center/NextBestActionCard.vue';
 import OperatingAreaCard from '../../components/control-center/OperatingAreaCard.vue';
 import RecentActivityPanel from '../../components/control-center/RecentActivityPanel.vue';
@@ -17,12 +18,14 @@ import type {
     GovernanceSummary,
     HealthRequirement,
     HealthSummary,
+    MasterJourneyPayload,
     NextActionItem,
     UpcomingItem,
 } from '../../components/control-center/types';
 
 type ControlCenterPayload = {
     business: BusinessSummary;
+    journey: MasterJourneyPayload;
     attention: AttentionItem[];
     health: {
         summary: HealthSummary;
@@ -62,6 +65,11 @@ const operatingAreas = computed(() =>
                     :business="controlCenter.business"
                     :health-available="controlCenter.health !== null"
                     :governance-available="controlCenter.governance !== null"
+                />
+
+                <MasterBusinessJourney
+                    :variant="controlCenter.journey.variant"
+                    :steps="controlCenter.journey.steps"
                 />
 
                 <AttentionQueue :items="controlCenter.attention" />
