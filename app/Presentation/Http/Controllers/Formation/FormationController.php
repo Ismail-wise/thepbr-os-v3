@@ -106,6 +106,58 @@ final class FormationController
         return back();
     }
 
+    public function saveBusinessModelFoundation(
+        Request $request,
+        BusinessModelPlanning $planning,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $money = [
+            'nullable',
+            'regex:/\A\d{1,16}(?:\.\d{1,2})?\z/',
+        ];
+
+        $data = $request->validate([
+            'expected_revision' => ['required', 'integer', 'min:0'],
+            'business_purpose' => ['nullable', 'string', 'max:8000'],
+            'market' => ['nullable', 'string', 'max:8000'],
+            'location' => ['nullable', 'string', 'max:4000'],
+            'operating_model' => ['nullable', 'string', 'max:8000'],
+            'excluded_activities' => ['nullable', 'string', 'max:8000'],
+            'pricing_notes' => ['nullable', 'string', 'max:8000'],
+            'unit_name' => ['nullable', 'string', 'max:80'],
+            'average_selling_price' => $money,
+            'variable_cost_per_unit' => $money,
+            'monthly_fixed_cost' => $money,
+            'expected_monthly_units' => [
+                'nullable',
+                'regex:/\A\d{1,16}(?:\.\d{1,2})?\z/',
+            ],
+            'scalability_strategy' => ['nullable', 'string', 'max:8000'],
+            'scalability_constraints' => ['nullable', 'string', 'max:8000'],
+            'first_12_month_plan' => ['nullable', 'string', 'max:12000'],
+        ]);
+
+        $fields = [];
+
+        foreach ($this->businessModelFoundationKeys() as $key) {
+            $fields[$key] = $data[$key] ?? null;
+        }
+
+        $result = $this->validatedCall(
+            fn () => $planning->saveOperatingProfile(
+                $user,
+                $business,
+                (int) $data['expected_revision'],
+                $fields,
+            ),
+        );
+
+        abort_if($result === null, 404);
+
+        return back();
+    }
+
     public function addAssumption(
         Request $request,
         NewBusinessPlanning $planning,
@@ -742,6 +794,29 @@ final class FormationController
                 'formation' => $exception->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function businessModelFoundationKeys(): array
+    {
+        return [
+            'business_purpose',
+            'market',
+            'location',
+            'operating_model',
+            'excluded_activities',
+            'pricing_notes',
+            'unit_name',
+            'average_selling_price',
+            'variable_cost_per_unit',
+            'monthly_fixed_cost',
+            'expected_monthly_units',
+            'scalability_strategy',
+            'scalability_constraints',
+            'first_12_month_plan',
+        ];
     }
 
     /**

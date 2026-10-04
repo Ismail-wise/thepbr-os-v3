@@ -247,6 +247,11 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 [FormationController::class, 'saveBmc'],
             )->name('formation.bmc.update');
 
+            Route::put(
+                '/formation/business-model/foundation',
+                [FormationController::class, 'saveBusinessModelFoundation'],
+            )->name('formation.business-model.foundation.update');
+
             Route::post(
                 '/formation/new/assumptions',
                 [FormationController::class, 'addAssumption'],

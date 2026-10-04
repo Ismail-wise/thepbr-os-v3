@@ -14,6 +14,7 @@ final class GetFormationWorkspace
 {
     public function __construct(
         private readonly FormationActorContext $actor,
+        private readonly BusinessModelEconomicsCalculator $economics,
     ) {}
 
     public function execute(
@@ -45,6 +46,17 @@ final class GetFormationWorkspace
             $business,
             CapabilityCatalog::CAPITAL_VIEW,
         );
+
+        $operatingProfile = $canViewModel
+            ? $this->row(
+                'business_model_operating_profiles',
+                $businessId,
+            )
+            : null;
+
+        $demandSummary = $canViewModel
+            ? $this->demandSummary($businessId)
+            : null;
 
         $promotions = $canViewCapital
             ? DB::table('capital_plan_promotions')
@@ -140,6 +152,15 @@ final class GetFormationWorkspace
                     'business_model_canvases',
                     $businessId,
                 )
+                : null,
+            'business_model_foundation' => $canViewModel
+                ? [
+                    'operating_profile' => $operatingProfile,
+                    'economics' => $this->economics->calculate(
+                        $operatingProfile,
+                    ),
+                    'demand' => $demandSummary,
+                ]
                 : null,
             'permissions' => [
                 'can_manage_formation' => $this->actor->allows(
@@ -280,5 +301,50 @@ final class GetFormationWorkspace
                 static fn (object $row): array => (array) $row,
             )
             ->all();
+    }
+
+    /**
+     * @return array<string,int|string>
+     */
+    private function demandSummary(string $businessId): array
+    {
+        $assumptions = DB::table('formation_assumptions')
+            ->where('business_id', $businessId);
+
+        $validations = DB::table('validation_activities')
+            ->where('business_id', $businessId);
+
+        $assumptionCount = (clone $assumptions)->count();
+        $validatedCount = (clone $assumptions)
+            ->where('status', 'validated')
+            ->count();
+        $invalidatedCount = (clone $assumptions)
+            ->where('status', 'invalidated')
+            ->count();
+        $validationCount = (clone $validations)->count();
+        $completedValidations = (clone $validations)
+            ->where('status', 'completed')
+            ->count();
+        $evidenceLinks = DB::table('validation_evidence_links')
+            ->where('business_id', $businessId)
+            ->count();
+
+        $status = 'not_started';
+
+        if ($validatedCount > 0 && $completedValidations > 0) {
+            $status = 'validated';
+        } elseif ($assumptionCount > 0 || $validationCount > 0) {
+            $status = 'testing';
+        }
+
+        return [
+            'status' => $status,
+            'assumptions' => $assumptionCount,
+            'validated_assumptions' => $validatedCount,
+            'invalidated_assumptions' => $invalidatedCount,
+            'validation_activities' => $validationCount,
+            'completed_validations' => $completedValidations,
+            'evidence_links' => $evidenceLinks,
+        ];
     }
 }

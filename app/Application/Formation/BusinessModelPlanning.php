@@ -135,4 +135,120 @@ final class BusinessModelPlanning
 
         return $row;
     }
+
+    /**
+     * @param  array<string,?string>  $fields
+     * @return array{id:string,revision:int}|null
+     */
+    public function saveOperatingProfile(
+        User $user,
+        Business $business,
+        int $expectedRevision,
+        array $fields,
+    ): ?array {
+        if (
+            ! $this->actor->allows(
+                $user,
+                $business,
+                CapabilityCatalog::BUSINESS_MODEL_MANAGE,
+            )
+        ) {
+            return null;
+        }
+
+        $expected = [
+            'business_purpose',
+            'market',
+            'location',
+            'operating_model',
+            'excluded_activities',
+            'pricing_notes',
+            'unit_name',
+            'average_selling_price',
+            'variable_cost_per_unit',
+            'monthly_fixed_cost',
+            'expected_monthly_units',
+            'scalability_strategy',
+            'scalability_constraints',
+            'first_12_month_plan',
+        ];
+
+        if (array_keys($fields) !== $expected) {
+            throw new InvalidArgumentException(
+                'Business model operating profile must use the canonical field set.',
+            );
+        }
+
+        $row = DB::transaction(function () use (
+            $business,
+            $expectedRevision,
+            $fields,
+        ): array {
+            $existing = DB::table('business_model_operating_profiles')
+                ->where('business_id', $business->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($existing === null) {
+                if ($expectedRevision !== 0) {
+                    throw new StaleRevision($expectedRevision, 0);
+                }
+
+                $id = (string) Str::uuid7();
+
+                DB::table('business_model_operating_profiles')->insert([
+                    'id' => $id,
+                    'business_id' => $business->getKey(),
+                    ...$fields,
+                    'revision' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                return [
+                    'id' => $id,
+                    'revision' => 1,
+                ];
+            }
+
+            $actual = (int) $existing->revision;
+
+            if ($actual !== $expectedRevision) {
+                throw new StaleRevision($expectedRevision, $actual);
+            }
+
+            DB::table('business_model_operating_profiles')
+                ->where('business_id', $business->getKey())
+                ->where('id', $existing->id)
+                ->update([
+                    ...$fields,
+                    'revision' => $actual + 1,
+                    'updated_at' => now(),
+                ]);
+
+            return [
+                'id' => (string) $existing->id,
+                'revision' => $actual + 1,
+            ];
+        });
+
+        DB::table('businesses')
+            ->where('id', $business->getKey())
+            ->whereNull('setup_phase')
+            ->update([
+                'setup_phase' => 'formation',
+                'updated_at' => now(),
+            ]);
+
+        $this->occurrence->record(
+            $user,
+            $business,
+            'formation.business_model_foundation.saved',
+            'business_model_operating_profile',
+            $row['id'],
+            ['revision' => $row['revision']],
+        );
+
+        return $row;
+    }
 }
