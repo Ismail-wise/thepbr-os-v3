@@ -214,6 +214,60 @@ final class PhaseOneUxFoundationTest extends TestCase
         $this->assertStringNotContainsString('axios', $source);
     }
 
+    public function test_identity_entry_and_business_creation_use_guided_shared_primitives(): void
+    {
+        $login = $this->source(
+            'resources/js/pages/Auth/Login.vue',
+        );
+        $businessCreate = $this->source(
+            'resources/js/pages/Businesses/Create.vue',
+        );
+
+        foreach ([
+            'PbrErrorSummary',
+            'PbrFormSection',
+            'PbrTextInput',
+            'PbrButton',
+            'humanErrorMessages',
+            'pbr-app-canvas',
+        ] as $contract) {
+            $this->assertStringContainsString($contract, $login);
+        }
+
+        foreach ([
+            'ProgressiveReveal',
+            'PbrErrorSummary',
+            'PbrFormSection',
+            'PbrTextInput',
+            'PbrField',
+            'PbrButton',
+            'humanErrorMessages',
+            'nameReady',
+            'originReady',
+            'stageReady',
+            'currencyReady',
+            'href="/overview"',
+        ] as $contract) {
+            $this->assertStringContainsString(
+                $contract,
+                $businessCreate,
+            );
+        }
+
+        $this->assertStringContainsString(
+            'v-model="form.origin_type"',
+            $businessCreate,
+        );
+        $this->assertStringContainsString(
+            'v-model="form.business_stage"',
+            $businessCreate,
+        );
+        $this->assertStringContainsString(
+            'v-model="form.base_currency"',
+            $businessCreate,
+        );
+    }
+
     private function source(string $path): string
     {
         $source = file_get_contents(base_path($path));
