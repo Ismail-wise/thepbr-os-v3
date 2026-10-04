@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import { useI18n } from '../../i18n/useI18n';
 
 const { t } = useI18n();
@@ -98,6 +98,15 @@ const submit = () => {
                     }}
                 </button>
             </form>
+
+            <p class="mt-6 text-center text-sm leading-6 text-slate-600">
+                <Link
+                    href="/access/code"
+                    class="font-bold text-[var(--pbr-green-dark)] underline decoration-[#b8cfbf] underline-offset-4"
+                >
+                    {{ t('accessCode.haveCode') }}
+                </Link>
+            </p>
         </section>
     </main>
 </template>

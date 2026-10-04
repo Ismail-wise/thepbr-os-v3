@@ -7,6 +7,7 @@ namespace Tests\Feature\Access;
 use App\Application\Access\CreateBusinessAccessInvitation;
 use App\Application\Access\RedeemBusinessAccessInvitation;
 use App\Application\Access\RevokeBusinessAccessInvitation;
+use App\Application\Identity\HasBusinessCreationEntitlement;
 use App\Application\Businesses\CreateBusiness;
 use App\Application\Partnership\PartnerDirectory;
 use App\Domain\Access\Enums\StandardAccessProfile;
@@ -88,6 +89,11 @@ final class BusinessAccessInvitationAdmissionTest extends TestCase
         self::assertSame(
             AccountStatus::Active,
             $result['user']->status,
+        );
+        self::assertFalse(
+            $this->app
+                ->make(HasBusinessCreationEntitlement::class)
+                ->handle($result['user']),
         );
         self::assertSame(
             (string) $business->getKey(),

@@ -8,6 +8,7 @@ use App\Application\Account\GetAccountGovernanceInbox;
 use App\Application\Account\GetAccountHome;
 use App\Application\Account\GetAccountWork;
 use App\Application\Businesses\ListAccessibleBusinesses;
+use App\Application\Identity\HasBusinessCreationEntitlement;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use Illuminate\Http\Request;
@@ -19,15 +20,20 @@ final class AccountExperienceController
     public function home(
         Request $request,
         GetAccountHome $home,
+        HasBusinessCreationEntitlement $entitlement,
     ): Response {
-        return Inertia::render('AccountHome', $home->execute(
-            $this->user($request),
-        ));
+        $user = $this->user($request);
+
+        return Inertia::render('AccountHome', [
+            ...$home->execute($user),
+            'canCreateBusiness' => $entitlement->handle($user),
+        ]);
     }
 
     public function businesses(
         Request $request,
         ListAccessibleBusinesses $businesses,
+        HasBusinessCreationEntitlement $entitlement,
     ): Response {
         $user = $this->user($request);
 
@@ -46,6 +52,7 @@ final class AccountExperienceController
                 )
                 ->values()
                 ->all(),
+            'canCreateBusiness' => $entitlement->handle($user),
         ]);
     }
 

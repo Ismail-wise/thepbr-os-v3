@@ -4,8 +4,11 @@ namespace Tests\Feature\Security;
 
 use App\Domain\Businesses\Enums\BusinessOriginType;
 use App\Domain\Businesses\Enums\BusinessStage;
+use App\Application\Identity\IssuePbrAccessCode;
+use App\Application\Identity\RedeemPbrAccessCode;
 use App\Domain\Businesses\Enums\WorkspaceStatus;
 use App\Domain\Identity\Enums\AccountStatus;
+use App\Domain\Identity\Enums\LanguageMode;
 use App\Domain\Members\Enums\MembershipAccessStatus;
 use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
@@ -309,6 +312,29 @@ final class BusinessOnboardingSecurityTest extends TestCase
         $this->assertDatabaseCount('memberships', 1);
     }
 
+    public function test_active_user_without_direct_client_entitlement_cannot_create_business(): void
+    {
+        $user = User::query()->create([
+            'email' => 'invited-only@example.com',
+            'password' => 'not-a-real-hash',
+            'status' => AccountStatus::Active,
+            'password_changed_at' => now(),
+        ]);
+
+        $this
+            ->actingAs($user)
+            ->get(route('businesses.create'))
+            ->assertForbidden();
+
+        $this
+            ->actingAs($user)
+            ->post(route('businesses.store'), $this->validPayload())
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('businesses', 0);
+        $this->assertDatabaseCount('memberships', 0);
+    }
+
     public function test_unauthenticated_user_cannot_create_business(): void
     {
         $this
@@ -355,12 +381,40 @@ final class BusinessOnboardingSecurityTest extends TestCase
 
     private function createUser(string $email, AccountStatus $status): User
     {
-        return User::query()->create([
+        $user = User::query()->create([
             'email' => $email,
             'password' => 'not-a-real-hash',
             'status' => $status,
             'password_changed_at' => now(),
         ]);
+
+        if ($status === AccountStatus::Active) {
+            $issued = $this->app
+                ->make(IssuePbrAccessCode::class)
+                ->handle(
+                    boundEmail: $email,
+                    expiresInHours: 24,
+                    clientReference: null,
+                    batchReference: null,
+                    notes: null,
+                    actorLabel: 'Test Administrator',
+                    reason: 'Authorize business creation test fixture',
+                );
+
+            $this->app
+                ->make(RedeemPbrAccessCode::class)
+                ->handle(
+                    $issued['token'],
+                    $email,
+                    $user,
+                    '',
+                    '',
+                    LanguageMode::English,
+                    'UTC',
+                );
+        }
+
+        return $user;
     }
 
     public function test_padded_base_currency_is_rejected_without_partial_rows(): void

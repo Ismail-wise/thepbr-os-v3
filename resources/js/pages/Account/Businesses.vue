@@ -10,6 +10,7 @@ import type { AccountBusiness } from '../../account/types';
 
 defineProps<{
     businesses: AccountBusiness[];
+    canCreateBusiness: boolean;
 }>();
 
 const { t } = useI18n();
@@ -29,6 +30,7 @@ const { t } = useI18n();
                 >
                     <template #actions>
                         <Link
+                            v-if="canCreateBusiness"
                             href="/businesses/create"
                             class="pbr-touch inline-flex min-h-10 items-center rounded-xl bg-[var(--pbr-green-dark)] px-4 text-sm font-black text-white"
                         >
@@ -52,8 +54,8 @@ const { t } = useI18n();
                     v-else
                     :title="t('account.noBusinesses')"
                     :body="t('account.noBusinessesHelp')"
-                    action-href="/businesses/create"
-                    :action-label="t('account.createBusiness')"
+                    :action-href="canCreateBusiness ? '/businesses/create' : undefined"
+                    :action-label="canCreateBusiness ? t('account.createBusiness') : undefined"
                 />
             </div>
         </main>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Application\Businesses\CreateBusiness;
+use App\Application\Identity\HasBusinessCreationEntitlement;
 use App\Application\Businesses\ResolveCurrentBusiness;
 use App\Domain\Businesses\Enums\BusinessOriginType;
 use App\Domain\Businesses\Enums\BusinessStage;
@@ -16,8 +17,12 @@ use Inertia\Response;
 
 final class CreateBusinessController
 {
-    public function create(Request $request): Response
-    {
+    public function create(
+        Request $request,
+        HasBusinessCreationEntitlement $entitlement,
+    ): Response {
+        $this->authorizedCreator($request, $entitlement);
+
         return Inertia::render('Businesses/Create', [
             'originTypes' => [
                 [
@@ -47,7 +52,10 @@ final class CreateBusinessController
         Request $request,
         CreateBusiness $createBusiness,
         ResolveCurrentBusiness $resolveCurrentBusiness,
+        HasBusinessCreationEntitlement $entitlement,
     ): RedirectResponse {
+        $user = $this->authorizedCreator($request, $entitlement);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:160'],
             'origin_type' => [
@@ -66,10 +74,6 @@ final class CreateBusinessController
                 'regex:/\A[A-Z]{3}\z/',
             ],
         ]);
-
-        $user = $request->user();
-
-        abort_unless($user instanceof User, 403);
 
         $createdBusiness = $createBusiness->handle(
             $user,
@@ -94,5 +98,17 @@ final class CreateBusinessController
         return redirect()
             ->route('businesses.create')
             ->with('success', 'Business created successfully.');
+    }
+
+    private function authorizedCreator(
+        Request $request,
+        HasBusinessCreationEntitlement $entitlement,
+    ): User {
+        $user = $request->user();
+
+        abort_unless($user instanceof User, 403);
+        abort_unless($entitlement->handle($user), 403);
+
+        return $user;
     }
 }

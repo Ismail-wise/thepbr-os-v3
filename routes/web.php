@@ -4,6 +4,7 @@ use App\Http\Controllers\CreateBusinessController;
 use App\Http\Controllers\SelectCurrentBusinessController;
 use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Presentation\Http\Controllers\Access\BusinessAccessInvitationRedemptionController;
+use App\Presentation\Http\Controllers\Access\PbrAccessCodeRedemptionController;
 use App\Presentation\Http\Controllers\Access\WorkspaceAccessController;
 use App\Presentation\Http\Controllers\Access\WorkspaceAccessInvitationController;
 use App\Presentation\Http\Controllers\Account\AccountExperienceController;
@@ -45,6 +46,18 @@ Route::middleware('guest')->group(function (): void {
         ->middleware('throttle:login')
         ->name('login.store');
 });
+
+Route::get(
+    '/access/code',
+    [PbrAccessCodeRedemptionController::class, 'show'],
+)->name('access.codes.redeem.show');
+
+Route::post(
+    '/access/code/redeem',
+    [PbrAccessCodeRedemptionController::class, 'store'],
+)
+    ->middleware('throttle:login')
+    ->name('access.codes.redeem.store');
 
 Route::get(
     '/access/invitation',

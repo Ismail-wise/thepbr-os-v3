@@ -23,6 +23,7 @@ const props = defineProps<{
     attention: AccountAttentionItem[];
     businesses: AccountBusiness[];
     notifications: AccountNotification[];
+    canCreateBusiness: boolean;
 }>();
 
 const { t } = useI18n();
@@ -65,6 +66,7 @@ const logout = () => {
                 >
                     <template #actions>
                         <Link
+                            v-if="canCreateBusiness"
                             href="/businesses/create"
                             class="pbr-touch inline-flex min-h-10 items-center rounded-xl bg-[var(--pbr-green-dark)] px-4 text-sm font-black text-white shadow-[0_8px_18px_rgb(13_106_59_/_16%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pbr-green)] focus-visible:ring-offset-2"
                         >
@@ -208,8 +210,8 @@ const logout = () => {
                         v-else
                         :title="t('account.noBusinesses')"
                         :body="t('account.noBusinessesHelp')"
-                        action-href="/businesses/create"
-                        :action-label="t('account.createBusiness')"
+                        :action-href="canCreateBusiness ? '/businesses/create' : undefined"
+                        :action-label="canCreateBusiness ? t('account.createBusiness') : undefined"
                     />
                 </section>
 
