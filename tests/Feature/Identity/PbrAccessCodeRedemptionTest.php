@@ -11,6 +11,7 @@ use App\Domain\Identity\Enums\AccountStatus;
 use App\Domain\Identity\Enums\LanguageMode;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use App\Infrastructure\Persistence\Eloquent\Identity\UserProfile;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -186,7 +187,7 @@ final class PbrAccessCodeRedemptionTest extends TestCase
             ->where('user_id', $user->getKey())
             ->sole();
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         DB::table('account_entitlements')
             ->where('id', $entitlement->id)
