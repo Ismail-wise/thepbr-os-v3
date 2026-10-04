@@ -18,6 +18,8 @@ final class FormationHybridExperienceTest extends TestCase
 
         foreach ([
             'GuidedJourneyStepper',
+            'BusinessModelGuidedJourney',
+            "v-show=\"active === 'bmc'\"",
             "stepDirection: 'Go / Revise / Hold / No-Go'",
             "stepPartnerSetup: 'Partner Setup'",
             "stepCurrentBmc: 'Current BMC'",
@@ -40,6 +42,36 @@ final class FormationHybridExperienceTest extends TestCase
         ] as $required) {
             self::assertStringContainsString($required, $source);
         }
+    }
+
+    public function test_business_model_redesign_uses_progressive_guidance_and_autosaved_canonical_sources(): void
+    {
+        $source = file_get_contents(
+            base_path('resources/js/components/business-model/BusinessModelGuidedJourney.vue'),
+        );
+
+        self::assertIsString($source);
+
+        foreach ([
+            'useAutosaveDraft',
+            "'/formation/bmc'",
+            "'/formation/business-model/foundation'",
+            "currentStep === 'purpose'",
+            "currentStep === 'economics'",
+            "currentStep === 'scalability'",
+            "profileDraft.market.trim() !== ''",
+            "profileDraft.average_selling_price.trim() !== ''",
+            "bmcDraft.key_resources.trim() !== ''",
+            'Business Model guided journey',
+            'Deep Feasibility',
+        ] as $required) {
+            self::assertStringContainsString($required, $source);
+        }
+
+        self::assertStringNotContainsString(
+            'Exactly nine canonical blocks',
+            $source,
+        );
     }
 
     public function test_existing_business_guided_sections_follow_the_conversion_journey_order(): void

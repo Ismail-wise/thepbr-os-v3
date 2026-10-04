@@ -118,23 +118,46 @@ test(
             })
             .click();
 
-        for (const block of [
-            'Customer Segments',
-            'Value Propositions',
-            'Channels',
-            'Customer Relationships',
-            'Revenue Streams',
-            'Key Resources',
-            'Key Activities',
-            'Key Partnerships',
-            'Cost Structure',
+        await expect(
+            page.getByRole('heading', {
+                name: 'Build how this Business will work',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        const businessModelJourney = page.getByRole('navigation', {
+            name: 'Business Model guided journey',
+            exact: true,
+        });
+
+        for (const step of [
+            'Purpose',
+            'Customer',
+            'Product / service',
+            'Market & location',
+            'Revenue model',
+            'Pricing & break-even',
+            'Sales channels',
+            'Customer relationship',
+            'Operating model',
+            'Delivery engine',
+            'Cost structure',
+            'Scalability',
+            'Boundaries',
+            'First 12 months',
+            'Review',
         ]) {
             await expect(
-                page.getByRole('button', {
-                    name: new RegExp(block),
+                businessModelJourney.getByRole('button', {
+                    name: step,
+                    exact: true,
                 }),
             ).toBeVisible();
         }
+
+        await expect(
+            page.getByText('Draft ready', { exact: true }),
+        ).toBeVisible();
 
         await page
             .getByRole('button', {
@@ -229,10 +252,30 @@ test(
             .click();
 
         await expect(
-            page.getByRole('button', {
-                name: /Customer Segments/,
+            page.getByRole('heading', {
+                name: 'Build how this Business will work',
+                exact: true,
             }),
-        ).toContainText('Existing customer base');
+        ).toBeVisible();
+
+        const existingBusinessModelJourney = page.getByRole(
+            'navigation',
+            {
+                name: 'Business Model guided journey',
+                exact: true,
+            },
+        );
+
+        await existingBusinessModelJourney
+            .getByRole('button', {
+                name: 'Customer',
+                exact: true,
+            })
+            .click();
+
+        await expect(page.locator('textarea').first()).toHaveValue(
+            'Existing customer base',
+        );
 
         await page
             .getByRole('button', {

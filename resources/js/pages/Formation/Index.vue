@@ -4,20 +4,10 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
 import GuidedJourneyStepper from '../../components/hybrid/GuidedJourneyStepper.vue';
+import BusinessModelGuidedJourney from '../../components/business-model/BusinessModelGuidedJourney.vue';
 
 type LanguageMode = 'en' | 'my' | 'mixed';
 type Journey = 'new' | 'existing';
-type BmcKey =
-    | 'customer_segments'
-    | 'value_propositions'
-    | 'channels'
-    | 'customer_relationships'
-    | 'revenue_streams'
-    | 'key_resources'
-    | 'key_activities'
-    | 'key_partnerships'
-    | 'cost_structure';
-
 type GenericRow = Record<string, any>;
 
 type FormationWorkspace = {
@@ -31,6 +21,28 @@ type FormationWorkspace = {
     };
     journey: Journey;
     bmc: GenericRow | null;
+    business_model_foundation: null | {
+        operating_profile: GenericRow | null;
+        economics: {
+            status: string;
+            contributionMarginPerUnit: string | null;
+            grossMarginPercent: number | null;
+            breakEvenUnits: number | null;
+            breakEvenRevenue: string | null;
+            expectedMonthlyRevenue: string | null;
+            expectedMonthlyGrossProfit: string | null;
+            expectedMonthlyOperatingProfit: string | null;
+        };
+        demand: {
+            status: string;
+            assumptions: number;
+            validated_assumptions: number;
+            invalidated_assumptions: number;
+            validation_activities: number;
+            completed_validations: number;
+            evidence_links: number;
+        };
+    };
     permissions: {
         can_manage_formation: boolean;
         can_manage_bmc: boolean;
@@ -464,40 +476,6 @@ const idea = reactive({
     proposed_solution: field(props.formation.new_business?.idea, 'proposed_solution'),
 });
 
-const bmcKeys: BmcKey[] = [
-    'customer_segments',
-    'value_propositions',
-    'channels',
-    'customer_relationships',
-    'revenue_streams',
-    'key_resources',
-    'key_activities',
-    'key_partnerships',
-    'cost_structure',
-];
-
-const bmcLabels: Record<BmcKey, string> = {
-    customer_segments: 'Customer Segments',
-    value_propositions: 'Value Propositions',
-    channels: 'Channels',
-    customer_relationships: 'Customer Relationships',
-    revenue_streams: 'Revenue Streams',
-    key_resources: 'Key Resources',
-    key_activities: 'Key Activities',
-    key_partnerships: 'Key Partnerships',
-    cost_structure: 'Cost Structure',
-};
-
-const bmcDraft = reactive(
-    Object.fromEntries(
-        bmcKeys.map((key) => [
-            key,
-            field(props.formation.bmc, key),
-        ]),
-    ) as Record<BmcKey, string>,
-);
-
-const selectedBmc = ref<BmcKey | null>(null);
 const validationEvidenceIds = reactive<Record<string, string>>({});
 
 const fit = reactive({
@@ -769,12 +747,6 @@ const saveIdea = () =>
     put('/formation/new/idea', {
         expected_revision: revision(props.formation.new_business?.idea),
         ...idea,
-    });
-
-const saveBmc = () =>
-    put('/formation/bmc', {
-        expected_revision: revision(props.formation.bmc),
-        ...bmcDraft,
     });
 
 const linkValidationEvidence = (validationId: string) => {
@@ -1090,55 +1062,17 @@ const selectFormationStep = (key: string) => {
                     </div>
                 </section>
 
-                <section v-if="active === 'bmc'" class="py-6">
-                    <div class="flex items-center justify-between gap-4">
-                        <div>
-                            <h2 class="text-lg font-semibold">{{ c.bmc }}</h2>
-                            <p class="mt-1 text-sm text-slate-600">Exactly nine canonical blocks. Working BMC remains editable planning data.</p>
-                        </div>
-                        <span class="text-xs font-semibold text-slate-500">
-                            {{ c.version }} {{ formation.bmc?.revision ?? 0 }}
-                        </span>
-                    </div>
-
-                    <div class="mt-5 grid gap-3 md:grid-cols-3">
-                        <button
-                            v-for="key in bmcKeys"
-                            :key="key"
-                            type="button"
-                            class="min-h-36 border border-slate-300 bg-white p-4 text-left hover:border-slate-950"
-                            @click="selectedBmc = key"
-                        >
-                            <span class="text-sm font-semibold">{{ bmcLabels[key] }}</span>
-                            <span class="mt-3 block line-clamp-4 whitespace-pre-wrap text-xs leading-5 text-slate-600">
-                                {{ bmcDraft[key] || '—' }}
-                            </span>
-                        </button>
-                    </div>
-
-                    <div
-                        v-if="selectedBmc"
-                        class="fixed inset-0 z-50 flex justify-end bg-slate-950/30"
-                        @click.self="selectedBmc = null"
-                    >
-                        <aside class="h-full w-full max-w-xl overflow-y-auto bg-white p-6 shadow-xl">
-                            <div class="flex items-center justify-between gap-4">
-                                <h3 class="text-lg font-semibold">{{ bmcLabels[selectedBmc] }}</h3>
-                                <button type="button" class="min-h-11 border border-slate-300 px-4 text-sm font-semibold" @click="selectedBmc = null">
-                                    {{ c.close }}
-                                </button>
-                            </div>
-                            <textarea v-model="bmcDraft[selectedBmc]" class="mt-5 min-h-72 w-full border border-slate-300 p-3" />
-                            <button
-                                v-if="formation.permissions.can_manage_bmc"
-                                type="button"
-                                class="mt-4 min-h-11 bg-slate-950 px-4 text-sm font-semibold text-white"
-                                @click="saveBmc"
-                            >
-                                {{ c.save }}
-                            </button>
-                        </aside>
-                    </div>
+                <section v-show="active === 'bmc'" class="py-6">
+                    <BusinessModelGuidedJourney
+                        v-if="formation.business_model_foundation"
+                        :key="formation.business.id"
+                        :journey="formation.journey"
+                        :currency="formation.business.base_currency"
+                        :bmc="formation.bmc"
+                        :foundation="formation.business_model_foundation"
+                        :can-manage="formation.permissions.can_manage_bmc"
+                        @open-demand="active = 'validation'"
+                    />
                 </section>
 
                 <section v-if="formation.journey === 'new' && active === 'validation'" class="py-6">
