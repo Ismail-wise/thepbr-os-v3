@@ -60,8 +60,8 @@ const signIn = async (page: Page) => {
         page.getByRole('heading', { name: 'Sign in', exact: true }),
     ).toBeVisible();
 
-    await page.getByLabel(/^Email\\s*\\*?$/).fill(E2E_EMAIL);
-    await page.getByLabel(/^Password\\s*\\*?$/).fill(E2E_PASSWORD);
+    await page.locator('input[name="email"]').fill(E2E_EMAIL);
+    await page.locator('input[name="password"]').fill(E2E_PASSWORD);
 
     await page
         .getByRole('button', { name: 'Sign in', exact: true })
@@ -88,7 +88,7 @@ const createBusiness = async (
         currency: 'THB' | 'MMK';
     },
 ) => {
-    await page.getByLabel(/^Business name\\s*\\*?$/).fill(name);
+    await page.locator('input[name="name"]').fill(name);
 
     const originRadio = page.getByRole('radio', {
         name: origin,
@@ -99,11 +99,11 @@ const createBusiness = async (
     await expect(originRadio).toBeChecked();
 
     await page
-        .getByLabel(/^Current Business stage\\s*\\*?$/)
+        .locator('select[name="business_stage"]')
         .selectOption({ label: stage });
 
     await page
-        .getByLabel(/^Base currency\\s*\\*?$/)
+        .locator('input[name="base_currency"]')
         .fill(currency);
 
     await page
@@ -112,9 +112,11 @@ const createBusiness = async (
 
     await expect(page).toHaveURL(/\/businesses\/create$/);
 
-    await expect(page.getByRole('status')).toHaveText(
-        'Business created successfully.',
-    );
+    await expect(
+        page
+            .getByRole('status')
+            .getByText('Business created successfully.', { exact: true }),
+    ).toBeVisible();
 
     await expectCurrentBusiness(page, name);
 };
