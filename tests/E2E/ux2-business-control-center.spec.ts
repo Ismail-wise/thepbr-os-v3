@@ -12,8 +12,8 @@ if (!password) {
 
 const signIn = async (page: Page) => {
     await page.goto('/login');
-    await page.getByLabel('Email', { exact: true }).fill(OWNER_EMAIL);
-    await page.getByLabel('Password', { exact: true }).fill(password);
+    await page.locator('input[name="email"]').fill(OWNER_EMAIL);
+    await page.locator('input[name="password"]').fill(password);
 
     await Promise.all([
         page.waitForURL(

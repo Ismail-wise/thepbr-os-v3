@@ -13,8 +13,8 @@ if (!password) {
 
 const signIn = async (page: Page) => {
     await page.goto('/login');
-    await page.getByLabel('Email', { exact: true }).fill(E2E_EMAIL);
-    await page.getByLabel('Password', { exact: true }).fill(password);
+    await page.locator('input[name="email"]').fill(E2E_EMAIL);
+    await page.locator('input[name="password"]').fill(password);
 
     const homeNavigation = page.waitForURL(
         (url) => url.pathname === '/',

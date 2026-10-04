@@ -30,8 +30,8 @@ const resetFixture = () => {
 
 const signIn = async (page: Page, email: string) => {
     await page.goto('/login');
-    await page.getByLabel('Email', { exact: true }).fill(email);
-    await page.getByLabel('Password', { exact: true }).fill(password);
+    await page.locator('input[name="email"]').fill(email);
+    await page.locator('input[name="password"]').fill(password);
 
     const homeNavigation = page.waitForURL(
         (url) => url.pathname === '/',

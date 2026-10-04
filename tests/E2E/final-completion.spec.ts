@@ -34,8 +34,8 @@ const forbiddenDefaultLabels = [
 
 const signInAndSelectBusiness = async (page: Page) => {
     await page.goto('/login');
-    await page.getByLabel('Email', { exact: true }).fill(OWNER_EMAIL);
-    await page.getByLabel('Password', { exact: true }).fill(password as string);
+    await page.locator('input[name="email"]').fill(OWNER_EMAIL);
+    await page.locator('input[name="password"]').fill(password as string);
 
     await Promise.all([
         page.waitForURL((url) => url.pathname === '/', {
