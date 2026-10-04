@@ -6,12 +6,19 @@ type JourneyStep = {
     label: string;
     helper?: string;
     state: StepState;
+    disabled?: boolean;
 };
 
-defineProps<{
-    steps: JourneyStep[];
-    label: string;
-}>();
+withDefaults(
+    defineProps<{
+        steps: JourneyStep[];
+        label: string;
+        compact?: boolean;
+    }>(),
+    {
+        compact: false,
+    },
+);
 
 const emit = defineEmits<{
     select: [key: string];
@@ -29,18 +36,21 @@ const emit = defineEmits<{
             <li
                 v-for="(step, index) in steps"
                 :key="step.key"
-                class="bg-white"
+                class="min-w-0 bg-white"
             >
                 <button
                     type="button"
-                    class="group flex h-full min-h-[5.25rem] w-full items-start gap-3 px-4 py-3.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--pbr-green)]"
-                    :aria-current="step.state === 'current' ? 'step' : undefined"
-                    :data-state="step.state"
-                    :class="
+                    class="group flex h-full w-full min-w-0 items-start gap-3 px-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--pbr-green)] disabled:cursor-not-allowed disabled:opacity-55"
+                    :class="[
+                        compact ? 'min-h-16 py-3' : 'min-h-[5.25rem] py-3.5',
                         step.state === 'current'
                             ? 'bg-[linear-gradient(135deg,#e8f5ec,#faf8ef)]'
-                            : 'hover:bg-[#f8faf8]'
-                    "
+                            : 'hover:bg-[#f8faf8]',
+                    ]"
+                    :aria-current="step.state === 'current' ? 'step' : undefined"
+                    :aria-disabled="step.disabled ? 'true' : undefined"
+                    :data-state="step.state"
+                    :disabled="step.disabled"
                     @click="emit('select', step.key)"
                 >
                     <span
@@ -59,9 +69,9 @@ const emit = defineEmits<{
                         <span v-else aria-hidden="true">{{ index + 1 }}</span>
                     </span>
 
-                    <span class="min-w-0">
+                    <span class="min-w-0 flex-1">
                         <span
-                            class="block text-sm font-black tracking-[-0.01em]"
+                            class="block break-words text-sm font-black leading-5 tracking-[-0.01em]"
                             :class="
                                 step.state === 'current'
                                     ? 'text-[var(--pbr-green-dark)]'
@@ -72,7 +82,7 @@ const emit = defineEmits<{
                         </span>
                         <span
                             v-if="step.helper"
-                            class="mt-1 block text-[11px] leading-4 text-[var(--pbr-muted)]"
+                            class="mt-1 block break-words text-[11px] leading-4 text-[var(--pbr-muted)]"
                         >
                             {{ step.helper }}
                         </span>
