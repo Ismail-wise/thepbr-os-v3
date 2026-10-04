@@ -419,12 +419,10 @@ final class BusinessOnboardingSecurityTest extends TestCase
 
     public function test_padded_base_currency_is_rejected_without_partial_rows(): void
     {
-        $user = User::query()->create([
-            'email' => 'http-padded-currency@example.com',
-            'password' => 'not-a-real-hash',
-            'status' => AccountStatus::Active,
-            'password_changed_at' => now(),
-        ]);
+        $user = $this->createUser(
+            'http-padded-currency@example.com',
+            AccountStatus::Active,
+        );
 
         $response = $this
             ->actingAs($user)

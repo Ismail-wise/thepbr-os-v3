@@ -2,11 +2,14 @@
 
 namespace Tests\Feature\Businesses;
 
+use App\Application\Identity\IssuePbrAccessCode;
+use App\Application\Identity\RedeemPbrAccessCode;
 use App\Domain\Businesses\Enums\BusinessOriginType;
 use App\Domain\Businesses\Enums\BusinessStage;
 use App\Domain\Businesses\Enums\SetupPhase;
 use App\Domain\Businesses\Enums\WorkspaceStatus;
 use App\Domain\Identity\Enums\AccountStatus;
+use App\Domain\Identity\Enums\LanguageMode;
 use App\Domain\Members\Enums\MembershipAccessStatus;
 use App\Http\Middleware\EnsureCurrentBusinessContext;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
@@ -186,6 +189,30 @@ final class BusinessSwitcherTest extends TestCase
             'language_mode' => 'en',
             'timezone' => 'Asia/Yangon',
         ]);
+
+        $issued = $this->app
+            ->make(IssuePbrAccessCode::class)
+            ->handle(
+                boundEmail: $email,
+                expiresInHours: 24,
+                clientReference: null,
+                batchReference: null,
+                notes: null,
+                actorLabel: 'Test Administrator',
+                reason: 'Authorize create-business page fixture',
+            );
+
+        $this->app
+            ->make(RedeemPbrAccessCode::class)
+            ->handle(
+                $issued['token'],
+                $email,
+                $user,
+                '',
+                '',
+                LanguageMode::English,
+                'Asia/Yangon',
+            );
 
         return $user;
     }
