@@ -60,8 +60,8 @@ const signIn = async (page: Page) => {
         page.getByRole('heading', { name: 'Sign in', exact: true }),
     ).toBeVisible();
 
-    await page.getByLabel('Email', { exact: true }).fill(E2E_EMAIL);
-    await page.getByLabel('Password', { exact: true }).fill(E2E_PASSWORD);
+    await page.getByLabel(/^Email\\s*\\*?$/).fill(E2E_EMAIL);
+    await page.getByLabel(/^Password\\s*\\*?$/).fill(E2E_PASSWORD);
 
     await page
         .getByRole('button', { name: 'Sign in', exact: true })
@@ -88,7 +88,7 @@ const createBusiness = async (
         currency: 'THB' | 'MMK';
     },
 ) => {
-    await page.getByLabel('Business name', { exact: true }).fill(name);
+    await page.getByLabel(/^Business name\\s*\\*?$/).fill(name);
 
     const originRadio = page.getByRole('radio', {
         name: origin,
@@ -99,11 +99,11 @@ const createBusiness = async (
     await expect(originRadio).toBeChecked();
 
     await page
-        .getByLabel('Current Business stage', { exact: true })
+        .getByLabel(/^Current Business stage\\s*\\*?$/)
         .selectOption({ label: stage });
 
     await page
-        .getByLabel('Base currency', { exact: true })
+        .getByLabel(/^Base currency\\s*\\*?$/)
         .fill(currency);
 
     await page
