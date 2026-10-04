@@ -159,6 +159,38 @@ test(
             page.getByText('Draft ready', { exact: true }),
         ).toBeVisible();
 
+        await newBusinessJourney
+            .getByRole('button', {
+                name: /Validation/,
+            })
+            .click();
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'Test whether customers actually want this',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        const demandJourney = page.getByRole('navigation', {
+            name: 'Demand evidence guided journey',
+            exact: true,
+        });
+
+        for (const step of [
+            'Assumption',
+            'Validation test',
+            'Evidence',
+            'Review',
+        ]) {
+            await expect(
+                demandJourney.getByRole('button', {
+                    name: step,
+                    exact: true,
+                }),
+            ).toBeVisible();
+        }
+
         await page
             .getByRole('button', {
                 name: 'Capital',

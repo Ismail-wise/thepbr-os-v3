@@ -60,6 +60,7 @@ type ProfileDraft = {
     business_purpose: string;
     market: string;
     location: string;
+    competition_alternatives: string;
     operating_model: string;
     excluded_activities: string;
     pricing_notes: string;
@@ -129,6 +130,10 @@ const profileDraft = reactive<ProfileDraft>({
     ),
     market: field(props.foundation.operating_profile, 'market'),
     location: field(props.foundation.operating_profile, 'location'),
+    competition_alternatives: field(
+        props.foundation.operating_profile,
+        'competition_alternatives',
+    ),
     operating_model: field(
         props.foundation.operating_profile,
         'operating_model',
@@ -278,6 +283,17 @@ const copy = {
             'Only add location detail if it matters to customers, delivery, regulation or costs.',
         locationExample:
             'Example: Chiang Mai first, then online delivery across Thailand.',
+        competitionLabel: 'What does the customer use instead today?',
+        competitionInstruction:
+            'Name direct competitors or practical alternatives such as doing it manually, hiring staff, spreadsheets or another type of service.',
+        competitionExample:
+            'Example: Spreadsheet + WhatsApp coordination, local consultants, or a larger ERP product.',
+        competitionSuggestions: [
+            'Do it manually / in-house',
+            'Spreadsheets or messaging apps',
+            'Local service provider',
+            'Larger software / enterprise option',
+        ],
         revenueLabel: 'How will the Business earn money?',
         revenueInstruction:
             'Choose a simple revenue logic or write your own. You can combine more than one.',
@@ -497,6 +513,17 @@ const copy = {
             'Customer, Delivery, Regulation ဒါမှမဟုတ် Cost ကို သက်ရောက်မှ Location ကို ထည့်ပါ။',
         locationExample:
             'ဥပမာ - Chiang Mai မှာစပြီး Thailand တစ်နိုင်ငံလုံး Online Delivery။',
+        competitionLabel: 'Customer က အခု ဘာကို အစားထိုးသုံးနေသလဲ?',
+        competitionInstruction:
+            'Direct Competitor တွေ ဒါမှမဟုတ် Manual Work, Staff Hiring, Spreadsheet, အခြား Service လို Practical Alternative တွေကို ရေးပါ။',
+        competitionExample:
+            'ဥပမာ - Spreadsheet + WhatsApp, Local Consultant, ဒါမှမဟုတ် ERP Product ကြီး။',
+        competitionSuggestions: [
+            'Manual / In-house လုပ်မယ်',
+            'Spreadsheet / Messaging App သုံးမယ်',
+            'Local Service Provider သုံးမယ်',
+            'Larger Software / Enterprise Option သုံးမယ်',
+        ],
         revenueLabel: 'Business က ဘယ်လိုဝင်ငွေရမလဲ?',
         revenueInstruction:
             'အဓိက Revenue Logic ကိုရွေးပါ ဒါမှမဟုတ် ကိုယ့်ပုံစံကို ရေးပါ။ တစ်မျိုးထက်ပိုပေါင်းလို့ရပါတယ်။',
@@ -716,6 +743,17 @@ const copy = {
             'Customer, delivery, regulation or cost ကို affect လုပ်ရင် location detail ထည့်ပါ။',
         locationExample:
             'Example: Chiang Mai first, then online delivery across Thailand.',
+        competitionLabel: 'Customer က today ဘာ alternative သုံးနေသလဲ?',
+        competitionInstruction:
+            'Direct competitors or practical alternatives — manual work, staff, spreadsheet, another service — ကို capture လုပ်ပါ။',
+        competitionExample:
+            'Example: Spreadsheet + WhatsApp, local consultant, or a larger ERP product.',
+        competitionSuggestions: [
+            'Do it manually / in-house',
+            'Spreadsheets or messaging apps',
+            'Local service provider',
+            'Larger software / enterprise option',
+        ],
         revenueLabel: 'Business က ဘယ်လို money earn လုပ်မလဲ?',
         revenueInstruction:
             'Simple revenue logic ကိုရွေး သို့မဟုတ် own model ရေးပါ။ Multiple models ပေါင်းလို့ရပါတယ်။',
@@ -1293,6 +1331,16 @@ const money = (value: string | null): string =>
                 :example="c.locationExample"
                 :disabled="!canManage"
             />
+
+            <GuidedSuggestionTextarea
+                v-if="profileDraft.market.trim() !== ''"
+                v-model="profileDraft.competition_alternatives"
+                :label="c.competitionLabel"
+                :instruction="c.competitionInstruction"
+                :example="c.competitionExample"
+                :suggestions="[...c.competitionSuggestions]"
+                :disabled="!canManage"
+            />
         </PbrFormSection>
 
         <PbrFormSection
@@ -1639,6 +1687,7 @@ const money = (value: string | null): string =>
                         [c.stepCustomer, bmcDraft.customer_segments],
                         [c.stepOffer, bmcDraft.value_propositions],
                         [c.stepMarket, profileDraft.market],
+                        [c.competitionLabel, profileDraft.competition_alternatives],
                         [c.stepRevenue, bmcDraft.revenue_streams],
                         [c.stepOperations, profileDraft.operating_model],
                         [c.stepScalability, profileDraft.scalability_strategy],

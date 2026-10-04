@@ -160,6 +160,7 @@ final class BusinessModelPlanning
             'business_purpose',
             'market',
             'location',
+            'competition_alternatives',
             'operating_model',
             'excluded_activities',
             'pricing_notes',

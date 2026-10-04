@@ -5,6 +5,7 @@ import { computed, reactive, ref } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
 import GuidedJourneyStepper from '../../components/hybrid/GuidedJourneyStepper.vue';
 import BusinessModelGuidedJourney from '../../components/business-model/BusinessModelGuidedJourney.vue';
+import DemandEvidenceGuidedJourney from '../../components/business-model/DemandEvidenceGuidedJourney.vue';
 
 type LanguageMode = 'en' | 'my' | 'mixed';
 type Journey = 'new' | 'existing';
@@ -476,8 +477,6 @@ const idea = reactive({
     proposed_solution: field(props.formation.new_business?.idea, 'proposed_solution'),
 });
 
-const validationEvidenceIds = reactive<Record<string, string>>({});
-
 const fit = reactive({
     goals_alignment: field(
         props.formation.new_business?.partnership_fit,
@@ -499,20 +498,6 @@ const fit = reactive({
         props.formation.new_business?.partnership_fit,
         'unresolved_questions',
     ),
-});
-
-const assumption = reactive({
-    category: 'market',
-    statement: '',
-    status: 'planned',
-});
-
-const validation = reactive({
-    assumption_id: '',
-    method: '',
-    status: 'planned',
-    result_summary: '',
-    occurred_on: '',
 });
 
 const feasibility = reactive({
@@ -748,18 +733,6 @@ const saveIdea = () =>
         expected_revision: revision(props.formation.new_business?.idea),
         ...idea,
     });
-
-const linkValidationEvidence = (validationId: string) => {
-    const evidenceId = (validationEvidenceIds[validationId] ?? '').trim();
-
-    if (!evidenceId) {
-        return;
-    }
-
-    post(`/formation/new/validations/${validationId}/evidence`, {
-        evidence_id: evidenceId,
-    });
-};
 
 const saveFit = () =>
     put('/formation/new/partnership-fit', {
@@ -1075,74 +1048,18 @@ const selectFormationStep = (key: string) => {
                     />
                 </section>
 
-                <section v-if="formation.journey === 'new' && active === 'validation'" class="py-6">
-                    <div class="grid gap-8 lg:grid-cols-2">
-                        <div>
-                            <h2 class="text-lg font-semibold">{{ c.assumptions }}</h2>
-                            <form class="mt-4 grid gap-3" @submit.prevent="post('/formation/new/assumptions', assumption)">
-                                <input v-model="assumption.category" class="min-h-11 border border-slate-300 px-3" :placeholder="c.category" required>
-                                <textarea v-model="assumption.statement" class="min-h-24 border border-slate-300 p-3" :placeholder="c.statement" required />
-                                <select v-model="assumption.status" class="min-h-11 border border-slate-300 bg-white px-3">
-                                    <option value="planned">planned</option>
-                                    <option value="testing">testing</option>
-                                    <option value="validated">validated</option>
-                                    <option value="invalidated">invalidated</option>
-                                </select>
-                                <button v-if="formation.permissions.can_manage_formation" class="min-h-11 border border-slate-950 px-4 text-sm font-semibold">{{ c.add }}</button>
-                            </form>
-                            <table class="mt-5 w-full text-left text-sm">
-                                <tbody>
-                                    <tr v-for="row in formation.new_business?.assumptions ?? []" :key="row.id" class="border-b border-slate-200">
-                                        <td class="py-3 font-semibold">{{ row.category }}</td>
-                                        <td class="py-3">{{ row.statement }}</td>
-                                        <td class="py-3">{{ row.status }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div>
-                            <h2 class="text-lg font-semibold">{{ c.validationActivities }}</h2>
-                            <form class="mt-4 grid gap-3" @submit.prevent="post('/formation/new/validations', validation)">
-                                <select v-model="validation.assumption_id" class="min-h-11 border border-slate-300 bg-white px-3">
-                                    <option value="">No linked assumption</option>
-                                    <option v-for="row in formation.new_business?.assumptions ?? []" :key="row.id" :value="row.id">
-                                        {{ row.category }} · {{ row.statement }}
-                                    </option>
-                                </select>
-                                <input v-model="validation.method" class="min-h-11 border border-slate-300 px-3" :placeholder="c.method" required>
-                                <select v-model="validation.status" class="min-h-11 border border-slate-300 bg-white px-3">
-                                    <option value="planned">planned</option>
-                                    <option value="in_progress">in_progress</option>
-                                    <option value="completed">completed</option>
-                                </select>
-                                <OptionalTemporalInput v-model="validation.occurred_on" type="date" class="min-h-11 border border-slate-300 px-3" />
-                                <textarea v-model="validation.result_summary" class="min-h-24 border border-slate-300 p-3" :placeholder="c.result" />
-                                <button v-if="formation.permissions.can_manage_formation" class="min-h-11 border border-slate-950 px-4 text-sm font-semibold">{{ c.add }}</button>
-                            </form>
-                            <div class="mt-5 divide-y divide-slate-200 border-t border-slate-200">
-                                <div v-for="row in formation.new_business?.validations ?? []" :key="row.id" class="py-4">
-                                    <p class="font-semibold">{{ row.method }} · {{ row.status }}</p>
-                                    <p class="mt-1 text-sm text-slate-600">{{ row.result_summary || '—' }}</p>
-                                    <details
-                                        v-if="formation.permissions.can_manage_formation"
-                                        class="mt-3 rounded-xl border border-[#dfe7e1] bg-[#f8faf8] px-3 py-2.5"
-                                    >
-                                        <summary class="cursor-pointer text-xs font-extrabold text-[var(--pbr-green-dark)]">
-                                            {{ c.evidenceAdvanced }}
-                                        </summary>
-                                        <form
-                                            class="mt-3 flex gap-2"
-                                            @submit.prevent="linkValidationEvidence(row.id)"
-                                        >
-                                            <input v-model="validationEvidenceIds[row.id]" class="min-h-10 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 text-xs" :placeholder="c.evidenceId" required>
-                                            <button class="rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold">{{ c.linkEvidence }}</button>
-                                        </form>
-                                    </details>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <section
+                    v-if="formation.journey === 'new'"
+                    v-show="active === 'validation'"
+                    class="py-6"
+                >
+                    <DemandEvidenceGuidedJourney
+                        :key="formation.business.id"
+                        :business-id="formation.business.id"
+                        :assumptions="formation.new_business?.assumptions ?? []"
+                        :validations="formation.new_business?.validations ?? []"
+                        :can-manage="formation.permissions.can_manage_formation"
+                    />
                 </section>
 
                 <section v-if="formation.journey === 'new' && active === 'feasibility'" class="py-6">

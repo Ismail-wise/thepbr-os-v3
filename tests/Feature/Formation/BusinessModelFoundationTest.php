@@ -8,6 +8,7 @@ use App\Application\Businesses\CreateBusiness;
 use App\Application\Formation\BusinessModelPlanning;
 use App\Application\Formation\GetFormationWorkspace;
 use App\Application\Formation\NewBusinessPlanning;
+use App\Application\Journey\GetMasterBusinessJourney;
 use App\Domain\Businesses\Enums\BusinessOriginType;
 use App\Domain\Businesses\Enums\BusinessStage;
 use App\Domain\Identity\Enums\AccountStatus;
@@ -79,6 +80,10 @@ final class BusinessModelFoundationTest extends TestCase
         self::assertSame(
             'Build a simple operating system for SME partnerships.',
             $workspace['business_model_foundation']['operating_profile']['business_purpose'],
+        );
+        self::assertSame(
+            'Spreadsheet + WhatsApp coordination and larger ERP products.',
+            $workspace['business_model_foundation']['operating_profile']['competition_alternatives'],
         );
         self::assertSame(
             'ready',
@@ -154,6 +159,39 @@ final class BusinessModelFoundationTest extends TestCase
         self::assertSame([], $workspace['existing_business']['valuations']);
     }
 
+    public function test_master_journey_records_business_model_progress_from_operating_profile_before_bmc_exists(): void
+    {
+        $user = $this->activeUser('business-model-journey@example.test');
+        $business = $this->app->make(CreateBusiness::class)->handle(
+            $user,
+            'Business Model Journey Progress',
+            BusinessOriginType::StartedThroughPbr,
+            BusinessStage::Idea,
+            'USD',
+        );
+
+        $this->app->make(BusinessModelPlanning::class)
+            ->saveOperatingProfile(
+                $user,
+                $business,
+                0,
+                $this->operatingProfile(),
+            );
+
+        self::assertDatabaseCount('business_model_canvases', 0);
+
+        $journey = $this->app
+            ->make(GetMasterBusinessJourney::class)
+            ->execute($user, $business, null);
+
+        $step = collect($journey['steps'])
+            ->firstWhere('key', 'business_model');
+
+        self::assertIsArray($step);
+        self::assertSame('recorded', $step['state']);
+        self::assertSame('/formation', $step['route']);
+    }
+
     public function test_http_save_allows_progressive_partial_foundation_without_hidden_field_validation(): void
     {
         $this->withoutVite();
@@ -215,6 +253,7 @@ final class BusinessModelFoundationTest extends TestCase
             'business_purpose' => 'Build a simple operating system for SME partnerships.',
             'market' => 'Myanmar-owned SMEs operating in Myanmar and Thailand.',
             'location' => 'Myanmar and Thailand',
+            'competition_alternatives' => 'Spreadsheet + WhatsApp coordination and larger ERP products.',
             'operating_model' => 'Guided setup plus recurring support.',
             'excluded_activities' => 'No legal representation or guaranteed business outcomes.',
             'pricing_notes' => 'Average setup package used for planning.',

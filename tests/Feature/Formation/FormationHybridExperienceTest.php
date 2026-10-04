@@ -19,6 +19,7 @@ final class FormationHybridExperienceTest extends TestCase
         foreach ([
             'GuidedJourneyStepper',
             'BusinessModelGuidedJourney',
+            'DemandEvidenceGuidedJourney',
             "v-show=\"active === 'bmc'\"",
             "stepDirection: 'Go / Revise / Hold / No-Go'",
             "stepPartnerSetup: 'Partner Setup'",
@@ -60,6 +61,7 @@ final class FormationHybridExperienceTest extends TestCase
             "currentStep === 'economics'",
             "currentStep === 'scalability'",
             "profileDraft.market.trim() !== ''",
+            'competition_alternatives',
             "profileDraft.average_selling_price.trim() !== ''",
             "bmcDraft.key_resources.trim() !== ''",
             'Business Model guided journey',
@@ -72,6 +74,30 @@ final class FormationHybridExperienceTest extends TestCase
             'Exactly nine canonical blocks',
             $source,
         );
+    }
+
+    public function test_demand_evidence_redesign_reuses_existing_records_with_progressive_local_draft_preservation(): void
+    {
+        $source = file_get_contents(
+            base_path('resources/js/components/business-model/DemandEvidenceGuidedJourney.vue'),
+        );
+
+        self::assertIsString($source);
+
+        foreach ([
+            "'/formation/new/assumptions'",
+            "'/formation/new/validations'",
+            "'/evidence'",
+            'sessionStorage',
+            'Demand evidence guided journey',
+            "focus === 'assumption'",
+            "focus === 'test'",
+            "focus === 'evidence'",
+            "focus === 'review'",
+            '/records/documents',
+        ] as $required) {
+            self::assertStringContainsString($required, $source);
+        }
     }
 
     public function test_existing_business_guided_sections_follow_the_conversion_journey_order(): void

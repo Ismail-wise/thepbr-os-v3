@@ -256,7 +256,10 @@ final class GetMasterBusinessJourney
         return match ($key) {
             'business_model' => DB::table('business_model_canvases')
                 ->where('business_id', $businessId)
-                ->exists(),
+                ->exists()
+                || DB::table('business_model_operating_profiles')
+                    ->where('business_id', $businessId)
+                    ->exists(),
             'business_valuation' => DB::table('valuations')
                 ->where('business_id', $businessId)
                 ->exists(),
