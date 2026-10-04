@@ -3,10 +3,13 @@
 declare(strict_types=1);
 
 use App\Application\Identity\ChangeAccountStatus;
+use App\Application\Identity\IssuePbrAccessCode;
 use App\Application\Identity\ProvisionAccount;
+use App\Application\Identity\RedeemPbrAccessCode;
 use App\Domain\Identity\Enums\AccountStatus;
 use App\Domain\Identity\Enums\LanguageMode;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
+use App\Infrastructure\Persistence\Eloquent\Identity\AccountEntitlement;
 use App\Infrastructure\Persistence\Eloquent\Identity\SecurityEvent;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use App\Infrastructure\Persistence\Eloquent\Identity\UserProfile;
@@ -61,6 +64,7 @@ $initialCounts = [
     'user_profiles' => UserProfile::query()->count(),
     'businesses' => Business::query()->count(),
     'memberships' => Membership::query()->count(),
+    'account_entitlements' => AccountEntitlement::query()->count(),
     'security_events' => SecurityEvent::query()->count(),
 ];
 
@@ -123,11 +127,32 @@ if ($user->profile->language_mode !== LanguageMode::English) {
     throw new RuntimeException('Fixture account did not start in English mode.');
 }
 
+$issued = $app->make(IssuePbrAccessCode::class)->handle(
+    boundEmail: $email,
+    expiresInHours: 24,
+    clientReference: 'F1-A13-E2E',
+    batchReference: null,
+    notes: 'Deterministic browser fixture entitlement',
+    actorLabel: 'F1-A13 E2E Fixture',
+    reason: 'Authorize deterministic business creation journey',
+);
+
+$app->make(RedeemPbrAccessCode::class)->handle(
+    $issued['token'],
+    $email,
+    $user,
+    '',
+    '',
+    LanguageMode::English,
+    'UTC',
+);
+
 $finalCounts = [
     'users' => User::query()->count(),
     'user_profiles' => UserProfile::query()->count(),
     'businesses' => Business::query()->count(),
     'memberships' => Membership::query()->count(),
+    'account_entitlements' => AccountEntitlement::query()->count(),
     'security_events' => SecurityEvent::query()->count(),
 ];
 
@@ -136,6 +161,7 @@ $expectedCounts = [
     'user_profiles' => 1,
     'businesses' => 0,
     'memberships' => 0,
+    'account_entitlements' => 1,
     'security_events' => 2,
 ];
 
@@ -153,5 +179,6 @@ echo 'F1_E2E_LANGUAGE=', $user->profile->language_mode->value, PHP_EOL;
 echo 'F1_E2E_USERS=', $finalCounts['users'], PHP_EOL;
 echo 'F1_E2E_BUSINESSES=', $finalCounts['businesses'], PHP_EOL;
 echo 'F1_E2E_MEMBERSHIPS=', $finalCounts['memberships'], PHP_EOL;
+echo 'F1_E2E_ACCOUNT_ENTITLEMENTS=', $finalCounts['account_entitlements'], PHP_EOL;
 echo 'F1_E2E_SECURITY_EVENTS=', $finalCounts['security_events'], PHP_EOL;
 echo 'F1_E2E_PASSWORD_OUTPUT=SUPPRESSED', PHP_EOL;
