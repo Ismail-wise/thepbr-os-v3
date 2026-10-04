@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Partnership;
 
+use App\Application\PartnerDynamics\GetPartnerDynamicsWorkspace;
 use App\Domain\Access\CapabilityCatalog;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
@@ -13,6 +14,7 @@ final class GetPartnershipWorkspace
 {
     public function __construct(
         private readonly PartnershipActorContext $actor,
+        private readonly GetPartnerDynamicsWorkspace $partnerDynamicsWorkspace,
     ) {}
 
     /**
@@ -232,6 +234,10 @@ final class GetPartnershipWorkspace
             }
         }
 
+        $partnerDynamicsWorkspace = $canViewPartners
+            ? $this->partnerDynamicsWorkspace->execute($user, $business)
+            : null;
+
         return [
             'business' => [
                 'id' => $businessId,
@@ -266,6 +272,7 @@ final class GetPartnershipWorkspace
             'partners' => $partners,
             'due_diligence' => $dueDiligence,
             'partner_dynamics' => $partnerDynamics,
+            'partner_dynamics_workspace' => $partnerDynamicsWorkspace,
             'contributions' => $contributions,
             'contribution_submissions' => $contributionSubmissions,
             'ownership_scenarios' => $scenarios,

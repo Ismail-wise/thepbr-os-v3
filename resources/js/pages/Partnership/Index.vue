@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PartnershipWorkflowPanel from '../../components/PartnershipWorkflowPanel.vue';
 import GuidedJourneyStepper from '../../components/hybrid/GuidedJourneyStepper.vue';
+import PartnerDynamicsWorkspacePanel from '../../components/partner-dynamics/PartnerDynamicsWorkspacePanel.vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
 import { useI18n } from '../../i18n/useI18n';
 
@@ -42,6 +43,84 @@ type PartnerDynamics = {
     primary_profile: string;
     secondary_profile: string | null;
     completed_at: string;
+};
+
+type PartnerDynamicsWorkspace = {
+    progress: {
+        completed: number;
+        total: number;
+        ready: boolean;
+    };
+    currentUser: {
+        linked: boolean;
+        completed: boolean;
+        assessmentRoute: string;
+    };
+    participants: Array<{
+        partnerId: string;
+        displayName: string;
+        partnerStatus: string;
+        completionStatus: 'completed' | 'pending';
+        primaryProfile: string | null;
+        secondaryProfile: string | null;
+        completedAt: string | null;
+        isCurrentUser: boolean;
+    }>;
+    alignment: null | {
+        summary: {
+            participantCount: number;
+            sharedStrengthCount: number;
+            complementaryAreaCount: number;
+            importantDifferenceCount: number;
+            sharedBlindSpotCount: number;
+            note: string;
+        };
+        sharedStrengths: Array<{
+            dimension: string;
+            label: string;
+            averageScore?: number;
+            gap?: number;
+            message: string;
+        }>;
+        complementaryAreas: Array<{
+            dimension: string;
+            label: string;
+            averageScore?: number;
+            gap?: number;
+            message: string;
+        }>;
+        importantDifferences: Array<{
+            dimension: string;
+            label: string;
+            averageScore?: number;
+            gap?: number;
+            message: string;
+        }>;
+        sharedBlindSpots: Array<{
+            dimension: string;
+            label: string;
+            averageScore?: number;
+            gap?: number;
+            message: string;
+        }>;
+        roleSuggestions: Array<{
+            name: string;
+            primaryProfile: string;
+            secondaryProfile: string | null;
+            suggestions: string[];
+            note: string;
+        }>;
+        decisionRecommendations: Array<{
+            title: string;
+            message: string;
+        }>;
+        discussionPriorities: Array<{
+            priority: string;
+            topic: string;
+            reason: string;
+        }>;
+    };
+    advisoryOnly: boolean;
 };
 
 type Contribution = {
@@ -122,6 +201,7 @@ const props = defineProps<{
         partners: Partner[];
         due_diligence: DueDiligence[];
         partner_dynamics: PartnerDynamics[];
+        partner_dynamics_workspace: PartnerDynamicsWorkspace | null;
         contributions: Contribution[];
         contribution_submissions: GovernanceSubmission[];
         ownership_scenarios: OwnershipScenario[];
@@ -505,6 +585,11 @@ const createPartner = () => {
                             </div>
                         </dl>
                     </div>
+
+                    <PartnerDynamicsWorkspacePanel
+                        v-if="partnership.partner_dynamics_workspace"
+                        :workspace="partnership.partner_dynamics_workspace"
+                    />
 
                     <form
                         v-if="partnership.permissions.partners_manage"
