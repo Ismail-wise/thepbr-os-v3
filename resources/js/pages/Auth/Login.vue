@@ -61,7 +61,7 @@ const submit = () => {
                 />
 
                 <PbrFormSection
-                    :title="t('login.title')"
+                    :title="t('common.brand')"
                     :instruction="t('login.description')"
                 >
                     <PbrTextInput
