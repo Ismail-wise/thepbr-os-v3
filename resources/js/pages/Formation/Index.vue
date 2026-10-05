@@ -7,11 +7,30 @@ import GuidedJourneyStepper from '../../components/hybrid/GuidedJourneyStepper.v
 import BusinessModelGuidedJourney from '../../components/business-model/BusinessModelGuidedJourney.vue';
 import DemandEvidenceGuidedJourney from '../../components/business-model/DemandEvidenceGuidedJourney.vue';
 import BusinessValuationGuidedJourney from '../../components/business-valuation/BusinessValuationGuidedJourney.vue';
+import DeepFeasibilityGuidedJourney from '../../components/deep-feasibility/DeepFeasibilityGuidedJourney.vue';
 import type { BusinessValuationReadModel } from '../../types/businessValuation';
 
 type LanguageMode = 'en' | 'my' | 'mixed';
 type Journey = 'new' | 'existing';
 type GenericRow = Record<string, any>;
+
+type DeepFeasibilityHistorySummary = {
+    sequence: number;
+    createdAt: string | null;
+    confidenceLevel: string;
+    evidenceQuality: string;
+    assessedDimensions: number;
+    evidenceGaps: number;
+    unavailableDependencies: number;
+    blockers: number;
+    strengths: number;
+    risks: number;
+    requiredActions: number;
+    recommendationAvailable: boolean;
+    recommendation: string | null;
+    historicalSnapshot: boolean;
+    readOnly: boolean;
+};
 
 type FormationWorkspace = {
     business: {
@@ -56,6 +75,8 @@ type FormationWorkspace = {
         assumptions: GenericRow[];
         validations: GenericRow[];
         feasibility: GenericRow[];
+        deep_feasibility_foundation: GenericRow | null;
+        deep_feasibility_history: DeepFeasibilityHistorySummary[];
         partnership_fit: GenericRow | null;
         directions: GenericRow[];
     };
@@ -106,6 +127,8 @@ const copy = {
         bmc: 'Business Model Canvas',
         validation: 'Validation',
         feasibility: 'Feasibility',
+        feasibilityUnavailable:
+            'Deep Feasibility is not available for this account in the current Business. Required Business Model access is not available.',
         fit: 'Partnership Fit',
         baseline: 'Baseline',
         capital: 'Capital',
@@ -228,6 +251,8 @@ const copy = {
         bmc: 'Business Model Canvas',
         validation: 'စမ်းသပ်အတည်ပြုမှု',
         feasibility: 'ဖြစ်နိုင်ခြေ',
+        feasibilityUnavailable:
+            'ဒီ Business အတွက် Deep Feasibility ကို ဒီ account နဲ့ မကြည့်နိုင်သေးပါ။ လိုအပ်တဲ့ Business Model access မရှိသေးပါ။',
         fit: 'Partnership Fit',
         baseline: 'အခြေခံမှတ်တမ်း',
         capital: 'အရင်းအနှီး',
@@ -350,6 +375,8 @@ const copy = {
         bmc: 'Business Model Canvas',
         validation: 'Validation',
         feasibility: 'Feasibility',
+        feasibilityUnavailable:
+            'ဒီ Business အတွက် Deep Feasibility မရသေးပါ။ Required Business Model access မရှိသေးပါ။',
         fit: 'Partnership Fit',
         baseline: 'Baseline',
         capital: 'Capital',
@@ -501,13 +528,6 @@ const fit = reactive({
         props.formation.new_business?.partnership_fit,
         'unresolved_questions',
     ),
-});
-
-const feasibility = reactive({
-    name: 'Base feasibility',
-    projected_monthly_revenue: '0.00',
-    projected_monthly_cost: '0.00',
-    notes: '',
 });
 
 const direction = reactive({
@@ -795,7 +815,8 @@ const formationSteps = computed(() => {
             validation:
                 (props.formation.new_business?.validations ?? []).length > 0,
             feasibility:
-                (props.formation.new_business?.feasibility ?? []).length > 0,
+                (props.formation.new_business?.deep_feasibility_history ?? [])
+                    .length > 0,
             fit: props.formation.new_business?.partnership_fit !== null,
             direction:
                 (props.formation.new_business?.directions ?? []).length > 0,
@@ -1058,28 +1079,27 @@ const selectFormationStep = (key: string) => {
                     />
                 </section>
 
-                <section v-if="formation.journey === 'new' && active === 'feasibility'" class="py-6">
-                    <h2 class="text-lg font-semibold">{{ c.feasibility }}</h2>
-                    <p class="mt-1 text-sm text-slate-600">This is decision support only. The OS does not decide viability for the owners.</p>
-                    <form class="mt-5 grid gap-3 md:grid-cols-2" @submit.prevent="post('/formation/new/feasibility', feasibility)">
-                        <input v-model="feasibility.name" class="min-h-11 border border-slate-300 px-3" :placeholder="c.scenarioName" required>
-                        <input v-model="feasibility.projected_monthly_revenue" class="min-h-11 border border-slate-300 px-3" :placeholder="c.monthlyRevenue" required>
-                        <input v-model="feasibility.projected_monthly_cost" class="min-h-11 border border-slate-300 px-3" :placeholder="c.monthlyCost" required>
-                        <textarea v-model="feasibility.notes" class="min-h-24 border border-slate-300 p-3 md:col-span-2" :placeholder="c.notes" />
-                        <button v-if="formation.permissions.can_manage_formation" class="min-h-11 bg-slate-950 px-4 text-sm font-semibold text-white md:col-span-2">{{ c.add }}</button>
-                    </form>
-                    <table class="mt-6 w-full text-left text-sm">
-                        <thead class="border-b border-slate-300 text-slate-500">
-                            <tr><th class="py-2">{{ c.name }}</th><th>{{ c.monthlyRevenue }}</th><th>{{ c.monthlyCost }}</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="row in formation.new_business?.feasibility ?? []" :key="row.id" class="border-b border-slate-200">
-                                <td class="py-3 font-semibold">{{ row.name }}</td>
-                                <td>{{ row.projected_monthly_revenue }}</td>
-                                <td>{{ row.projected_monthly_cost }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <section
+                    v-if="formation.journey === 'new'"
+                    v-show="active === 'feasibility'"
+                    class="py-6"
+                >
+                    <DeepFeasibilityGuidedJourney
+                        v-if="formation.new_business?.deep_feasibility_foundation"
+                        :key="formation.business.id"
+                        :foundation="formation.new_business.deep_feasibility_foundation"
+                        :history="formation.new_business.deep_feasibility_history"
+                        :can-manage="formation.permissions.can_manage_formation"
+                        @open-business-model="active = 'bmc'"
+                        @open-demand="active = 'validation'"
+                    />
+                    <div
+                        v-else
+                        class="rounded-[22px] border border-[#d9e1e4] bg-[#f7f8f9] p-5 text-sm leading-6 text-[var(--pbr-muted)]"
+                        role="status"
+                    >
+                        {{ c.feasibilityUnavailable }}
+                    </div>
                 </section>
 
                 <section v-if="formation.journey === 'new' && active === 'fit'" class="py-6">

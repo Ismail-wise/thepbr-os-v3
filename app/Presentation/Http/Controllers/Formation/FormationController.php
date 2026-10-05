@@ -10,6 +10,7 @@ use App\Application\Formation\CapitalPlanning;
 use App\Application\Formation\ExistingBusinessBaseline;
 use App\Application\Formation\GetFormationWorkspace;
 use App\Application\Formation\NewBusinessPlanning;
+use App\Application\Formation\RecordDeepFeasibilityAssessmentRun;
 use App\Domain\Capital\ValueObjects\CapitalRequirement;
 use App\Domain\Records\Enums\FormalRecordState;
 use App\Domain\Records\Exceptions\StaleRevision;
@@ -239,6 +240,19 @@ final class FormationController
         );
 
         abort_if($id === null, 404);
+
+        return back();
+    }
+
+    public function recordDeepFeasibilityAssessment(
+        Request $request,
+        RecordDeepFeasibilityAssessmentRun $recorder,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $result = $recorder->execute($user, $business);
+
+        abort_if($result === null, 404);
 
         return back();
     }

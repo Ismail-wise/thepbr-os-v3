@@ -268,6 +268,14 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
             )->name('formation.new.validations.evidence.store');
 
             Route::post(
+                '/formation/new/deep-feasibility/assessments',
+                [
+                    FormationController::class,
+                    'recordDeepFeasibilityAssessment',
+                ],
+            )->name('formation.new.deep-feasibility.assessments.store');
+
+            Route::post(
                 '/formation/new/feasibility',
                 [FormationController::class, 'addFeasibility'],
             )->name('formation.new.feasibility.store');

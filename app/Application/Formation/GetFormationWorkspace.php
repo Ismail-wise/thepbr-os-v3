@@ -18,6 +18,7 @@ final class GetFormationWorkspace
         private readonly GetBusinessValuationReadModel $businessValuation,
         private readonly GetDemandEvidenceSummary $demandEvidence,
         private readonly GetDeepFeasibilityFoundation $deepFeasibility,
+        private readonly GetDeepFeasibilityAssessmentRunSummaries $deepFeasibilityHistory,
     ) {}
 
     public function execute(
@@ -206,6 +207,12 @@ final class GetFormationWorkspace
                             $business,
                         )
                         : null,
+                    'deep_feasibility_history' => $canViewModel
+                        ? ($this->deepFeasibilityHistory->execute(
+                            $user,
+                            $business,
+                        ) ?? [])
+                        : [],
                     'partnership_fit' => $this->row(
                         'partnership_fit_assessments',
                         $businessId,
