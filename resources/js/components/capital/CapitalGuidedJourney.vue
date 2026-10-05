@@ -5,6 +5,7 @@ import GuidedJourneyStepper from '../hybrid/GuidedJourneyStepper.vue';
 import ProgressiveReveal from '../hybrid/ProgressiveReveal.vue';
 import PbrErrorSummary from '../ui/PbrErrorSummary.vue';
 import PbrFormSection from '../ui/PbrFormSection.vue';
+import CapitalPlanComparison from './CapitalPlanComparison.vue';
 import CapitalRuleAllocationStep from './CapitalRuleAllocationStep.vue';
 import { useI18n } from '../../i18n/useI18n';
 import { humanErrorMessages } from '../../support/humanErrors';
@@ -33,6 +34,8 @@ const props = defineProps<{
     calculation: GenericRow | null;
     ruleDraft: GenericRow | null;
     ruleReadModel: GenericRow | null;
+    comparisonDraft: GenericRow | null;
+    comparisonReadModel: GenericRow | null;
     businessModelFoundation: GenericRow | null;
     currency: string;
     canManage: boolean;
@@ -613,6 +616,10 @@ const moveItem = (
 };
 
 const savedInput = computed(
+    () => (props.draft?.input ?? null) as GenericRow | null,
+);
+
+const canonicalDraftInput = computed(
     () => (props.draft?.input ?? null) as GenericRow | null,
 );
 
@@ -1643,6 +1650,14 @@ const contingencyBase = computed(
                     {{ busy ? c.saving : c.saveDraft }}
                 </button>
             </div>
+
+            <CapitalPlanComparison
+                :draft="comparisonDraft"
+                :read-model="comparisonReadModel"
+                :canonical-input="canonicalDraftInput"
+                :currency="currency"
+                :can-manage="canManage"
+            />
         </template>
 
         <div v-else class="rounded-2xl border border-[#eadcb1] bg-[#fffaf0] p-5">

@@ -360,6 +360,16 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 [FormationController::class, 'saveCapitalRuleDraft'],
             )->name('formation.capital.rule-draft.update');
 
+            Route::post(
+                '/formation/capital/comparison-draft/refresh',
+                [FormationController::class, 'refreshCapitalComparisonDraft'],
+            )->name('formation.capital.comparison-draft.refresh');
+
+            Route::put(
+                '/formation/capital/comparison-draft',
+                [FormationController::class, 'saveCapitalComparisonDraft'],
+            )->name('formation.capital.comparison-draft.update');
+
             Route::put(
                 '/formation/capital/scenarios/{kind}',
                 [FormationController::class, 'saveCapitalScenario'],

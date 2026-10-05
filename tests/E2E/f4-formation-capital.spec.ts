@@ -461,11 +461,20 @@ test(
             ).toBeVisible();
         }
 
+        const capitalComparison = page.getByTestId(
+            'capital-plan-comparison',
+        );
+
         await expect(
-            page.getByText('Capital Plan Comparison', {
+            capitalComparison.getByRole('heading', {
+                name: 'Compare Lean, Base and Growth before Capital Approval',
                 exact: true,
             }),
-        ).toHaveCount(0);
+        ).toBeVisible();
+
+        await expect(
+            capitalComparison.getByTestId('comparison-prepare'),
+        ).toBeDisabled();
 
         await expect(
             page.getByRole('button', {
@@ -806,6 +815,152 @@ test(
             ),
         ).toBeVisible();
 
+        // Capital Comparison starts from the current canonical Capital input
+        // once, then lets the manager vary Lean / Base / Growth assumptions
+        // without re-entering the complete plan or touching Step 6.
+        const comparisonPrepareResponse = page.waitForResponse(
+            (response) =>
+                response.url().endsWith(
+                    '/formation/capital/comparison-draft/refresh',
+                )
+                && response.request().method() === 'POST',
+        );
+
+        await capitalComparison
+            .getByTestId('comparison-prepare')
+            .click();
+
+        await comparisonPrepareResponse;
+
+        const comparisonCards = capitalComparison.locator(
+            '[data-testid^="comparison-card-"]',
+        );
+
+        await expect(comparisonCards).toHaveCount(3);
+        await expect(comparisonCards.nth(0)).toHaveAttribute(
+            'data-testid',
+            'comparison-card-lean',
+        );
+        await expect(comparisonCards.nth(1)).toHaveAttribute(
+            'data-testid',
+            'comparison-card-base',
+        );
+        await expect(comparisonCards.nth(2)).toHaveAttribute(
+            'data-testid',
+            'comparison-card-growth',
+        );
+
+        const leanCard = capitalComparison.getByTestId(
+            'comparison-card-lean',
+        );
+        const baseCard = capitalComparison.getByTestId(
+            'comparison-card-base',
+        );
+        const growthCard = capitalComparison.getByTestId(
+            'comparison-card-growth',
+        );
+
+        for (const card of [leanCard, baseCard, growthCard]) {
+            await expect(
+                card.getByText('22660.00 USD', { exact: true }),
+            ).toBeVisible();
+            await expect(
+                card.getByText('21660.00 USD', { exact: true }),
+            ).toBeVisible();
+        }
+
+        await leanCard
+            .getByRole('spinbutton', {
+                name: 'Working Capital months',
+                exact: true,
+            })
+            .fill('2');
+
+        await leanCard
+            .getByRole('spinbutton', {
+                name: 'Contingency %',
+                exact: true,
+            })
+            .fill('5');
+
+        await growthCard
+            .getByRole('spinbutton', {
+                name: 'Working Capital months',
+                exact: true,
+            })
+            .fill('4');
+
+        await growthCard
+            .getByRole('spinbutton', {
+                name: 'Contingency %',
+                exact: true,
+            })
+            .fill('15');
+
+        const comparisonSaveResponse = page.waitForResponse(
+            (response) =>
+                response.url().endsWith(
+                    '/formation/capital/comparison-draft',
+                )
+                && response.request().method() === 'PUT',
+        );
+
+        await capitalComparison
+            .getByTestId('comparison-save')
+            .click();
+
+        await comparisonSaveResponse;
+
+        for (const value of ['15120.00 USD', '14120.00 USD']) {
+            await expect(
+                leanCard.getByText(value, { exact: true }),
+            ).toBeVisible();
+        }
+
+        for (const value of ['22660.00 USD', '21660.00 USD']) {
+            await expect(
+                baseCard.getByText(value, { exact: true }),
+            ).toBeVisible();
+        }
+
+        for (const value of ['30820.00 USD', '29820.00 USD']) {
+            await expect(
+                growthCard.getByText(value, { exact: true }),
+            ).toBeVisible();
+        }
+
+        await expect(
+            capitalComparison.getByText(
+                'Ready for comparison',
+                { exact: true },
+            ).first(),
+        ).toBeVisible();
+
+        await capitalComparison
+            .getByTestId('comparison-preferred-base')
+            .click();
+
+        const preferredSaveResponse = page.waitForResponse(
+            (response) =>
+                response.url().endsWith(
+                    '/formation/capital/comparison-draft',
+                )
+                && response.request().method() === 'PUT',
+        );
+
+        await capitalComparison
+            .getByTestId('comparison-save')
+            .click();
+
+        await preferredSaveResponse;
+
+        await expect(
+            capitalComparison.getByText(
+                'Preferred planning candidate: Base',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
         // Saved draft survives normal reload. Explicit zero remains distinct
         // from the untouched/missing state and hidden stale method values stay
         // out of the canonical draft.
@@ -821,6 +976,16 @@ test(
                 exact: true,
             },
         );
+        const reloadedComparison = page.getByTestId(
+            'capital-plan-comparison',
+        );
+
+        await expect(
+            reloadedComparison.getByText(
+                'Preferred planning candidate: Base',
+                { exact: true },
+            ),
+        ).toBeVisible();
 
         await reloadedCapitalJourney
             .getByRole('button', {
@@ -869,6 +1034,7 @@ test(
             .getByRole('spinbutton', {
                 name: /^Confirmed Funding \(USD\)/,
             })
+            .first()
             .fill('2000.00');
 
         const capitalRevisionResponse = page.waitForResponse(
@@ -887,6 +1053,26 @@ test(
             .click();
 
         await capitalRevisionResponse;
+
+        await expect(
+            reloadedComparison.getByText(
+                'The current Capital plan changed after this comparison was prepared. Refresh before treating any scenario as ready for the next stage.',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            reloadedComparison.getByText(
+                'Needs review',
+                { exact: true },
+            ).first(),
+        ).toBeVisible();
+
+        await expect(
+            reloadedComparison.getByTestId(
+                'comparison-preferred-base',
+            ),
+        ).toBeDisabled();
 
         await reloadedCapitalJourney
             .getByRole('button', {
@@ -1002,6 +1188,21 @@ test(
             }),
         ).toBeVisible();
 
+        await expect(
+            reloadedComparison.getByRole('heading', {
+                name: 'Capital Approval မတိုင်မီ Lean, Base, Growth ကို နှိုင်းယှဉ်ပါ',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        expect(
+            await reloadedComparison.evaluate(
+                (element) =>
+                    element.scrollWidth
+                    <= element.clientWidth + 1,
+            ),
+        ).toBeTruthy();
+
         expect(
             await reloadedCapitalPanel.evaluate(
                 (element) =>
@@ -1032,6 +1233,21 @@ test(
                 exact: true,
             }),
         ).toBeVisible();
+
+        await expect(
+            reloadedComparison.getByRole('heading', {
+                name: 'Capital Approval မတိုင်မီ Lean / Base / Growth ကို compare လုပ်ပါ',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        expect(
+            await reloadedComparison.evaluate(
+                (element) =>
+                    element.scrollWidth
+                    <= element.clientWidth + 1,
+            ),
+        ).toBeTruthy();
 
         await capitalLanguageSwitcher.selectOption('en');
 

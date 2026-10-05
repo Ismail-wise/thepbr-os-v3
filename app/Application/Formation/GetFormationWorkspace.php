@@ -23,6 +23,8 @@ final class GetFormationWorkspace
         private readonly GetCapitalPlanningDraftCalculation $capitalPlanningCalculation,
         private readonly GetCapitalRuleDraft $capitalRuleDraft,
         private readonly GetCapitalRuleReadModel $capitalRuleReadModel,
+        private readonly GetCapitalComparisonDraft $capitalComparisonDraft,
+        private readonly GetCapitalComparisonReadModel $capitalComparisonReadModel,
     ) {}
 
     public function execute(
@@ -85,6 +87,20 @@ final class GetFormationWorkspace
 
         $capitalRuleReadModel = $canViewCapital
             ? $this->capitalRuleReadModel->execute(
+                $user,
+                $business,
+            )
+            : null;
+
+        $capitalComparisonDraft = $canViewCapital
+            ? $this->capitalComparisonDraft->execute(
+                $user,
+                $business,
+            )
+            : null;
+
+        $capitalComparisonReadModel = $canViewCapital
+            ? $this->capitalComparisonReadModel->execute(
                 $user,
                 $business,
             )
@@ -315,6 +331,8 @@ final class GetFormationWorkspace
                 'planning_calculation' => $capitalCalculation,
                 'rule_draft' => $capitalRuleDraft,
                 'rule_read_model' => $capitalRuleReadModel,
+                'comparison_draft' => $capitalComparisonDraft,
+                'comparison_read_model' => $capitalComparisonReadModel,
                 'scenarios' => $canViewCapital
                     ? $this->rows(
                         'capital_scenarios',

@@ -100,6 +100,8 @@ type FormationWorkspace = {
         planning_calculation: GenericRow | null;
         rule_draft: GenericRow | null;
         rule_read_model: GenericRow | null;
+        comparison_draft: GenericRow | null;
+        comparison_read_model: GenericRow | null;
         scenarios: GenericRow[];
         promotions: GenericRow[];
         current_effective: GenericRow | null;
@@ -212,7 +214,7 @@ const copy = {
         version: 'Revision',
         history: 'Promotion History',
         capitalJourney: 'Capital Planning Workflow',
-        capitalJourneyHelp: 'Calculate the full requirement, compare Lean / Base / Growth, then promote the chosen plan into the governed approval flow.',
+        capitalJourneyHelp: 'Calculate the full requirement, compare Lean / Base / Growth, then mark a Preferred Plan to prepare the next governed Capital Approval stage.',
         startupCostPlan: 'Startup Cost Plan',
         initialAssetsOpening: 'Initial Assets & Opening Inventory',
         workingCapitalForecast: 'Working Capital Forecast',
@@ -336,7 +338,7 @@ const copy = {
         version: 'Revision',
         history: 'Promotion History',
         capitalJourney: 'အရင်းအနှီး စီမံကိန်း အဆင့်လိုက်လမ်းကြောင်း',
-        capitalJourneyHelp: 'လိုအပ်သော Capital ပမာဏကိုတွက်၊ Lean / Base / Growth ကိုနှိုင်းယှဉ်ပြီး ရွေးထားသော plan ကို governed approval flow သို့ တင်ပါ။',
+        capitalJourneyHelp: 'လိုအပ်သော Capital ပမာဏကိုတွက်၊ Lean / Base / Growth ကိုနှိုင်းယှဉ်ပြီး နောက် Capital Approval အဆင့်အတွက် Preferred Plan ကို မှတ်ထားပါ။',
         startupCostPlan: 'Startup Cost Plan',
         initialAssetsOpening: 'Initial Assets & Opening Inventory',
         workingCapitalForecast: 'Working Capital Forecast',
@@ -460,7 +462,7 @@ const copy = {
         version: 'Revision',
         history: 'Promotion History',
         capitalJourney: 'Capital Planning Workflow',
-        capitalJourneyHelp: 'Capital requirement ကို calculate လုပ်၊ Lean / Base / Growth ကို compare လုပ်ပြီး chosen plan ကို governed approval flow သို့ promote လုပ်ပါ။',
+        capitalJourneyHelp: 'Capital requirement ကို calculate လုပ်၊ Lean / Base / Growth ကို compare လုပ်ပြီး next Capital Approval stage အတွက် Preferred Plan ကို mark လုပ်ပါ။',
         startupCostPlan: 'Startup Cost Plan',
         initialAssetsOpening: 'Initial Assets & Opening Inventory',
         workingCapitalForecast: 'Working Capital Forecast',
@@ -1177,6 +1179,8 @@ const selectFormationStep = (key: string) => {
                         :calculation="formation.capital.planning_calculation"
                         :rule-draft="formation.capital.rule_draft"
                         :rule-read-model="formation.capital.rule_read_model"
+                        :comparison-draft="formation.capital.comparison_draft"
+                        :comparison-read-model="formation.capital.comparison_read_model"
                         :business-model-foundation="formation.business_model_foundation"
                         :currency="formation.business.base_currency"
                         :can-manage="formation.permissions.can_manage_capital"

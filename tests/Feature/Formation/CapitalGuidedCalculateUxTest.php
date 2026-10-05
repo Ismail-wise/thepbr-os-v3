@@ -455,6 +455,9 @@ final class CapitalGuidedCalculateUxTest extends TestCase
         $rule = $this->source(
             'resources/js/components/capital/CapitalRuleAllocationStep.vue',
         );
+        $comparison = $this->source(
+            'resources/js/components/capital/CapitalPlanComparison.vue',
+        );
 
         self::assertStringContainsString(
             '<CapitalGuidedJourney',
@@ -493,14 +496,43 @@ final class CapitalGuidedCalculateUxTest extends TestCase
         }
 
         foreach ([
-            'Capital Plan Comparison',
-            'Promote to frozen Proposal',
-            'Lean',
-            'Growth',
-        ] as $deferredUx) {
-            self::assertStringNotContainsString(
-                $deferredUx,
+            'CapitalPlanComparison',
+            ':draft="comparisonDraft"',
+            ':read-model="comparisonReadModel"',
+        ] as $comparisonIntegration) {
+            self::assertStringContainsString(
+                $comparisonIntegration,
                 $guided,
+            );
+        }
+
+        foreach ([
+            'Capital Plan Comparison',
+            'Lean',
+            'Base',
+            'Growth',
+            '/formation/capital/comparison-draft',
+            '/formation/capital/comparison-draft/refresh',
+            'Planning comparison only.',
+            'Preferred Plan is not Approval',
+            'capital-plan-comparison',
+        ] as $comparisonContract) {
+            self::assertStringContainsString(
+                $comparisonContract,
+                $comparison,
+            );
+        }
+
+        foreach ([
+            'Promote to frozen Proposal',
+            'capital_plan_promotions',
+            'approvedTruth =',
+            'totalCapitalRequirement =',
+            'fundingGap =',
+        ] as $forbiddenComparisonUx) {
+            self::assertStringNotContainsString(
+                $forbiddenComparisonUx,
+                $comparison,
             );
         }
 
@@ -547,6 +579,9 @@ final class CapitalGuidedCalculateUxTest extends TestCase
         $rule = $this->source(
             'resources/js/components/capital/CapitalRuleAllocationStep.vue',
         );
+        $comparison = $this->source(
+            'resources/js/components/capital/CapitalPlanComparison.vue',
+        );
 
         foreach ([
             'uiLanguageMode',
@@ -576,6 +611,31 @@ final class CapitalGuidedCalculateUxTest extends TestCase
                 $rule,
             );
         }
+
+        foreach ([
+            'uiLanguageMode',
+            'Capital Approval မတိုင်မီ Lean, Base, Growth ကို နှိုင်းယှဉ်ပါ',
+            'Capital Approval မတိုင်မီ Lean / Base / Growth ကို compare လုပ်ပါ',
+            'pbr-safe-copy',
+            'min-w-0',
+            'flex-wrap',
+            'sm:grid-cols-3',
+            'xl:grid-cols-3',
+        ] as $comparisonContract) {
+            self::assertStringContainsString(
+                $comparisonContract,
+                $comparison,
+            );
+        }
+
+        self::assertStringNotContainsString(
+            'w-[320px]',
+            $comparison,
+        );
+        self::assertStringNotContainsString(
+            'reasonCode',
+            $comparison,
+        );
 
         self::assertStringNotContainsString(
             'w-[320px]',

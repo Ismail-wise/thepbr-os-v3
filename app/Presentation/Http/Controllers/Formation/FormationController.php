@@ -11,6 +11,8 @@ use App\Application\Formation\ExistingBusinessBaseline;
 use App\Application\Formation\GetFormationWorkspace;
 use App\Application\Formation\NewBusinessPlanning;
 use App\Application\Formation\RecordDeepFeasibilityAssessmentRun;
+use App\Application\Formation\RefreshCapitalComparisonDraftFromCanonical;
+use App\Application\Formation\SaveCapitalComparisonDraft;
 use App\Application\Formation\SaveCapitalPlanningDraft;
 use App\Application\Formation\SaveCapitalRuleDraft;
 use App\Domain\Capital\ValueObjects\CapitalRequirement;
@@ -745,6 +747,76 @@ final class FormationController
         return back()->with(
             'status',
             'Capital Rule draft saved.',
+        );
+    }
+
+    public function refreshCapitalComparisonDraft(
+        Request $request,
+        RefreshCapitalComparisonDraftFromCanonical $comparisons,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $data = $request->validate([
+            'expected_revision' => ['required', 'integer', 'min:0'],
+        ]);
+
+        try {
+            $result = $comparisons->execute(
+                $user,
+                $business,
+                (int) $data['expected_revision'],
+            );
+        } catch (StaleRevision) {
+            throw ValidationException::withMessages([
+                'capital_comparison' => 'This Capital comparison draft changed after you opened it. Reload the latest comparison before refreshing.',
+            ]);
+        } catch (InvalidArgumentException) {
+            throw ValidationException::withMessages([
+                'capital_comparison' => 'Save the current Capital planning draft before preparing or refreshing Lean, Base and Growth.',
+            ]);
+        }
+
+        abort_if($result === null, 404);
+
+        return back()->with(
+            'status',
+            'Capital comparison prepared from the current Capital plan.',
+        );
+    }
+
+    public function saveCapitalComparisonDraft(
+        Request $request,
+        SaveCapitalComparisonDraft $comparisons,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $data = $request->validate([
+            'expected_revision' => ['required', 'integer', 'min:0'],
+            'input' => ['required', 'array'],
+        ]);
+
+        try {
+            $result = $comparisons->execute(
+                $user,
+                $business,
+                (int) $data['expected_revision'],
+                $data['input'],
+            );
+        } catch (StaleRevision) {
+            throw ValidationException::withMessages([
+                'capital_comparison' => 'This Capital comparison draft changed after you opened it. Reload the latest comparison, review it, and then save again.',
+            ]);
+        } catch (InvalidArgumentException) {
+            throw ValidationException::withMessages([
+                'capital_comparison' => 'Check the visible Lean, Base and Growth planning fields before saving.',
+            ]);
+        }
+
+        abort_if($result === null, 404);
+
+        return back()->with(
+            'status',
+            'Capital comparison draft saved.',
         );
     }
 
