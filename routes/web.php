@@ -333,6 +333,11 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
             )->name('formation.existing.conversion.update');
 
             Route::post(
+                '/formation/existing/business-valuation',
+                [FormationController::class, 'calculateBusinessValuation'],
+            )->name('formation.existing.business-valuation.store');
+
+            Route::post(
                 '/formation/existing/valuations',
                 [FormationController::class, 'addValuation'],
             )->name('formation.existing.valuations.store');

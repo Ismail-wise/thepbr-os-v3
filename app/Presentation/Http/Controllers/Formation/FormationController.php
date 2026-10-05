@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Presentation\Http\Controllers\Formation;
 
 use App\Application\Formation\BusinessModelPlanning;
+use App\Application\Formation\BusinessValuationPlanning;
 use App\Application\Formation\CapitalPlanning;
 use App\Application\Formation\ExistingBusinessBaseline;
 use App\Application\Formation\GetFormationWorkspace;
@@ -556,6 +557,70 @@ final class FormationController
                 $business,
                 (int) $data['expected_revision'],
                 $data['plan'],
+            ),
+        );
+
+        abort_if($result === null, 404);
+
+        return back();
+    }
+
+    public function calculateBusinessValuation(
+        Request $request,
+        BusinessValuationPlanning $valuation,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $money = [
+            'nullable',
+            'regex:/\A\d{1,16}(?:\.\d{1,2})?\z/',
+        ];
+        $assumption = [
+            'nullable',
+            'regex:/\A\d{1,4}(?:\.\d{1,4})?\z/',
+        ];
+
+        $data = $request->validate([
+            'as_of_date' => ['required', 'date_format:Y-m-d'],
+            'historical' => ['sometimes', 'array'],
+            'historical.ebitda' => $money,
+            'historical.owner_earnings' => $money,
+            'historical.free_cash_flow' => $money,
+            'historical.debt' => $money,
+            'assumptions' => ['sometimes', 'array'],
+            'assumptions.ebitda_multiple' => $assumption,
+            'assumptions.sde_multiple' => $assumption,
+            'assumptions.growth_rate_percent' => [
+                'nullable',
+                'regex:/\A-?\d{1,3}(?:\.\d{1,4})?\z/',
+            ],
+            'assumptions.discount_rate_percent' => $assumption,
+            'assumptions.terminal_growth_rate_percent' => $assumption,
+            'review_state' => [
+                'required',
+                Rule::in(['draft', 'reviewed']),
+            ],
+        ]);
+
+        $historical = array_filter(
+            $data['historical'] ?? [],
+            static fn (mixed $value): bool => $value !== null
+                && $value !== '',
+        );
+        $assumptions = array_filter(
+            $data['assumptions'] ?? [],
+            static fn (mixed $value): bool => $value !== null
+                && $value !== '',
+        );
+
+        $result = $this->validatedCall(
+            fn () => $valuation->calculateAndRecord(
+                $user,
+                $business,
+                $data['as_of_date'],
+                $historical,
+                $assumptions,
+                $data['review_state'],
             ),
         );
 

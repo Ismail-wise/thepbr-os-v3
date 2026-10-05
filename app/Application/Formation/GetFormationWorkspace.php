@@ -15,6 +15,7 @@ final class GetFormationWorkspace
     public function __construct(
         private readonly FormationActorContext $actor,
         private readonly BusinessModelEconomicsCalculator $economics,
+        private readonly GetBusinessValuationReadModel $businessValuation,
     ) {}
 
     public function execute(
@@ -256,6 +257,10 @@ final class GetFormationWorkspace
                         'valuations',
                         $businessId,
                         'as_of_date',
+                    ),
+                    'business_valuation' => $this->businessValuation->latest(
+                        $user,
+                        $business,
                     ),
                 ],
             'capital' => [

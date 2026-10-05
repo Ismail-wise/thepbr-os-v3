@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Application\Businesses\CreateBusiness;
 use App\Application\Formation\BusinessModelPlanning;
+use App\Application\Formation\BusinessValuationPlanning;
 use App\Application\Formation\CapitalPlanning;
 use App\Application\Formation\ExistingBusinessBaseline;
 use App\Application\Formation\NewBusinessPlanning;
@@ -65,6 +66,7 @@ foreach (
         'capital_scenarios',
         'existing_business_profiles',
         'valuations',
+        'business_valuation_runs',
     ] as $table
 ) {
     $count = DB::table($table)->count();
@@ -254,17 +256,29 @@ $baseline->addOwnerPosition(
     ],
 );
 
-$baseline->addValuation(
+$baseline->addAsset(
     $user,
     $existingBusiness,
     [
-        'as_of_date' => '2026-09-26',
-        'amount' => '250000.00',
-        'method' => 'Prepared baseline method',
-        'review_state' => 'reviewed',
-        'notes' => 'Reviewed baseline state only.',
+        'name' => 'Prepared operating assets',
+        'estimated_value' => '250000.00',
+        'notes' => 'Canonical source for deterministic guided valuation.',
     ],
 );
+
+$valuation = $app->make(BusinessValuationPlanning::class)
+    ->calculateAndRecord(
+        $user,
+        $existingBusiness,
+        '2026-09-26',
+        [],
+        [],
+        'reviewed',
+    );
+
+if ($valuation === null) {
+    throw new RuntimeException('F4 guided valuation fixture failed.');
+}
 
 echo 'F4_E2E_FIXTURE=PASS', PHP_EOL;
 echo 'F4_E2E_EMAIL=', $email, PHP_EOL;

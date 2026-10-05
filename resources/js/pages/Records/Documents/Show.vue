@@ -515,7 +515,7 @@ const verifyEvidence = (): void => {
                             </label>
 
                             <label
-                                v-if="linkForm.target_type === 'contribution'"
+                                v-if="(evidenceTargetOptions[linkForm.target_type] ?? []).length > 0"
                                 class="block text-sm font-medium text-slate-700"
                             >
                                 {{ t('documents.targetRecord') }}
@@ -528,7 +528,7 @@ const verifyEvidence = (): void => {
                                         {{ t('documents.selectTarget') }}
                                     </option>
                                     <option
-                                        v-for="option in evidenceTargetOptions.contribution ?? []"
+                                        v-for="option in evidenceTargetOptions[linkForm.target_type] ?? []"
                                         :key="option.id"
                                         :value="option.id"
                                     >

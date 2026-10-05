@@ -29,7 +29,59 @@ final class ListAuthorizedEvidenceTargets
                 $user,
                 $business,
             ),
+            'business_valuation_run' => $this->businessValuations(
+                $user,
+                $business,
+            ),
         ];
+    }
+
+    /**
+     * @return list<array{id:string,label:string}>
+     */
+    private function businessValuations(
+        User $user,
+        Business $business,
+    ): array {
+        $decision = $this->authorize->decide(
+            $user,
+            $business,
+            $business,
+            new Capability(
+                CapabilityCatalog::FORMATION_MANAGE,
+            ),
+        );
+
+        if (! $decision->allowed) {
+            return [];
+        }
+
+        return DB::table('business_valuation_runs')
+            ->where('business_id', $business->getKey())
+            ->orderByDesc('as_of_date')
+            ->orderByDesc('created_at')
+            ->get([
+                'id',
+                'as_of_date',
+                'base_value',
+                'confidence_level',
+                'review_state',
+            ])
+            ->map(function (object $row) use ($business): array {
+                return [
+                    'id' => (string) $row->id,
+                    'label' => sprintf(
+                        '%s · %s %s · %s confidence · %s',
+                        (string) $row->as_of_date,
+                        (string) $row->base_value,
+                        (string) $business->base_currency,
+                        (string) $row->confidence_level,
+                        (string) $row->review_state,
+                    ),
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     /**

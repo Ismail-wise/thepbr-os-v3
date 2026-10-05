@@ -317,16 +317,100 @@ test(
             .click();
 
         await expect(
-            page.getByText('250000.00 USD', {
+            page.getByRole('heading', {
+                name: 'Estimate a practical value range for the existing Business',
                 exact: true,
             }),
         ).toBeVisible();
 
+        const valuationJourney = page.getByRole('navigation', {
+            name: 'Business Valuation guided journey',
+            exact: true,
+        });
+
+        for (const step of [
+            'Business facts',
+            'Historical facts',
+            'Assumptions',
+            'Review',
+            'Result',
+        ]) {
+            await expect(
+                valuationJourney.getByRole('button', {
+                    name: new RegExp(step),
+                }),
+            ).toBeVisible();
+        }
+
         await expect(
-            page.getByRole('cell', {
-                name: 'reviewed',
+            page.getByText('250,000 USD', {
                 exact: true,
-            }),
+            }).first(),
         ).toBeVisible();
+
+        await expect(
+            page.getByText('Asset-Based', {
+                exact: true,
+            }).first(),
+        ).toBeVisible();
+
+        await expect(
+            page.getByText(
+                /not a guaranteed market value.*Contribution Valuation/i,
+            ).first(),
+        ).toBeVisible();
+
+        await page
+            .getByRole('button', {
+                name: 'Prepare another estimate',
+                exact: true,
+            })
+            .click();
+
+        await valuationJourney
+            .getByRole('button', {
+                name: /Historical facts/,
+            })
+            .click();
+
+        const ebitdaToggle = page.getByRole('checkbox', {
+            name: /I have a usable EBITDA figure/,
+        });
+
+        await expect(
+            page.getByLabel('Historical EBITDA', { exact: true }),
+        ).toHaveCount(0);
+
+        await ebitdaToggle.check();
+
+        const ebitdaInput = page.getByLabel('Historical EBITDA', {
+            exact: true,
+        });
+
+        await expect(ebitdaInput).toBeVisible();
+        await ebitdaInput.fill('123456.00');
+
+        await page.reload();
+
+        const reloadedValuationJourney = page.getByRole('navigation', {
+            name: 'Business Valuation guided journey',
+            exact: true,
+        });
+
+        await reloadedValuationJourney
+            .getByRole('button', {
+                name: /Historical facts/,
+            })
+            .click();
+
+        await expect(
+            page.getByRole('checkbox', {
+                name: /I have a usable EBITDA figure/,
+            }),
+        ).toBeChecked();
+
+        await expect(
+            page.getByLabel('Historical EBITDA', { exact: true }),
+        ).toHaveValue('123456.00');
     },
 );

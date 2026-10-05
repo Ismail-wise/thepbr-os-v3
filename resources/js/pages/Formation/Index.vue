@@ -6,6 +6,8 @@ import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
 import GuidedJourneyStepper from '../../components/hybrid/GuidedJourneyStepper.vue';
 import BusinessModelGuidedJourney from '../../components/business-model/BusinessModelGuidedJourney.vue';
 import DemandEvidenceGuidedJourney from '../../components/business-model/DemandEvidenceGuidedJourney.vue';
+import BusinessValuationGuidedJourney from '../../components/business-valuation/BusinessValuationGuidedJourney.vue';
+import type { BusinessValuationReadModel } from '../../types/businessValuation';
 
 type LanguageMode = 'en' | 'my' | 'mixed';
 type Journey = 'new' | 'existing';
@@ -69,6 +71,7 @@ type FormationWorkspace = {
         gap_assessment: GenericRow | null;
         conversion_plan: GenericRow | null;
         valuations: GenericRow[];
+        business_valuation: BusinessValuationReadModel | null;
     };
     capital: {
         scenarios: GenericRow[];
@@ -578,14 +581,6 @@ const conversion = reactive({
     plan: field(props.formation.existing_business?.conversion_plan, 'plan'),
 });
 
-const valuation = reactive({
-    as_of_date: new Date().toISOString().slice(0, 10),
-    amount: '0.00',
-    method: '',
-    review_state: 'draft',
-    notes: '',
-});
-
 const scenarioKinds = ['lean', 'base', 'growth'] as const;
 type ScenarioKind = (typeof scenarioKinds)[number];
 
@@ -848,7 +843,8 @@ const formationSteps = computed(() => {
             (props.formation.existing_business?.assets ?? []).length > 0
             || (props.formation.existing_business?.liabilities ?? []).length > 0,
         valuation:
-            (props.formation.existing_business?.valuations ?? []).length > 0,
+            props.formation.existing_business?.business_valuation !== null
+            || (props.formation.existing_business?.valuations ?? []).length > 0,
         owners:
             (props.formation.existing_business?.owner_positions ?? []).length > 0,
         obligations_risks:
@@ -1188,29 +1184,17 @@ const selectFormationStep = (key: string) => {
                             </p>
                         </div>
 
-                        <div id="formation-existing-valuation" class="scroll-mt-24 space-y-4 rounded-[18px] border border-[#dce6de] bg-white p-5 shadow-[0_8px_22px_rgb(16_35_26_/_3%)] xl:col-span-2">
-                            <h3 class="font-semibold">{{ c.valuations }}</h3>
-                            <p class="text-sm text-slate-600">{{ c.valuationNotice }}</p>
-                            <form class="grid gap-2 lg:grid-cols-[10rem_12rem_1fr_9rem_auto]" @submit.prevent="post('/formation/existing/valuations', valuation)">
-                                <input v-model="valuation.as_of_date" type="date" class="min-h-10 border border-slate-300 px-2" required>
-                                <input v-model="valuation.amount" class="min-h-10 border border-slate-300 px-2" :placeholder="c.amount" required>
-                                <input v-model="valuation.method" class="min-h-10 border border-slate-300 px-2" :placeholder="c.method" required>
-                                <select v-model="valuation.review_state" class="min-h-10 border border-slate-300 bg-white px-2">
-                                    <option value="draft">draft</option>
-                                    <option value="reviewed">reviewed</option>
-                                </select>
-                                <button class="border border-slate-300 px-3 text-xs font-semibold">{{ c.add }}</button>
-                            </form>
-                            <table class="w-full text-left text-sm">
-                                <tbody>
-                                    <tr v-for="row in formation.existing_business?.valuations ?? []" :key="row.id" class="border-b border-slate-200">
-                                        <td class="py-3">{{ row.as_of_date }}</td>
-                                        <td>{{ row.amount }} {{ formation.business.base_currency }}</td>
-                                        <td>{{ row.method }}</td>
-                                        <td class="font-semibold">{{ row.review_state }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div id="formation-existing-valuation" class="scroll-mt-24 xl:col-span-2">
+                            <BusinessValuationGuidedJourney
+                                :key="formation.existing_business?.business_valuation?.id ?? formation.business.id"
+                                :business-id="formation.business.id"
+                                :currency="formation.business.base_currency"
+                                :financial-snapshots="formation.existing_business?.financial_snapshots ?? []"
+                                :assets="formation.existing_business?.assets ?? []"
+                                :liabilities="formation.existing_business?.liabilities ?? []"
+                                :latest="formation.existing_business?.business_valuation ?? null"
+                                :can-manage="formation.permissions.can_manage_formation"
+                            />
                         </div>
 
                         <div id="formation-existing-owners" class="scroll-mt-24 space-y-4 rounded-[18px] border border-[#dce6de] bg-white p-5 shadow-[0_8px_22px_rgb(16_35_26_/_3%)]">
