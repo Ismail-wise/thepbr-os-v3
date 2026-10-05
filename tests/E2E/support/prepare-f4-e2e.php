@@ -9,6 +9,8 @@ use App\Application\Formation\CapitalPlanning;
 use App\Application\Formation\ExistingBusinessBaseline;
 use App\Application\Formation\NewBusinessPlanning;
 use App\Application\Formation\RecordDeepFeasibilityAssessmentRun;
+use App\Application\Governance\EstablishInitialFormationAuthority;
+use App\Application\Governance\FormationAuthorityPolicyWorkflow;
 use App\Application\Identity\ChangeAccountStatus;
 use App\Application\Identity\ProvisionAccount;
 use App\Domain\Businesses\Enums\BusinessOriginType;
@@ -17,6 +19,7 @@ use App\Domain\Capital\ValueObjects\CapitalRequirement;
 use App\Domain\Identity\Enums\AccountStatus;
 use App\Domain\Identity\Enums\LanguageMode;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
+use App\Infrastructure\Persistence\Eloquent\Members\Membership;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\DB;
@@ -67,6 +70,8 @@ foreach (
         'capital_scenarios',
         'capital_planning_drafts',
         'capital_rule_drafts',
+        'capital_comparison_drafts',
+        'capital_approval_snapshots',
         'existing_business_profiles',
         'valuations',
         'business_valuation_runs',
@@ -133,6 +138,72 @@ $existingBusiness = $createBusiness->handle(
     BusinessStage::Operating,
     'USD',
 );
+
+$newBusinessOwner = Membership::query()
+    ->where('business_id', $newBusiness->getKey())
+    ->where('user_id', $user->getKey())
+    ->sole();
+
+$formationAuthority = $app->make(
+    FormationAuthorityPolicyWorkflow::class,
+);
+
+$authorityDraft = $formationAuthority->createDraft(
+    $user,
+    $newBusiness,
+    [[
+        'decision_type' => 'capital_plan_approval',
+        'decision_method' => 'approval',
+        'required_approvals' => 1,
+        'required_votes' => 0,
+        'quorum_count' => 1,
+        'signature_required' => false,
+        'reserved_matter' => false,
+        'amount_min' => null,
+        'amount_max' => null,
+        'actors' => [[
+            'membership_id' => (string) $newBusinessOwner->getKey(),
+            'capacity' => 'Capital Approver',
+            'can_approve' => true,
+            'can_vote' => false,
+            'can_sign' => false,
+        ]],
+    ]],
+    now()->subMinute(),
+);
+
+if ($authorityDraft === null) {
+    throw new RuntimeException(
+        'F4 Capital Approval authority draft fixture failed.',
+    );
+}
+
+$authorityFrozen = $formationAuthority->freezeForBootstrap(
+    $user,
+    $newBusiness,
+    $authorityDraft['formal_record_version_id'],
+    $authorityDraft['revision'],
+);
+
+if ($authorityFrozen === null) {
+    throw new RuntimeException(
+        'F4 Capital Approval authority freeze fixture failed.',
+    );
+}
+
+$authorityEstablished = $app
+    ->make(EstablishInitialFormationAuthority::class)
+    ->execute(
+        $user,
+        $newBusiness,
+        $authorityDraft['formal_record_version_id'],
+    );
+
+if ($authorityEstablished === null) {
+    throw new RuntimeException(
+        'F4 Capital Approval authority establishment fixture failed.',
+    );
+}
 
 $newPlanning = $app->make(NewBusinessPlanning::class);
 $businessModel = $app->make(BusinessModelPlanning::class);

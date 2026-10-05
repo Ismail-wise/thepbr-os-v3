@@ -6,6 +6,7 @@ namespace App\Presentation\Http\Controllers\Formation;
 
 use App\Application\Formation\BusinessModelPlanning;
 use App\Application\Formation\BusinessValuationPlanning;
+use App\Application\Formation\CapitalApprovalWorkflow;
 use App\Application\Formation\CapitalPlanning;
 use App\Application\Formation\ExistingBusinessBaseline;
 use App\Application\Formation\GetFormationWorkspace;
@@ -16,6 +17,8 @@ use App\Application\Formation\SaveCapitalComparisonDraft;
 use App\Application\Formation\SaveCapitalPlanningDraft;
 use App\Application\Formation\SaveCapitalRuleDraft;
 use App\Domain\Capital\ValueObjects\CapitalRequirement;
+use App\Domain\Governance\Enums\ProposalReviewOutcome;
+use App\Domain\Governance\Enums\VoteChoice;
 use App\Domain\Records\Enums\FormalRecordState;
 use App\Domain\Records\Exceptions\StaleRevision;
 use App\Http\Middleware\EnsureCurrentBusinessContext;
@@ -30,6 +33,7 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use InvalidArgumentException;
+use RuntimeException;
 
 final class FormationController
 {
@@ -820,6 +824,184 @@ final class FormationController
         );
     }
 
+    public function prepareCapitalApproval(
+        Request $request,
+        CapitalApprovalWorkflow $approval,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $result = $this->capitalApprovalCall(
+            fn () => $approval->prepare($user, $business),
+        );
+
+        abort_if($result === null, 404);
+
+        return back()->with(
+            'status',
+            'Final Capital Plan prepared for governed approval.',
+        );
+    }
+
+    public function createCapitalApprovalReview(
+        Request $request,
+        CapitalApprovalWorkflow $approval,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $data = $request->validate([
+            'reviewer_membership_id' => ['required', 'uuid'],
+        ]);
+
+        $result = $this->capitalApprovalCall(
+            fn () => $approval->createProposalReview(
+                $user,
+                $business,
+                (string) $data['reviewer_membership_id'],
+            ),
+        );
+
+        abort_if($result === null, 404);
+
+        return back()->with(
+            'status',
+            'Final Capital Plan review started.',
+        );
+    }
+
+    public function completeCapitalApprovalReview(
+        Request $request,
+        CapitalApprovalWorkflow $approval,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $data = $request->validate([
+            'outcome' => ['required', Rule::in([
+                ProposalReviewOutcome::Approved->value,
+                ProposalReviewOutcome::ChangesRequested->value,
+                ProposalReviewOutcome::Rejected->value,
+            ])],
+            'notes' => ['nullable', 'string', 'max:4000'],
+        ]);
+
+        $result = $this->capitalApprovalCall(
+            fn () => $approval->completeProposalReview(
+                $user,
+                $business,
+                ProposalReviewOutcome::from((string) $data['outcome']),
+                $data['notes'] ?? null,
+            ),
+        );
+
+        abort_if($result === null, 404);
+
+        return back()->with(
+            'status',
+            'Final Capital Plan review recorded.',
+        );
+    }
+
+    public function openCapitalApproval(
+        Request $request,
+        CapitalApprovalWorkflow $approval,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $data = $request->validate([
+            'meeting_id' => ['nullable', 'uuid'],
+        ]);
+
+        $result = $this->capitalApprovalCall(
+            fn () => $approval->openDecision(
+                $user,
+                $business,
+                $data['meeting_id'] ?? null,
+            ),
+        );
+
+        abort_if($result === null, 404);
+
+        return back()->with(
+            'status',
+            'Capital approval requirements are now open.',
+        );
+    }
+
+    public function recordCapitalApproval(
+        Request $request,
+        CapitalApprovalWorkflow $approval,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $data = $request->validate([
+            'rationale' => ['nullable', 'string', 'max:4000'],
+        ]);
+
+        $result = $this->capitalApprovalCall(
+            fn () => $approval->approve(
+                $user,
+                $business,
+                $data['rationale'] ?? null,
+            ),
+        );
+
+        abort_if($result === null, 404);
+
+        return back()->with(
+            'status',
+            'Your governed Capital approval was recorded.',
+        );
+    }
+
+    public function castCapitalApprovalVote(
+        Request $request,
+        CapitalApprovalWorkflow $approval,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $data = $request->validate([
+            'choice' => ['required', Rule::in([
+                VoteChoice::For->value,
+                VoteChoice::Against->value,
+                VoteChoice::Abstain->value,
+            ])],
+            'rationale' => ['nullable', 'string', 'max:4000'],
+        ]);
+
+        $result = $this->capitalApprovalCall(
+            fn () => $approval->vote(
+                $user,
+                $business,
+                VoteChoice::from((string) $data['choice']),
+                $data['rationale'] ?? null,
+            ),
+        );
+
+        abort_if($result === null, 404);
+
+        return back()->with(
+            'status',
+            'Your governed Capital vote was recorded.',
+        );
+    }
+
+    public function resolveCapitalApproval(
+        Request $request,
+        CapitalApprovalWorkflow $approval,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $result = $this->capitalApprovalCall(
+            fn () => $approval->resolve($user, $business),
+        );
+
+        abort_if($result === null, 404);
+
+        return back()->with(
+            'status',
+            'Capital Plan approved. It is not yet signed or effective.',
+        );
+    }
+
     public function saveCapitalScenario(
         Request $request,
         string $kind,
@@ -1018,6 +1200,17 @@ final class FormationController
         } catch (StaleRevision|InvalidArgumentException $exception) {
             throw ValidationException::withMessages([
                 'formation' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    private function capitalApprovalCall(callable $callback): mixed
+    {
+        try {
+            return $callback();
+        } catch (RuntimeException|InvalidArgumentException $exception) {
+            throw ValidationException::withMessages([
+                'capital_approval' => $exception->getMessage(),
             ]);
         }
     }

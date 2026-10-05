@@ -45,7 +45,7 @@ const switchBusiness = async (page: Page, business: string) => {
 test(
     'F4 formation workspace preserves Guided Capital Steps 1-6 and New/Existing Business journeys',
     async ({ page }, testInfo) => {
-        test.setTimeout(90_000);
+        test.setTimeout(120_000);
 
         test.skip(
             testInfo.project.name !== 'chromium-desktop',
@@ -961,6 +961,176 @@ test(
             ),
         ).toBeVisible();
 
+        // Capital Cycle 6: the exact Preferred Plan becomes a frozen governed
+        // approval candidate. Review and governance use the existing V3
+        // lifecycle; Approval remains separate from Signature and Effectivity.
+        const capitalApproval = page.getByTestId(
+            'capital-approval-stage',
+        );
+
+        await expect(
+            capitalApproval.getByRole('heading', {
+                name: 'Final Plan for Approval',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            capitalApproval.getByText('22660.00 USD', {
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            capitalApproval.getByText('21660.00 USD', {
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        const approvalPrepareResponse = page.waitForResponse(
+            (response) =>
+                response.url().endsWith(
+                    '/formation/capital/approval/prepare',
+                )
+                && response.request().method() === 'POST',
+        );
+
+        await capitalApproval
+            .getByTestId('capital-approval-prepare')
+            .click();
+
+        await approvalPrepareResponse;
+
+        const reviewerSelect = capitalApproval.getByTestId(
+            'capital-approval-reviewer',
+        );
+
+        await reviewerSelect.selectOption({
+            label: 'F4 Browser Tester',
+        });
+
+        const reviewStartResponse = page.waitForResponse(
+            (response) =>
+                response.url().endsWith(
+                    '/formation/capital/approval/review',
+                )
+                && response.request().method() === 'POST',
+        );
+
+        await capitalApproval
+            .getByTestId('capital-approval-start-review')
+            .click();
+
+        await reviewStartResponse;
+
+        const reviewCompleteResponse = page.waitForResponse(
+            (response) =>
+                response.url().endsWith(
+                    '/formation/capital/approval/review',
+                )
+                && response.request().method() === 'PUT',
+        );
+
+        await capitalApproval
+            .getByTestId('capital-approval-confirm-review')
+            .click();
+
+        await reviewCompleteResponse;
+
+        await expect(
+            capitalApproval.getByText(
+                'Temporary Formation Authority',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        const approvalOpenResponse = page.waitForResponse(
+            (response) =>
+                response.url().endsWith(
+                    '/formation/capital/approval/open',
+                )
+                && response.request().method() === 'POST',
+        );
+
+        await capitalApproval
+            .getByTestId('capital-approval-open')
+            .click();
+
+        await approvalOpenResponse;
+
+        const approvalEvidenceResponse = page.waitForResponse(
+            (response) =>
+                response.url().endsWith(
+                    '/formation/capital/approval/approve',
+                )
+                && response.request().method() === 'POST',
+        );
+
+        await capitalApproval
+            .getByTestId('capital-approval-approve')
+            .click();
+
+        await approvalEvidenceResponse;
+
+        const approvalResolveResponse = page.waitForResponse(
+            (response) =>
+                response.url().endsWith(
+                    '/formation/capital/approval/resolve',
+                )
+                && response.request().method() === 'POST',
+        );
+
+        await capitalApproval
+            .getByTestId('capital-approval-resolve')
+            .click();
+
+        await approvalResolveResponse;
+
+        await expect(
+            capitalApproval.getByTestId(
+                'capital-approval-approved',
+            ),
+        ).toBeVisible();
+
+        await expect(
+            capitalApproval.getByText(
+                'Approved, but not Signed and not Effective.',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            capitalApproval.getByText(
+                'F4 Browser Tester',
+                { exact: true },
+            ).last(),
+        ).toBeVisible();
+
+        // Governed Approval does not make Capital current/effective in the
+        // Master Business Journey.
+        await page.goto('/overview');
+
+        await page
+            .getByText('View full Business journey', { exact: true })
+            .click();
+
+        const postApprovalJourney = page.getByRole('navigation', {
+            name: 'Master Business Journey',
+            exact: true,
+        });
+
+        const capitalJourneyStep = postApprovalJourney.getByRole(
+            'button',
+            {
+                name: /^Capital/,
+            },
+        );
+
+        await expect(capitalJourneyStep).toBeVisible();
+        await expect(capitalJourneyStep).not.toContainText(
+            'Information already recorded',
+        );
+
         // Saved draft survives normal reload. Explicit zero remains distinct
         // from the untouched/missing state and hidden stale method values stay
         // out of the canonical draft.
@@ -978,6 +1148,9 @@ test(
         );
         const reloadedComparison = page.getByTestId(
             'capital-plan-comparison',
+        );
+        const reloadedApproval = page.getByTestId(
+            'capital-approval-stage',
         );
 
         await expect(
@@ -1203,6 +1376,21 @@ test(
             ),
         ).toBeTruthy();
 
+        await expect(
+            reloadedApproval.getByRole('heading', {
+                name: 'Approval အတွက် နောက်ဆုံး Capital Plan',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        expect(
+            await reloadedApproval.evaluate(
+                (element) =>
+                    element.scrollWidth
+                    <= element.clientWidth + 1,
+            ),
+        ).toBeTruthy();
+
         expect(
             await reloadedCapitalPanel.evaluate(
                 (element) =>
@@ -1243,6 +1431,21 @@ test(
 
         expect(
             await reloadedComparison.evaluate(
+                (element) =>
+                    element.scrollWidth
+                    <= element.clientWidth + 1,
+            ),
+        ).toBeTruthy();
+
+        await expect(
+            reloadedApproval.getByRole('heading', {
+                name: 'Final Plan for Approval',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        expect(
+            await reloadedApproval.evaluate(
                 (element) =>
                     element.scrollWidth
                     <= element.clientWidth + 1,

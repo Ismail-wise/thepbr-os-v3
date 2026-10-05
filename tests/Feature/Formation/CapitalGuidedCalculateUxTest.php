@@ -458,6 +458,9 @@ final class CapitalGuidedCalculateUxTest extends TestCase
         $comparison = $this->source(
             'resources/js/components/capital/CapitalPlanComparison.vue',
         );
+        $approval = $this->source(
+            'resources/js/components/capital/CapitalApprovalStage.vue',
+        );
 
         self::assertStringContainsString(
             '<CapitalGuidedJourney',
@@ -537,6 +540,53 @@ final class CapitalGuidedCalculateUxTest extends TestCase
         }
 
         foreach ([
+            'CapitalApprovalStage',
+            ':read-model="approvalReadModel"',
+            ':can-manage-records="canManageRecords"',
+            ':can-manage-governance="canManageGovernance"',
+        ] as $approvalIntegration) {
+            self::assertStringContainsString(
+                $approvalIntegration,
+                $guided,
+            );
+        }
+
+        foreach ([
+            'Capital Approval',
+            'Final Plan for Approval',
+            '/formation/capital/approval/prepare',
+            '/formation/capital/approval/review',
+            '/formation/capital/approval/open',
+            '/formation/capital/approval/approve',
+            '/formation/capital/approval/vote',
+            '/formation/capital/approval/resolve',
+            'Approval is not Signature',
+            'Approved, but not Signed and not Effective.',
+            'capital-approval-stage',
+        ] as $approvalContract) {
+            self::assertStringContainsString(
+                $approvalContract,
+                $approval,
+            );
+        }
+
+        foreach ([
+            'totalCapitalRequirement +',
+            'fundingGap =',
+            'confirmedFunding -',
+            'record_family_effective_heads',
+            'SignatureRequest',
+            'proposal_version_id',
+            'formal_record_version_id',
+            'authority_snapshot_id',
+        ] as $forbiddenApprovalUx) {
+            self::assertStringNotContainsString(
+                $forbiddenApprovalUx,
+                $approval,
+            );
+        }
+
+        foreach ([
             '/formation/capital/rule-draft',
             'Capital Allocation Summary',
             'Reduce the startup scope',
@@ -581,6 +631,9 @@ final class CapitalGuidedCalculateUxTest extends TestCase
         );
         $comparison = $this->source(
             'resources/js/components/capital/CapitalPlanComparison.vue',
+        );
+        $approval = $this->source(
+            'resources/js/components/capital/CapitalApprovalStage.vue',
         );
 
         foreach ([
@@ -635,6 +688,31 @@ final class CapitalGuidedCalculateUxTest extends TestCase
         self::assertStringNotContainsString(
             'reasonCode',
             $comparison,
+        );
+
+        foreach ([
+            'uiLanguageMode',
+            'Approval အတွက် နောက်ဆုံး Capital Plan',
+            'Approval != Signature != Effective',
+            'pbr-safe-copy',
+            'min-w-0',
+            'flex-wrap',
+            'sm:grid-cols-2',
+            'Capital Approval လုပ်မယ့် Authority ကို မသတ်မှတ်ရသေးပါ',
+        ] as $approvalContract) {
+            self::assertStringContainsString(
+                $approvalContract,
+                $approval,
+            );
+        }
+
+        self::assertStringNotContainsString(
+            'w-[320px]',
+            $approval,
+        );
+        self::assertStringNotContainsString(
+            'reasonCode',
+            $approval,
         );
 
         self::assertStringNotContainsString(

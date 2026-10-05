@@ -370,6 +370,41 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 [FormationController::class, 'saveCapitalComparisonDraft'],
             )->name('formation.capital.comparison-draft.update');
 
+            Route::post(
+                '/formation/capital/approval/prepare',
+                [FormationController::class, 'prepareCapitalApproval'],
+            )->name('formation.capital.approval.prepare');
+
+            Route::post(
+                '/formation/capital/approval/review',
+                [FormationController::class, 'createCapitalApprovalReview'],
+            )->name('formation.capital.approval.review.store');
+
+            Route::put(
+                '/formation/capital/approval/review',
+                [FormationController::class, 'completeCapitalApprovalReview'],
+            )->name('formation.capital.approval.review.update');
+
+            Route::post(
+                '/formation/capital/approval/open',
+                [FormationController::class, 'openCapitalApproval'],
+            )->name('formation.capital.approval.open');
+
+            Route::post(
+                '/formation/capital/approval/approve',
+                [FormationController::class, 'recordCapitalApproval'],
+            )->name('formation.capital.approval.approve');
+
+            Route::post(
+                '/formation/capital/approval/vote',
+                [FormationController::class, 'castCapitalApprovalVote'],
+            )->name('formation.capital.approval.vote');
+
+            Route::post(
+                '/formation/capital/approval/resolve',
+                [FormationController::class, 'resolveCapitalApproval'],
+            )->name('formation.capital.approval.resolve');
+
             Route::put(
                 '/formation/capital/scenarios/{kind}',
                 [FormationController::class, 'saveCapitalScenario'],

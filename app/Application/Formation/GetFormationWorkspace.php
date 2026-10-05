@@ -25,6 +25,7 @@ final class GetFormationWorkspace
         private readonly GetCapitalRuleReadModel $capitalRuleReadModel,
         private readonly GetCapitalComparisonDraft $capitalComparisonDraft,
         private readonly GetCapitalComparisonReadModel $capitalComparisonReadModel,
+        private readonly GetCapitalApprovalReadModel $capitalApprovalReadModel,
     ) {}
 
     public function execute(
@@ -101,6 +102,13 @@ final class GetFormationWorkspace
 
         $capitalComparisonReadModel = $canViewCapital
             ? $this->capitalComparisonReadModel->execute(
+                $user,
+                $business,
+            )
+            : null;
+
+        $capitalApprovalReadModel = $canViewCapital
+            ? $this->capitalApprovalReadModel->execute(
                 $user,
                 $business,
             )
@@ -230,6 +238,16 @@ final class GetFormationWorkspace
                     $business,
                     CapabilityCatalog::CAPITAL_MANAGE,
                 ),
+                'can_manage_records' => $this->actor->allows(
+                    $user,
+                    $business,
+                    CapabilityCatalog::RECORDS_MANAGE,
+                ),
+                'can_manage_governance' => $this->actor->allows(
+                    $user,
+                    $business,
+                    CapabilityCatalog::GOVERNANCE_RECORDS_MANAGE,
+                ),
             ],
             'new_business' => $isNew
                 ? [
@@ -333,6 +351,7 @@ final class GetFormationWorkspace
                 'rule_read_model' => $capitalRuleReadModel,
                 'comparison_draft' => $capitalComparisonDraft,
                 'comparison_read_model' => $capitalComparisonReadModel,
+                'approval_read_model' => $capitalApprovalReadModel,
                 'scenarios' => $canViewCapital
                     ? $this->rows(
                         'capital_scenarios',

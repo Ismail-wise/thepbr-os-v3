@@ -70,6 +70,8 @@ type FormationWorkspace = {
         can_manage_formation: boolean;
         can_manage_bmc: boolean;
         can_manage_capital: boolean;
+        can_manage_records: boolean;
+        can_manage_governance: boolean;
     };
     new_business: null | {
         idea: GenericRow | null;
@@ -102,6 +104,7 @@ type FormationWorkspace = {
         rule_read_model: GenericRow | null;
         comparison_draft: GenericRow | null;
         comparison_read_model: GenericRow | null;
+        approval_read_model: GenericRow | null;
         scenarios: GenericRow[];
         promotions: GenericRow[];
         current_effective: GenericRow | null;
@@ -1181,9 +1184,12 @@ const selectFormationStep = (key: string) => {
                         :rule-read-model="formation.capital.rule_read_model"
                         :comparison-draft="formation.capital.comparison_draft"
                         :comparison-read-model="formation.capital.comparison_read_model"
+                        :approval-read-model="formation.capital.approval_read_model"
                         :business-model-foundation="formation.business_model_foundation"
                         :currency="formation.business.base_currency"
                         :can-manage="formation.permissions.can_manage_capital"
+                        :can-manage-records="formation.permissions.can_manage_records"
+                        :can-manage-governance="formation.permissions.can_manage_governance"
                         @open-business-model="active = 'bmc'"
                     />
                 </section>

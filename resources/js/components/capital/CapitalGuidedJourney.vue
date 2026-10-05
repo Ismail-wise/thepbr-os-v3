@@ -5,6 +5,7 @@ import GuidedJourneyStepper from '../hybrid/GuidedJourneyStepper.vue';
 import ProgressiveReveal from '../hybrid/ProgressiveReveal.vue';
 import PbrErrorSummary from '../ui/PbrErrorSummary.vue';
 import PbrFormSection from '../ui/PbrFormSection.vue';
+import CapitalApprovalStage from './CapitalApprovalStage.vue';
 import CapitalPlanComparison from './CapitalPlanComparison.vue';
 import CapitalRuleAllocationStep from './CapitalRuleAllocationStep.vue';
 import { useI18n } from '../../i18n/useI18n';
@@ -36,9 +37,12 @@ const props = defineProps<{
     ruleReadModel: GenericRow | null;
     comparisonDraft: GenericRow | null;
     comparisonReadModel: GenericRow | null;
+    approvalReadModel: GenericRow | null;
     businessModelFoundation: GenericRow | null;
     currency: string;
     canManage: boolean;
+    canManageRecords: boolean;
+    canManageGovernance: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -1657,6 +1661,13 @@ const contingencyBase = computed(
                 :canonical-input="canonicalDraftInput"
                 :currency="currency"
                 :can-manage="canManage"
+            />
+
+            <CapitalApprovalStage
+                :read-model="approvalReadModel"
+                :can-manage-capital="canManage"
+                :can-manage-records="canManageRecords"
+                :can-manage-governance="canManageGovernance"
             />
         </template>
 
