@@ -6,6 +6,10 @@ namespace App\Application\Formation;
 
 final class DeepFeasibilityDimensionAssessmentEngine
 {
+    public const string CONTRACT_VERSION = 'deep-feasibility-dimensions-v1';
+
+    public const string ENGINE_VERSION = 'deep-feasibility-dimension-engine-v1';
+
     public const string ASSESSED = 'assessed';
 
     public const string INSUFFICIENT_EVIDENCE = 'insufficient_evidence';
@@ -129,7 +133,8 @@ final class DeepFeasibilityDimensionAssessmentEngine
         };
 
         return [
-            'contractVersion' => 'deep-feasibility-dimensions-v1',
+            'contractVersion' => self::CONTRACT_VERSION,
+            'engineVersion' => self::ENGINE_VERSION,
             'dimensions' => $dimensions,
             'summary' => $summary,
             'blockers' => $blockers,
