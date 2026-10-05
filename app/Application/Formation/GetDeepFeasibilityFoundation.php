@@ -17,6 +17,7 @@ final class GetDeepFeasibilityFoundation
         private readonly BusinessModelEconomicsCalculator $economics,
         private readonly GetDemandEvidenceSummary $demandEvidence,
         private readonly DeepFeasibilityDimensionAssessmentEngine $assessment,
+        private readonly DeepFeasibilityActionableFindings $findings,
     ) {}
 
     /**
@@ -184,6 +185,7 @@ final class GetDeepFeasibilityFoundation
         return [
             ...$foundation,
             'assessment' => $assessment,
+            'findings' => $this->findings->derive($assessment),
             'score' => $assessment['overall']['score'],
             'decision' => $assessment['overall']['recommendation'],
         ];
