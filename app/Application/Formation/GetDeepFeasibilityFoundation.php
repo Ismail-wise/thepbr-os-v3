@@ -16,6 +16,7 @@ final class GetDeepFeasibilityFoundation
         private readonly FormationActorContext $actor,
         private readonly BusinessModelEconomicsCalculator $economics,
         private readonly GetDemandEvidenceSummary $demandEvidence,
+        private readonly DeepFeasibilityDimensionAssessmentEngine $assessment,
     ) {}
 
     /**
@@ -114,7 +115,7 @@ final class GetDeepFeasibilityFoundation
             default => 'not_started',
         };
 
-        return [
+        $foundation = [
             'status' => $status,
             'businessId' => $businessId,
             'currency' => (string) $business->base_currency,
@@ -169,8 +170,6 @@ final class GetDeepFeasibilityFoundation
                 'legal_risk',
                 'sales_channel_readiness',
             ],
-            'score' => null,
-            'decision' => null,
             'semantics' => [
                 'livingFeasibility' => true,
                 'decisionRecommendationAvailable' => false,
@@ -178,6 +177,15 @@ final class GetDeepFeasibilityFoundation
                 'successProbability' => false,
                 'canonicalTruthDuplicated' => false,
             ],
+        ];
+
+        $assessment = $this->assessment->assess($foundation);
+
+        return [
+            ...$foundation,
+            'assessment' => $assessment,
+            'score' => $assessment['overall']['score'],
+            'decision' => $assessment['overall']['recommendation'],
         ];
     }
 

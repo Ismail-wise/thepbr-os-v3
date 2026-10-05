@@ -134,6 +134,22 @@ final class DeepFeasibilityFoundationTest extends TestCase
             $foundation['canonicalSources']['businessValuation']['reason'],
         );
 
+        self::assertSame(
+            'deep-feasibility-dimensions-v1',
+            $foundation['assessment']['contractVersion'],
+        );
+        self::assertSame(
+            4,
+            $foundation['assessment']['summary']['assessed'],
+        );
+        self::assertSame(
+            5,
+            $foundation['assessment']['summary']['unavailable_dependency'],
+        );
+        self::assertNull(
+            $foundation['assessment']['overall']['recommendation'],
+        );
+
         self::assertNull($foundation['score']);
         self::assertNull($foundation['decision']);
         self::assertTrue(
@@ -243,6 +259,12 @@ final class DeepFeasibilityFoundationTest extends TestCase
                 ->make(GetDeepFeasibilityFoundation::class)
                 ->execute($outsider, $business),
         );
+
+        $workspace = $this->app
+            ->make(GetFormationWorkspace::class)
+            ->execute($outsider, $business);
+
+        self::assertNull($workspace);
     }
 
     public function test_formation_workspace_exposes_the_same_living_foundation_without_replacing_legacy_scenarios(): void
