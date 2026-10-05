@@ -8,6 +8,7 @@ import BusinessModelGuidedJourney from '../../components/business-model/Business
 import DemandEvidenceGuidedJourney from '../../components/business-model/DemandEvidenceGuidedJourney.vue';
 import BusinessValuationGuidedJourney from '../../components/business-valuation/BusinessValuationGuidedJourney.vue';
 import DeepFeasibilityGuidedJourney from '../../components/deep-feasibility/DeepFeasibilityGuidedJourney.vue';
+import CapitalGuidedJourney from '../../components/capital/CapitalGuidedJourney.vue';
 import type { BusinessValuationReadModel } from '../../types/businessValuation';
 
 type LanguageMode = 'en' | 'my' | 'mixed';
@@ -95,6 +96,8 @@ type FormationWorkspace = {
         business_valuation: BusinessValuationReadModel | null;
     };
     capital: {
+        planning_draft: GenericRow | null;
+        planning_calculation: GenericRow | null;
         scenarios: GenericRow[];
         promotions: GenericRow[];
         current_effective: GenericRow | null;
@@ -118,9 +121,9 @@ const copy = {
     en: {
         title: 'Formation & Capital',
         description:
-            'Build the business baseline, validate assumptions and move Capital from editable scenarios into the governed official-record flow.',
+            'Build the business baseline, validate assumptions and calculate the Capital this Business needs from reusable planning evidence.',
         notice:
-            'Planning remains editable. A scenario never changes live truth. Official Capital uses Proposal → frozen version → Governance → Effective Record.',
+            'Capital stays editable planning truth in this stage. Saving a draft is not Approval, Signature, Equity, Ownership or an Effective record.',
         newJourney: 'New Business Formation',
         existingJourney: 'Existing Business Baseline',
         overview: 'Overview',
@@ -242,9 +245,9 @@ const copy = {
     my: {
         title: 'လုပ်ငန်းဖွဲ့စည်းမှုနှင့် အရင်းအနှီး',
         description:
-            'လုပ်ငန်းအခြေခံအချက်အလက်၊ စမ်းသပ်အတည်ပြုမှုနှင့် Capital scenario များကို governed official record flow သို့ တိတိကျကျ ပြောင်းရွှေ့ပါ။',
+            'လုပ်ငန်းအခြေခံအချက်အလက်နဲ့ စမ်းသပ်အတည်ပြုထားတဲ့ assumptions တွေကိုပြန်သုံးပြီး ဒီလုပ်ငန်းစဖို့လိုတဲ့ Capital ကို အဆင့်လိုက်တွက်ပါ။',
         notice:
-            'Planning data ကို ပြင်ဆင်နိုင်ပါတယ်။ Scenario က live truth ကို မပြောင်းပါ။ Official Capital က Proposal → frozen version → Governance → Effective Record flow ကိုသုံးပါတယ်။',
+            'ဒီအဆင့်က editable Capital Planning သာဖြစ်ပါတယ်။ Draft သိမ်းတာက Approval, Signature, Equity, Ownership သို့မဟုတ် Effective Record မဟုတ်ပါ။',
         newJourney: 'လုပ်ငန်းအသစ် ဖွဲ့စည်းမှု',
         existingJourney: 'လက်ရှိလုပ်ငန်း အခြေခံမှတ်တမ်း',
         overview: 'အနှစ်ချုပ်',
@@ -366,9 +369,9 @@ const copy = {
     mixed: {
         title: 'Formation & Capital · လုပ်ငန်းဖွဲ့စည်းမှုနှင့် အရင်းအနှီး',
         description:
-            'Business baseline၊ validation နဲ့ Capital scenario တွေကို governed official-record flow သို့ ပြောင်းရွှေ့ပါ။',
+            'Business baseline နဲ့ validated assumptions ကို reuse လုပ်ပြီး Business စဖို့လိုတဲ့ Capital ကို guided steps နဲ့ calculate လုပ်ပါ။',
         notice:
-            'Planning remains editable. Scenario က live truth ကို မပြောင်းပါ။ Official Capital = Proposal → frozen version → Governance → Effective Record.',
+            'This is editable Capital Planning. Save Draft က Approval, Signature, Equity, Ownership or Effective truth မဟုတ်ပါ။',
         newJourney: 'New Business Formation',
         existingJourney: 'Existing Business Baseline',
         overview: 'Overview',
@@ -632,140 +635,6 @@ const conversion = reactive({
     plan: field(props.formation.existing_business?.conversion_plan, 'plan'),
 });
 
-const scenarioKinds = ['lean', 'base', 'growth'] as const;
-type ScenarioKind = (typeof scenarioKinds)[number];
-
-const findScenario = (kind: ScenarioKind): GenericRow | undefined =>
-    props.formation.capital.scenarios.find(
-        (row) => row.scenario_kind === kind,
-    );
-
-const capitalForms = reactive(
-    Object.fromEntries(
-        scenarioKinds.map((kind) => {
-            const row = findScenario(kind);
-            return [
-                kind,
-                {
-                    name:
-                        field(row, 'name') ||
-                        kind.charAt(0).toUpperCase() + kind.slice(1),
-                    pre_opening_costs:
-                        field(row, 'pre_opening_costs') || '0.00',
-                    initial_assets_inventory:
-                        field(row, 'initial_assets_inventory') || '0.00',
-                    working_capital:
-                        field(row, 'working_capital') || '0.00',
-                    contingency_reserve:
-                        field(row, 'contingency_reserve') || '0.00',
-                    available_funding:
-                        field(row, 'available_funding') || '0.00',
-                    notes: field(row, 'notes'),
-                },
-            ];
-        }),
-    ) as Record<
-        ScenarioKind,
-        {
-            name: string;
-            pre_opening_costs: string;
-            initial_assets_inventory: string;
-            working_capital: string;
-            contingency_reserve: string;
-            available_funding: string;
-            notes: string;
-        }
-    >,
-);
-
-const selectedCapitalKind = ref<ScenarioKind>('base');
-const capitalFocus = ref('startup');
-
-const parseMoneyMinor = (value: string): bigint => {
-    const match = value.trim().match(/^(\d{1,16})(?:\.(\d{1,2}))?$/);
-
-    if (!match) {
-        return 0n;
-    }
-
-    return (
-        BigInt(match[1]) * 100n
-        + BigInt((match[2] ?? '').padEnd(2, '0'))
-    );
-};
-
-const formatMoneyMinor = (value: bigint): string =>
-    `${value / 100n}.${(value % 100n).toString().padStart(2, '0')}`;
-
-const capitalDraftPosition = (kind: ScenarioKind) => {
-    const form = capitalForms[kind];
-    const preOpening = parseMoneyMinor(form.pre_opening_costs);
-    const initialAssets = parseMoneyMinor(form.initial_assets_inventory);
-    const workingCapital = parseMoneyMinor(form.working_capital);
-    const contingency = parseMoneyMinor(form.contingency_reserve);
-    const funding = parseMoneyMinor(form.available_funding);
-    const total = preOpening + initialAssets + workingCapital + contingency;
-    const gap = total > funding ? total - funding : 0n;
-    const fundedHundredths = total === 0n ? 0n : (funding * 10_000n) / total;
-
-    return {
-        preOpening: formatMoneyMinor(preOpening),
-        initialAssets: formatMoneyMinor(initialAssets),
-        workingCapital: formatMoneyMinor(workingCapital),
-        contingency: formatMoneyMinor(contingency),
-        funding: formatMoneyMinor(funding),
-        total: formatMoneyMinor(total),
-        gap: formatMoneyMinor(gap),
-        fundedPercent:
-            `${fundedHundredths / 100n}.${(fundedHundredths % 100n)
-                .toString()
-                .padStart(2, '0')}%`,
-    };
-};
-
-const capitalDraftPositions = computed(() => ({
-    lean: capitalDraftPosition('lean'),
-    base: capitalDraftPosition('base'),
-    growth: capitalDraftPosition('growth'),
-}));
-
-const selectedCapitalPosition = computed(
-    () => capitalDraftPositions.value[selectedCapitalKind.value],
-);
-
-const capitalSteps = computed(() => {
-    const saved = findScenario(selectedCapitalKind.value) !== undefined;
-    const steps = [
-        ['startup', c.value.startupCostPlan],
-        ['assets', c.value.initialAssetsOpening],
-        ['working', c.value.workingCapitalForecast],
-        ['reserve', c.value.contingencyReserve],
-        ['funding', c.value.fundingPositionGap],
-        ['rule', c.value.capitalRuleAllocation],
-    ] as const;
-
-    return steps.map(([key, label]) => ({
-        key,
-        label,
-        state:
-            capitalFocus.value === key
-                ? 'current' as const
-                : saved
-                  ? 'recorded' as const
-                  : 'available' as const,
-    }));
-});
-
-const selectCapitalStep = (key: string) => {
-    capitalFocus.value = key;
-
-    window.setTimeout(() => {
-        document
-            .querySelector(`[data-capital-step="${key}"]`)
-            ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 0);
-};
-
 type PostData = NonNullable<Parameters<typeof router.post>[1]>;
 
 const post = (url: string, data: PostData = {}) =>
@@ -810,12 +679,6 @@ const saveConversion = () =>
             props.formation.existing_business?.conversion_plan,
         ),
         ...conversion,
-    });
-
-const saveCapital = (kind: ScenarioKind) =>
-    put(`/formation/capital/scenarios/${kind}`, {
-        expected_revision: revision(findScenario(kind)),
-        ...capitalForms[kind],
     });
 
 const sectionButton = (key: typeof active.value) =>
@@ -1307,268 +1170,14 @@ const selectFormationStep = (key: string) => {
                 </section>
 
                 <section v-if="active === 'capital'" class="py-6">
-                    <header class="flex flex-wrap items-start justify-between gap-4">
-                        <div>
-                            <h2 class="text-lg font-semibold">{{ c.capital }}</h2>
-                            <p class="mt-1 text-sm text-slate-600">
-                                {{ c.capitalFormula }}:
-                                <strong>{{ formation.capital.formula }}</strong>
-                            </p>
-                            <p class="mt-1 text-sm font-semibold text-slate-700">{{ formation.capital.scenario_notice }}</p>
-                        </div>
-                        <div class="text-right text-sm">
-                            <p class="font-semibold">{{ c.official }}</p>
-                            <p class="mt-1 text-slate-600">
-                                {{
-                                    formation.capital.current_effective
-                                        ? `${c.version} ${formation.capital.current_effective.scenario_revision}`
-                                        : c.none
-                                }}
-                            </p>
-                        </div>
-                    </header>
-
-                    <section class="mt-6 rounded-[22px] border border-[#d8e4da] bg-white/88 p-5 shadow-[0_10px_28px_rgb(16_35_26_/_4%)] sm:p-6">
-                        <div class="flex flex-wrap items-start justify-between gap-4">
-                            <div>
-                                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--pbr-green)]">
-                                    {{ c.capitalJourney }}
-                                </p>
-                                <p class="mt-1 max-w-3xl text-sm leading-6 text-[var(--pbr-muted)]">
-                                    {{ c.capitalJourneyHelp }}
-                                </p>
-                            </div>
-
-                            <div class="flex flex-wrap gap-2" aria-label="Capital scenarios">
-                                <button
-                                    v-for="kind in scenarioKinds"
-                                    :key="kind"
-                                    type="button"
-                                    class="min-h-10 rounded-xl border px-3 text-xs font-black uppercase tracking-[0.08em] transition"
-                                    :class="
-                                        selectedCapitalKind === kind
-                                            ? 'border-[var(--pbr-green)] bg-[#edf7f0] text-[var(--pbr-green-dark)]'
-                                            : 'border-[#d8e2da] bg-white text-[#66736a] hover:bg-[#f8faf8]'
-                                    "
-                                    :aria-pressed="selectedCapitalKind === kind"
-                                    @click="selectedCapitalKind = kind"
-                                >
-                                    {{ capitalForms[kind].name || kind }}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="mt-5">
-                            <GuidedJourneyStepper
-                                :steps="capitalSteps"
-                                :label="c.capitalJourney"
-                                @select="selectCapitalStep"
-                            />
-                        </div>
-
-                        <div class="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.65fr)]">
-                            <div>
-                                <div class="flex items-center justify-between gap-3">
-                                    <h3 class="font-black text-[var(--pbr-ink)]">
-                                        {{ c.liveCapitalPosition }}
-                                    </h3>
-                                    <span class="text-xs font-semibold text-[var(--pbr-muted)]">
-                                        {{ formation.business.base_currency }} · {{ selectedCapitalKind }}
-                                    </span>
-                                </div>
-
-                                <dl class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                                    <div data-capital-step="startup" class="rounded-[16px] border border-[#dce6de] bg-[#f8faf8] p-4">
-                                        <dt class="text-xs font-semibold text-[var(--pbr-muted)]">{{ c.preOpening }}</dt>
-                                        <dd class="mt-2 text-lg font-black">{{ selectedCapitalPosition.preOpening }} {{ formation.business.base_currency }}</dd>
-                                    </div>
-                                    <div data-capital-step="assets" class="rounded-[16px] border border-[#dce6de] bg-[#f8faf8] p-4">
-                                        <dt class="text-xs font-semibold text-[var(--pbr-muted)]">{{ c.initialAssets }}</dt>
-                                        <dd class="mt-2 text-lg font-black">{{ selectedCapitalPosition.initialAssets }} {{ formation.business.base_currency }}</dd>
-                                    </div>
-                                    <div data-capital-step="working" class="rounded-[16px] border border-[#dce6de] bg-[#f8faf8] p-4">
-                                        <dt class="text-xs font-semibold text-[var(--pbr-muted)]">{{ c.workingCapital }}</dt>
-                                        <dd class="mt-2 text-lg font-black">{{ selectedCapitalPosition.workingCapital }} {{ formation.business.base_currency }}</dd>
-                                    </div>
-                                    <div data-capital-step="reserve" class="rounded-[16px] border border-[#dce6de] bg-[#f8faf8] p-4">
-                                        <dt class="text-xs font-semibold text-[var(--pbr-muted)]">{{ c.contingency }}</dt>
-                                        <dd class="mt-2 text-lg font-black">{{ selectedCapitalPosition.contingency }} {{ formation.business.base_currency }}</dd>
-                                    </div>
-                                    <div class="rounded-[16px] border border-[#cfe0d4] bg-[#eef7f0] p-4">
-                                        <dt class="text-xs font-black text-[var(--pbr-green-dark)]">{{ c.total }}</dt>
-                                        <dd class="mt-2 text-xl font-black text-[var(--pbr-green-dark)]">{{ selectedCapitalPosition.total }} {{ formation.business.base_currency }}</dd>
-                                    </div>
-                                    <div data-capital-step="funding" class="rounded-[16px] border border-[#dce6de] bg-white p-4">
-                                        <dt class="text-xs font-semibold text-[var(--pbr-muted)]">{{ c.confirmedFunding }}</dt>
-                                        <dd class="mt-2 text-lg font-black">{{ selectedCapitalPosition.funding }} {{ formation.business.base_currency }}</dd>
-                                    </div>
-                                    <div class="rounded-[16px] border border-[#eadcb1] bg-[#fffaf0] p-4">
-                                        <dt class="text-xs font-black text-[#735d28]">{{ c.gap }}</dt>
-                                        <dd class="mt-2 text-xl font-black text-[#735d28]">{{ selectedCapitalPosition.gap }} {{ formation.business.base_currency }}</dd>
-                                    </div>
-                                    <div class="rounded-[16px] border border-[#dce6de] bg-white p-4">
-                                        <dt class="text-xs font-semibold text-[var(--pbr-muted)]">{{ c.fundedPercent }}</dt>
-                                        <dd class="mt-2 text-lg font-black">{{ selectedCapitalPosition.fundedPercent }}</dd>
-                                    </div>
-                                </dl>
-                            </div>
-
-                            <div data-capital-step="rule" class="rounded-[18px] border border-[#dce6de] bg-[#f8faf8] p-4">
-                                <div class="flex items-center justify-between gap-3">
-                                    <h3 class="font-black text-[var(--pbr-ink)]">{{ c.capitalRuleAllocation }}</h3>
-                                    <span class="text-[10px] font-black uppercase tracking-[0.14em] text-[var(--pbr-muted)]">
-                                        {{ findScenario(selectedCapitalKind) ? c.savedPlan : c.unsavedPlan }}
-                                    </span>
-                                </div>
-                                <textarea
-                                    v-model="capitalForms[selectedCapitalKind].notes"
-                                    class="mt-3 min-h-28 w-full rounded-xl border border-slate-300 bg-white p-3 text-sm"
-                                    :placeholder="c.capitalRuleNotes"
-                                />
-                                <div class="mt-3 flex flex-wrap gap-2">
-                                    <button
-                                        v-if="formation.permissions.can_manage_capital"
-                                        type="button"
-                                        class="min-h-10 rounded-xl bg-[var(--pbr-green-dark)] px-4 text-xs font-black text-white"
-                                        @click="saveCapital(selectedCapitalKind)"
-                                    >
-                                        {{ c.save }}
-                                    </button>
-                                    <button
-                                        v-if="formation.permissions.can_manage_capital && findScenario(selectedCapitalKind)"
-                                        type="button"
-                                        class="min-h-10 rounded-xl border border-slate-950 bg-white px-4 text-xs font-black text-slate-950"
-                                        @click="post(`/formation/capital/scenarios/${selectedCapitalKind}/promote`, {})"
-                                    >
-                                        {{ c.promote }}
-                                    </button>
-                                    <a
-                                        v-if="findScenario(selectedCapitalKind)"
-                                        :href="`/formation/capital/scenarios/${selectedCapitalKind}/export`"
-                                        class="inline-flex min-h-10 items-center rounded-xl border border-slate-300 bg-white px-4 text-xs font-black"
-                                    >
-                                        {{ c.export }}
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <div class="mt-6 flex items-end justify-between gap-4">
-                        <div>
-                            <h3 class="font-black text-[var(--pbr-ink)]">{{ c.planComparison }}</h3>
-                        </div>
-                    </div>
-
-                    <div class="mt-3 overflow-x-auto rounded-[18px] border border-[#dce6de] bg-white">
-                        <table class="min-w-[1050px] w-full border-collapse text-left text-sm">
-                            <thead class="border-b border-slate-300 text-slate-500">
-                                <tr>
-                                    <th class="px-2 py-3">Scenario</th>
-                                    <th class="px-2 py-3">{{ c.preOpening }}</th>
-                                    <th class="px-2 py-3">{{ c.initialAssets }}</th>
-                                    <th class="px-2 py-3">{{ c.workingCapital }}</th>
-                                    <th class="px-2 py-3">{{ c.contingency }}</th>
-                                    <th class="px-2 py-3">{{ c.availableFunding }}</th>
-                                    <th class="px-2 py-3">{{ c.total }}</th>
-                                    <th class="px-2 py-3">{{ c.gap }}</th>
-                                    <th class="px-2 py-3">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="kind in scenarioKinds" :key="kind" class="border-b border-slate-200 align-top">
-                                    <td class="px-2 py-3">
-                                        <input v-model="capitalForms[kind].name" class="min-h-10 w-32 border border-slate-300 px-2 font-semibold">
-                                        <p class="mt-1 text-xs uppercase text-slate-500">{{ kind }}</p>
-                                    </td>
-                                    <td class="px-2 py-3"><input v-model="capitalForms[kind].pre_opening_costs" class="min-h-10 w-28 border border-slate-300 px-2"></td>
-                                    <td class="px-2 py-3"><input v-model="capitalForms[kind].initial_assets_inventory" class="min-h-10 w-28 border border-slate-300 px-2"></td>
-                                    <td class="px-2 py-3"><input v-model="capitalForms[kind].working_capital" class="min-h-10 w-28 border border-slate-300 px-2"></td>
-                                    <td class="px-2 py-3"><input v-model="capitalForms[kind].contingency_reserve" class="min-h-10 w-28 border border-slate-300 px-2"></td>
-                                    <td class="px-2 py-3"><input v-model="capitalForms[kind].available_funding" class="min-h-10 w-28 border border-slate-300 px-2"></td>
-                                    <td class="px-2 py-3 font-semibold">{{ findScenario(kind)?.total_requirement ?? '—' }}</td>
-                                    <td class="px-2 py-3 font-semibold">{{ findScenario(kind)?.funding_gap ?? '—' }}</td>
-                                    <td class="px-2 py-3">
-                                        <div class="flex flex-col gap-2">
-                                            <button
-                                                v-if="formation.permissions.can_manage_capital"
-                                                type="button"
-                                                class="min-h-9 border border-slate-950 px-2 text-xs font-semibold"
-                                                @click="saveCapital(kind)"
-                                            >
-                                                {{ c.save }}
-                                            </button>
-                                            <button
-                                                v-if="formation.permissions.can_manage_capital && findScenario(kind)"
-                                                type="button"
-                                                class="min-h-9 bg-slate-950 px-2 text-xs font-semibold text-white"
-                                                @click="post(`/formation/capital/scenarios/${kind}/promote`, {})"
-                                            >
-                                                {{ c.promote }}
-                                            </button>
-                                            <a
-                                                v-if="findScenario(kind)"
-                                                :href="`/formation/capital/scenarios/${kind}/export`"
-                                                class="inline-flex min-h-9 items-center justify-center border border-slate-300 px-2 text-xs font-semibold"
-                                            >
-                                                {{ c.export }}
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <section class="mt-8 border-t border-slate-200 pt-6">
-                        <div class="flex items-center justify-between gap-4">
-                            <h3 class="font-semibold">{{ c.history }}</h3>
-                            <Link href="/governance" class="text-sm font-semibold underline">
-                                {{ c.governance }}
-                            </Link>
-                        </div>
-
-                        <table class="mt-4 w-full text-left text-sm">
-                            <thead class="border-b border-slate-300 text-slate-500">
-                                <tr>
-                                    <th class="py-2">{{ c.version }}</th>
-                                    <th>{{ c.status }}</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="row in formation.capital.promotions" :key="row.id" class="border-b border-slate-200">
-                                    <td class="py-3">{{ row.scenario_revision }}</td>
-                                    <td class="font-semibold">{{ row.state }}</td>
-                                    <td class="py-2">
-                                        <button
-                                            v-if="formation.permissions.can_manage_capital && row.state === 'ready_for_review'"
-                                            type="button"
-                                            class="mr-2 min-h-9 border border-slate-300 px-2 text-xs font-semibold"
-                                            @click="post(`/formation/capital/promotions/${row.id}/content-review`, { target: 'under_review' })"
-                                        >
-                                            {{ c.startContentReview }}
-                                        </button>
-                                        <button
-                                            v-if="formation.permissions.can_manage_capital && row.state === 'under_review'"
-                                            type="button"
-                                            class="min-h-9 border border-slate-950 bg-slate-950 px-2 text-xs font-semibold text-white"
-                                            @click="post(`/formation/capital/promotions/${row.id}/content-review`, { target: 'approved' })"
-                                        >
-                                            {{ c.approveContent }}
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr v-if="formation.capital.promotions.length === 0">
-                                    <td colspan="3" class="py-5 text-slate-500">{{ c.noRows }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <p class="mt-4 text-xs leading-5 text-slate-500">
-                            After content review is Approved, continue in Governance. Proposal Review and Governance Decision remain separate. Only the existing governed effectivity flow may establish the Current Effective Capital Plan. Evidence can be uploaded in Document Vault and linked to the exact Formal Record Version shown in Governance.
-                        </p>
-                    </section>
+                    <CapitalGuidedJourney
+                        :draft="formation.capital.planning_draft"
+                        :calculation="formation.capital.planning_calculation"
+                        :business-model-foundation="formation.business_model_foundation"
+                        :currency="formation.business.base_currency"
+                        :can-manage="formation.permissions.can_manage_capital"
+                        @open-business-model="active = 'bmc'"
+                    />
                 </section>
             </section>
         </main>

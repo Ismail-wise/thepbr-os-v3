@@ -43,8 +43,10 @@ const switchBusiness = async (page: Page, business: string) => {
 };
 
 test(
-    'F4 formation workspace distinguishes New and Existing Business journeys and preserves scenario-only Capital',
+    'F4 formation workspace preserves Guided Capital Steps 1-5 and New/Existing Business journeys',
     async ({ page }, testInfo) => {
+        test.setTimeout(90_000);
+
         test.skip(
             testInfo.project.name !== 'chromium-desktop',
             'F4 deterministic journey runs only in desktop Chromium.',
@@ -427,8 +429,19 @@ test(
             })
             .click();
 
+        await expect(
+            page.getByRole('heading', {
+                name: 'Work out how much Capital this Business needs to start',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        const capitalPanel = page.getByTestId(
+            'capital-guided-journey',
+        );
+
         const capitalJourney = page.getByRole('navigation', {
-            name: 'Capital Planning Workflow',
+            name: 'Capital guided calculate journey',
             exact: true,
         });
 
@@ -438,7 +451,6 @@ test(
             'Working Capital Forecast',
             'Contingency Reserve',
             'Funding Position & Gap',
-            'Capital Rule & Allocation',
         ]) {
             await expect(
                 capitalJourney.getByRole('button', {
@@ -449,29 +461,350 @@ test(
         }
 
         await expect(
+            capitalJourney.getByRole('button', {
+                name: 'Capital Rule & Allocation',
+                exact: true,
+            }),
+        ).toHaveCount(0);
+
+        await expect(
+            page.getByText('Capital Plan Comparison', {
+                exact: true,
+            }),
+        ).toHaveCount(0);
+
+        await expect(
+            page.getByRole('button', {
+                name: 'Promote to frozen Proposal',
+                exact: true,
+            }),
+        ).toHaveCount(0);
+
+        // New draft must be genuinely missing, not silently zeroed.
+        await expect(
+            capitalPanel.getByRole('radio', {
+                name: 'Not entered yet',
+                exact: true,
+            }).first(),
+        ).toBeChecked();
+
+        await expect(
+            capitalPanel
+                .locator('dd')
+                .filter({ hasText: 'Not available yet' })
+                .first(),
+        ).toBeVisible();
+
+        // Step 1: explicitly confirm zero Startup Costs.
+        await capitalPanel
+            .getByRole('radio', {
+                name: 'There are no Startup Costs / zero',
+                exact: true,
+            })
+            .check();
+
+        // Step 2: persist a real one-time Asset item.
+        await capitalJourney
+            .getByRole('button', {
+                name: 'Initial Assets & Opening Inventory',
+                exact: true,
+            })
+            .click();
+
+        const assetsSection = page
+            .getByRole('heading', {
+                name: 'What assets or opening stock are needed?',
+                exact: true,
+            })
+            .locator('..')
+            .locator('..');
+
+        await assetsSection
+            .getByRole('radio', {
+                name: 'I have items to enter',
+                exact: true,
+            })
+            .check();
+
+        await assetsSection
+            .getByRole('button', {
+                name: 'Add item',
+                exact: true,
+            })
+            .click();
+
+        await assetsSection
+            .getByRole('combobox', {
+                name: 'Category',
+                exact: true,
+            })
+            .selectOption('equipment');
+
+        await assetsSection
+            .getByRole('textbox', {
+                name: 'Description',
+                exact: true,
+            })
+            .fill('Launch equipment');
+
+        await assetsSection
+            .getByRole('spinbutton', {
+                name: 'Amount (USD)',
+                exact: true,
+            })
+            .fill('2000.00');
+
+        // Step 3: hidden method-specific fields disappear before save.
+        await capitalJourney
+            .getByRole('button', {
+                name: 'Working Capital Forecast',
+                exact: true,
+            })
+            .click();
+
+        const workingMethod = capitalPanel.getByRole(
+            'combobox',
+            {
+                name: 'Working Capital method',
+                exact: true,
+            },
+        );
+
+        await workingMethod.selectOption('monthly_burn');
+
+        await capitalPanel
+            .getByRole('spinbutton', {
+                name: 'Monthly burn (USD)',
+                exact: true,
+            })
+            .fill('999.00');
+
+        await workingMethod.selectOption('fixed_amount');
+
+        await expect(
+            capitalPanel.getByRole('spinbutton', {
+                name: 'Monthly burn (USD)',
+                exact: true,
+            }),
+        ).toHaveCount(0);
+
+        await capitalPanel
+            .getByRole('spinbutton', {
+                name: 'Fixed Working Capital amount (USD)',
+                exact: true,
+            })
+            .fill('777.00');
+
+        await workingMethod.selectOption(
+            'canonical_operating_profile',
+        );
+
+        await expect(
+            capitalPanel.getByRole('spinbutton', {
+                name: 'Fixed Working Capital amount (USD)',
+                exact: true,
+            }),
+        ).toHaveCount(0);
+
+        await expect(
+            capitalPanel.getByText(
+                'Current Business Model assumptions available',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await capitalPanel
+            .getByRole('spinbutton', {
+                name: 'Working Capital months',
+                exact: true,
+            })
+            .fill('3');
+
+        // Step 4: contingency percentage remains server-calculated.
+        await capitalJourney
+            .getByRole('button', {
+                name: 'Contingency Reserve',
+                exact: true,
+            })
+            .click();
+
+        await capitalPanel
+            .getByRole('combobox', {
+                name: 'Contingency method',
+                exact: true,
+            })
+            .selectOption('percentage');
+
+        await capitalPanel
+            .getByRole('spinbutton', {
+                name: 'Contingency percentage (%)',
+                exact: true,
+            })
+            .fill('10');
+
+        // Step 5: funding is Capital planning truth, not Contribution.
+        await capitalJourney
+            .getByRole('button', {
+                name: 'Funding Position & Gap',
+                exact: true,
+            })
+            .click();
+
+        await capitalPanel
+            .getByRole('spinbutton', {
+                name: /^Confirmed Funding \(USD\)/,
+            })
+            .fill('1000.00');
+
+        const capitalSaveResponse = page.waitForResponse(
+            (response) =>
+                response.url().endsWith(
+                    '/formation/capital/planning-draft',
+                )
+                && response.request().method() === 'PUT',
+        );
+
+        await capitalPanel
+            .getByRole('button', {
+                name: 'Save Capital draft',
+                exact: true,
+            })
+            .click();
+
+        await capitalSaveResponse;
+
+        await expect(
+            capitalPanel.getByText(
+                'Capital draft saved. Server calculation refreshed.',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        // Canonical Business Model operating cost = 6,200 × 3 months.
+        // Assets 2,000 + WC 18,600 = 20,600; reserve 10% = 2,060.
+        // Total = 22,660; funding = 1,000; gap = 21,660; funded = 4.41%.
+        for (const value of [
+            '22660.00 USD',
+            '21660.00 USD',
+            '4.41%',
+        ]) {
+            await expect(
+                capitalPanel.getByText(value, {
+                    exact: true,
+                }).first(),
+            ).toBeVisible();
+        }
+
+        // Saved draft survives normal reload. Explicit zero remains distinct
+        // from the untouched/missing state and hidden stale method values stay
+        // out of the canonical draft.
+        await page.goto('/formation?step=capital');
+
+        const reloadedCapitalPanel = page.getByTestId(
+            'capital-guided-journey',
+        );
+        const reloadedCapitalJourney = page.getByRole(
+            'navigation',
+            {
+                name: 'Capital guided calculate journey',
+                exact: true,
+            },
+        );
+
+        await reloadedCapitalJourney
+            .getByRole('button', {
+                name: 'Startup Cost Plan',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            reloadedCapitalPanel.getByRole('radio', {
+                name: 'There are no Startup Costs / zero',
+                exact: true,
+            }),
+        ).toBeChecked();
+
+        await reloadedCapitalJourney
+            .getByRole('button', {
+                name: 'Initial Assets & Opening Inventory',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            reloadedCapitalPanel.getByRole('textbox', {
+                name: 'Description',
+                exact: true,
+            }),
+        ).toHaveValue('Launch equipment');
+
+        await reloadedCapitalJourney
+            .getByRole('button', {
+                name: 'Working Capital Forecast',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            reloadedCapitalPanel.getByRole('combobox', {
+                name: 'Working Capital method',
+                exact: true,
+            }),
+        ).toHaveValue('canonical_operating_profile');
+
+        await expect(
+            reloadedCapitalPanel.getByText(
+                'Resolved monthly operating cost: 6200.00 USD',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            reloadedCapitalPanel.getByRole('spinbutton', {
+                name: 'Monthly burn (USD)',
+                exact: true,
+            }),
+        ).toHaveCount(0);
+
+        // English / Myanmar / Mixed responsive smoke.
+        const capitalLanguageSwitcher = page.locator(
+            '#shell-language-switcher',
+        );
+
+        await capitalLanguageSwitcher.selectOption('my');
+
+        await expect(
             page.getByRole('heading', {
-                name: 'Live Capital Position',
+                name: 'ဒီလုပ်ငန်းစဖို့ Capital ဘယ်လောက်လိုမလဲ အဆင့်လိုက်တွက်ပါ',
                 exact: true,
             }),
         ).toBeVisible();
 
-        await expect(
-            page.getByText('38.46%', { exact: true }),
-        ).toBeVisible();
-
-        await expect(
-            page.getByText('6500.00', { exact: true }),
-        ).toBeVisible();
-
-        await expect(
-            page.getByText('4000.00', { exact: true }),
-        ).toBeVisible();
-
-        await expect(
-            page.getByText(
-                'Scenario is planning only and never changes live truth.',
-                { exact: true },
+        expect(
+            await reloadedCapitalPanel.evaluate(
+                (element) =>
+                    element.scrollWidth
+                    <= element.clientWidth + 1,
             ),
+        ).toBeTruthy();
+
+        await capitalLanguageSwitcher.selectOption('mixed');
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'ဒီ Business စဖို့ Capital ဘယ်လောက်လိုမလဲ guided steps နဲ့တွက်ပါ',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await capitalLanguageSwitcher.selectOption('en');
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'Work out how much Capital this Business needs to start',
+                exact: true,
+            }),
         ).toBeVisible();
 
         await switchBusiness(page, EXISTING_BUSINESS);

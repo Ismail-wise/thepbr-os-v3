@@ -351,6 +351,11 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
             )->name('formation.existing.valuations.store');
 
             Route::put(
+                '/formation/capital/planning-draft',
+                [FormationController::class, 'saveCapitalPlanningDraft'],
+            )->name('formation.capital.planning-draft.update');
+
+            Route::put(
                 '/formation/capital/scenarios/{kind}',
                 [FormationController::class, 'saveCapitalScenario'],
             )->name('formation.capital.scenarios.update');

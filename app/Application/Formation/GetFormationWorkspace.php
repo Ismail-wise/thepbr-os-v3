@@ -19,6 +19,8 @@ final class GetFormationWorkspace
         private readonly GetDemandEvidenceSummary $demandEvidence,
         private readonly GetDeepFeasibilityFoundation $deepFeasibility,
         private readonly GetDeepFeasibilityAssessmentRunSummaries $deepFeasibilityHistory,
+        private readonly GetCapitalPlanningDraft $capitalPlanningDraft,
+        private readonly GetCapitalPlanningDraftCalculation $capitalPlanningCalculation,
     ) {}
 
     public function execute(
@@ -55,6 +57,20 @@ final class GetFormationWorkspace
             ? $this->row(
                 'business_model_operating_profiles',
                 $businessId,
+            )
+            : null;
+
+        $capitalDraft = $canViewCapital
+            ? $this->capitalPlanningDraft->execute(
+                $user,
+                $business,
+            )
+            : null;
+
+        $capitalCalculation = $canViewCapital
+            ? $this->capitalPlanningCalculation->execute(
+                $user,
+                $business,
             )
             : null;
 
@@ -279,6 +295,8 @@ final class GetFormationWorkspace
                     ),
                 ],
             'capital' => [
+                'planning_draft' => $capitalDraft,
+                'planning_calculation' => $capitalCalculation,
                 'scenarios' => $canViewCapital
                     ? $this->rows(
                         'capital_scenarios',

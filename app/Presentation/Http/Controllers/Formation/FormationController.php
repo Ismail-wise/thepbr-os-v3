@@ -11,6 +11,7 @@ use App\Application\Formation\ExistingBusinessBaseline;
 use App\Application\Formation\GetFormationWorkspace;
 use App\Application\Formation\NewBusinessPlanning;
 use App\Application\Formation\RecordDeepFeasibilityAssessmentRun;
+use App\Application\Formation\SaveCapitalPlanningDraft;
 use App\Domain\Capital\ValueObjects\CapitalRequirement;
 use App\Domain\Records\Enums\FormalRecordState;
 use App\Domain\Records\Exceptions\StaleRevision;
@@ -672,6 +673,42 @@ final class FormationController
         abort_if($id === null, 404);
 
         return back();
+    }
+
+    public function saveCapitalPlanningDraft(
+        Request $request,
+        SaveCapitalPlanningDraft $drafts,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $data = $request->validate([
+            'expected_revision' => ['required', 'integer', 'min:0'],
+            'input' => ['required', 'array'],
+        ]);
+
+        try {
+            $result = $drafts->execute(
+                $user,
+                $business,
+                (int) $data['expected_revision'],
+                $data['input'],
+            );
+        } catch (StaleRevision) {
+            throw ValidationException::withMessages([
+                'capital_draft' => 'This Capital planning draft changed after you opened it. Reload the latest saved draft, review it, and then save your changes again.',
+            ]);
+        } catch (InvalidArgumentException) {
+            throw ValidationException::withMessages([
+                'capital_draft' => 'Check the visible Capital planning fields. Use non-negative amounts and complete the description for every cost item you started.',
+            ]);
+        }
+
+        abort_if($result === null, 404);
+
+        return back()->with(
+            'status',
+            'Capital planning draft saved.',
+        );
     }
 
     public function saveCapitalScenario(

@@ -65,6 +65,7 @@ foreach (
         'business_ideas',
         'business_model_canvases',
         'capital_scenarios',
+        'capital_planning_drafts',
         'existing_business_profiles',
         'valuations',
         'business_valuation_runs',
@@ -253,6 +254,8 @@ $newPlanning->savePartnershipFit(
 
 $capital = $app->make(CapitalPlanning::class);
 
+// Keep the legacy aggregate scenario present. The browser journey must still
+// show the new draft-driven Guided Calculate Steps 1-5 as the normal path.
 $capital->saveScenario(
     $user,
     $newBusiness,
