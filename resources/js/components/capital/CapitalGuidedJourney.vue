@@ -5,11 +5,12 @@ import GuidedJourneyStepper from '../hybrid/GuidedJourneyStepper.vue';
 import ProgressiveReveal from '../hybrid/ProgressiveReveal.vue';
 import PbrErrorSummary from '../ui/PbrErrorSummary.vue';
 import PbrFormSection from '../ui/PbrFormSection.vue';
+import CapitalRuleAllocationStep from './CapitalRuleAllocationStep.vue';
 import { useI18n } from '../../i18n/useI18n';
 import { humanErrorMessages } from '../../support/humanErrors';
 
 type GenericRow = Record<string, any>;
-type StepKey = 'startup' | 'assets' | 'working' | 'reserve' | 'funding';
+type StepKey = 'startup' | 'assets' | 'working' | 'reserve' | 'funding' | 'rule';
 type SectionMode = 'missing' | 'zero' | 'items';
 type WorkingMethod =
     | 'missing'
@@ -30,6 +31,8 @@ type CapitalItem = {
 const props = defineProps<{
     draft: GenericRow | null;
     calculation: GenericRow | null;
+    ruleDraft: GenericRow | null;
+    ruleReadModel: GenericRow | null;
     businessModelFoundation: GenericRow | null;
     currency: string;
     canManage: boolean;
@@ -57,6 +60,7 @@ const copy = {
         workingStep: 'Working Capital Forecast',
         reserveStep: 'Contingency Reserve',
         fundingStep: 'Funding Position & Gap',
+        ruleStep: 'Capital Rule & Allocation',
         startupTitle: 'What one-time costs are needed before opening?',
         startupHelp:
             'Record only costs needed to get the Business ready to open. You do not need to create every category.',
@@ -199,6 +203,7 @@ const copy = {
         workingStep: 'Working Capital Forecast',
         reserveStep: 'Contingency Reserve',
         fundingStep: 'Funding Position & Gap',
+        ruleStep: 'Capital Rule & Allocation',
         startupTitle: 'မဖွင့်ခင် တစ်ကြိမ်တည်းကုန်ကျမယ့် ဘာတွေရှိသလဲ?',
         startupHelp:
             'Business စဖွင့်ဖို့ တကယ်လိုတဲ့ one-time costs ကိုပဲထည့်ပါ။ Category အားလုံး ဖြည့်ဖို့မလိုပါ။',
@@ -341,6 +346,7 @@ const copy = {
         workingStep: 'Working Capital Forecast',
         reserveStep: 'Contingency Reserve',
         fundingStep: 'Funding Position & Gap',
+        ruleStep: 'Capital Rule & Allocation',
         startupTitle: 'Before opening, what one-time costs do you need?',
         startupHelp: 'Business ready ဖြစ်ဖို့လိုတဲ့ one-time costs ကိုပဲထည့်ပါ။ Category အားလုံး မလိုပါ။',
         assetsTitle: 'What Assets or Opening Stock do you need?',
@@ -631,7 +637,11 @@ const stepRecorded = (key: StepKey): boolean => {
         return input.contingency !== null;
     }
 
-    return input.confirmedFunding !== null;
+    if (key === 'funding') {
+        return input.confirmedFunding !== null;
+    }
+
+    return props.ruleReadModel?.ready === true;
 };
 
 const stepLabels = computed<Record<StepKey, string>>(() => ({
@@ -640,10 +650,11 @@ const stepLabels = computed<Record<StepKey, string>>(() => ({
     working: c.value.workingStep,
     reserve: c.value.reserveStep,
     funding: c.value.fundingStep,
+    rule: c.value.ruleStep,
 }));
 
 const steps = computed(() =>
-    (['startup', 'assets', 'working', 'reserve', 'funding'] as StepKey[]).map(
+    (['startup', 'assets', 'working', 'reserve', 'funding', 'rule'] as StepKey[]).map(
         (key) => ({
             key,
             label: stepLabels.value[key],
@@ -668,6 +679,7 @@ const previousStep = (): void => {
         'working',
         'reserve',
         'funding',
+        'rule',
     ];
     const index = keys.indexOf(focus.value);
 
@@ -681,6 +693,7 @@ const nextStep = (): void => {
         'working',
         'reserve',
         'funding',
+        'rule',
     ];
     const index = keys.indexOf(focus.value);
 
@@ -1539,14 +1552,25 @@ const contingencyBase = computed(
                     </label>
 
                     <template #actions>
-                        <div class="flex flex-wrap justify-start gap-2">
+                        <div class="flex flex-wrap justify-between gap-2">
                             <button type="button" class="min-h-10 rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold" @click="previousStep">{{ c.previous }}</button>
+                            <button type="button" class="min-h-10 rounded-xl bg-[var(--pbr-green-dark)] px-4 text-sm font-black text-white" @click="nextStep">{{ c.next }}</button>
                         </div>
                     </template>
                 </PbrFormSection>
             </ProgressiveReveal>
 
-            <section class="mt-6 min-w-0 rounded-[22px] border border-[#d8e4da] bg-white/90 p-4 sm:p-5">
+            <ProgressiveReveal :visible="focus === 'rule'">
+                <CapitalRuleAllocationStep
+                    :draft="ruleDraft"
+                    :read-model="ruleReadModel"
+                    :currency="currency"
+                    :can-manage="canManage"
+                    @back="previousStep"
+                />
+            </ProgressiveReveal>
+
+            <section v-if="focus !== 'rule'" class="mt-6 min-w-0 rounded-[22px] border border-[#d8e4da] bg-white/90 p-4 sm:p-5">
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <div class="min-w-0">
                         <h3 class="break-words text-base font-black text-[var(--pbr-ink)]">
@@ -1598,7 +1622,7 @@ const contingencyBase = computed(
                 </div>
             </section>
 
-            <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--pbr-line)] pt-5">
+            <div v-if="focus !== 'rule'" class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--pbr-line)] pt-5">
                 <button
                     v-if="errors.length > 0"
                     type="button"

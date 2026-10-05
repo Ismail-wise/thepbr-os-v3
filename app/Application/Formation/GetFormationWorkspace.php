@@ -21,6 +21,8 @@ final class GetFormationWorkspace
         private readonly GetDeepFeasibilityAssessmentRunSummaries $deepFeasibilityHistory,
         private readonly GetCapitalPlanningDraft $capitalPlanningDraft,
         private readonly GetCapitalPlanningDraftCalculation $capitalPlanningCalculation,
+        private readonly GetCapitalRuleDraft $capitalRuleDraft,
+        private readonly GetCapitalRuleReadModel $capitalRuleReadModel,
     ) {}
 
     public function execute(
@@ -69,6 +71,20 @@ final class GetFormationWorkspace
 
         $capitalCalculation = $canViewCapital
             ? $this->capitalPlanningCalculation->execute(
+                $user,
+                $business,
+            )
+            : null;
+
+        $capitalRuleDraft = $canViewCapital
+            ? $this->capitalRuleDraft->execute(
+                $user,
+                $business,
+            )
+            : null;
+
+        $capitalRuleReadModel = $canViewCapital
+            ? $this->capitalRuleReadModel->execute(
                 $user,
                 $business,
             )
@@ -297,6 +313,8 @@ final class GetFormationWorkspace
             'capital' => [
                 'planning_draft' => $capitalDraft,
                 'planning_calculation' => $capitalCalculation,
+                'rule_draft' => $capitalRuleDraft,
+                'rule_read_model' => $capitalRuleReadModel,
                 'scenarios' => $canViewCapital
                     ? $this->rows(
                         'capital_scenarios',

@@ -444,13 +444,16 @@ final class CapitalGuidedCalculateUxTest extends TestCase
         );
     }
 
-    public function test_normal_capital_source_uses_guided_steps_one_to_five_and_excludes_legacy_primary_controls(): void
+    public function test_normal_capital_source_uses_guided_steps_one_to_six_and_excludes_legacy_primary_controls(): void
     {
         $formation = $this->source(
             'resources/js/pages/Formation/Index.vue',
         );
         $guided = $this->source(
             'resources/js/components/capital/CapitalGuidedJourney.vue',
+        );
+        $rule = $this->source(
+            'resources/js/components/capital/CapitalRuleAllocationStep.vue',
         );
 
         self::assertStringContainsString(
@@ -476,6 +479,7 @@ final class CapitalGuidedCalculateUxTest extends TestCase
             'Working Capital Forecast',
             'Contingency Reserve',
             'Funding Position & Gap',
+            'Capital Rule & Allocation',
             'capital-guided-journey',
             '/formation/capital/planning-draft',
             'Use existing Business Model numbers',
@@ -489,7 +493,6 @@ final class CapitalGuidedCalculateUxTest extends TestCase
         }
 
         foreach ([
-            'Capital Rule & Allocation',
             'Capital Plan Comparison',
             'Promote to frozen Proposal',
             'Lean',
@@ -500,6 +503,31 @@ final class CapitalGuidedCalculateUxTest extends TestCase
                 $guided,
             );
         }
+
+        foreach ([
+            '/formation/capital/rule-draft',
+            'Capital Allocation Summary',
+            'Reduce the startup scope',
+            'Delay the launch or selected spending',
+            'Consider borrowing',
+            'Consider a Capital Call later',
+            'This is a planning rule only.',
+            'capital-rule-step',
+        ] as $ruleContract) {
+            self::assertStringContainsString(
+                $ruleContract,
+                $rule,
+            );
+        }
+
+        self::assertStringNotContainsString(
+            'preOpening +',
+            $rule,
+        );
+        self::assertStringNotContainsString(
+            'totalCapitalRequirement =',
+            $rule,
+        );
 
         self::assertStringNotContainsString(
             'total =',
@@ -516,6 +544,9 @@ final class CapitalGuidedCalculateUxTest extends TestCase
         $guided = $this->source(
             'resources/js/components/capital/CapitalGuidedJourney.vue',
         );
+        $rule = $this->source(
+            'resources/js/components/capital/CapitalRuleAllocationStep.vue',
+        );
 
         foreach ([
             'uiLanguageMode',
@@ -529,6 +560,20 @@ final class CapitalGuidedCalculateUxTest extends TestCase
             self::assertStringContainsString(
                 $contract,
                 $guided,
+            );
+        }
+
+        foreach ([
+            'Capital Rule & Allocation ကို သတ်မှတ်ပါ',
+            'Capital Rule & Allocation ကို set လုပ်ပါ',
+            'pbr-safe-copy',
+            'min-w-0',
+            'flex-wrap',
+            'sm:grid-cols-2',
+        ] as $ruleContract) {
+            self::assertStringContainsString(
+                $ruleContract,
+                $rule,
             );
         }
 

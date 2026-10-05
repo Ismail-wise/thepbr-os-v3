@@ -66,6 +66,7 @@ foreach (
         'business_model_canvases',
         'capital_scenarios',
         'capital_planning_drafts',
+        'capital_rule_drafts',
         'existing_business_profiles',
         'valuations',
         'business_valuation_runs',

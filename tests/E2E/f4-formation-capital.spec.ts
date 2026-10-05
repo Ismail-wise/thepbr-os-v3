@@ -43,7 +43,7 @@ const switchBusiness = async (page: Page, business: string) => {
 };
 
 test(
-    'F4 formation workspace preserves Guided Capital Steps 1-5 and New/Existing Business journeys',
+    'F4 formation workspace preserves Guided Capital Steps 1-6 and New/Existing Business journeys',
     async ({ page }, testInfo) => {
         test.setTimeout(90_000);
 
@@ -451,6 +451,7 @@ test(
             'Working Capital Forecast',
             'Contingency Reserve',
             'Funding Position & Gap',
+            'Capital Rule & Allocation',
         ]) {
             await expect(
                 capitalJourney.getByRole('button', {
@@ -459,13 +460,6 @@ test(
                 }),
             ).toBeVisible();
         }
-
-        await expect(
-            capitalJourney.getByRole('button', {
-                name: 'Capital Rule & Allocation',
-                exact: true,
-            }),
-        ).toHaveCount(0);
 
         await expect(
             page.getByText('Capital Plan Comparison', {
@@ -695,6 +689,123 @@ test(
             ).toBeVisible();
         }
 
+        // Step 6 consumes the server-derived calculation; it does not ask
+        // the browser to re-enter or re-calculate Capital totals.
+        await capitalJourney
+            .getByRole('button', {
+                name: 'Capital Rule & Allocation',
+                exact: true,
+            })
+            .click();
+
+        const ruleStep = page.getByTestId('capital-rule-step');
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'Set the Capital Rule & Allocation',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        for (const value of [
+            '22660.00 USD',
+            '1000.00 USD',
+            '21660.00 USD',
+            '4.41%',
+        ]) {
+            await expect(
+                ruleStep.getByText(value, {
+                    exact: true,
+                }).first(),
+            ).toBeVisible();
+        }
+
+        await expect(
+            ruleStep.getByText(
+                'A Funding Gap exists. Record at least one shortfall response before Step 6 is ready.',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        const reduceScope = ruleStep.getByRole('checkbox', {
+            name: 'Reduce the startup scope',
+            exact: true,
+        });
+        const capitalCall = ruleStep.getByRole('checkbox', {
+            name: 'Consider a Capital Call later',
+            exact: true,
+        });
+
+        await reduceScope.check();
+        await capitalCall.check();
+
+        await expect(
+            ruleStep.getByText('Priority 1', { exact: true }),
+        ).toBeVisible();
+        await expect(
+            ruleStep.getByText('Priority 2', { exact: true }),
+        ).toBeVisible();
+
+        await ruleStep
+            .getByRole('textbox', {
+                name: 'Allocation notes',
+                exact: true,
+            })
+            .fill('Protect the early operating buffer first.');
+
+        await ruleStep
+            .getByRole('textbox', {
+                name: 'Shortfall rule notes',
+                exact: true,
+            })
+            .fill('Review the shortfall before launch.');
+
+        await ruleStep
+            .getByRole('textbox', {
+                name: 'Capital Call planning note',
+                exact: true,
+            })
+            .fill(
+                'Consider a future call only for the unresolved gap.',
+            );
+
+        await expect(
+            ruleStep.getByText(
+                /Actual contributor commitments, accepted contribution value, ownership and equity effects are handled later/i,
+            ),
+        ).toBeVisible();
+
+        const capitalRuleResponse = page.waitForResponse(
+            (response) =>
+                response.url().endsWith(
+                    '/formation/capital/rule-draft',
+                )
+                && response.request().method() === 'PUT',
+        );
+
+        await ruleStep
+            .getByRole('button', {
+                name: 'Save Capital Rule',
+                exact: true,
+            })
+            .click();
+
+        await capitalRuleResponse;
+
+        await expect(
+            ruleStep.getByText(
+                'Capital Rule draft saved.',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            ruleStep.getByText(
+                'Current rule is recorded against the latest Capital numbers.',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
         // Saved draft survives normal reload. Explicit zero remains distinct
         // from the untouched/missing state and hidden stale method values stay
         // out of the canonical draft.
@@ -710,6 +821,93 @@ test(
                 exact: true,
             },
         );
+
+        await reloadedCapitalJourney
+            .getByRole('button', {
+                name: 'Capital Rule & Allocation',
+                exact: true,
+            })
+            .click();
+
+        const reloadedRuleStep = page.getByTestId(
+            'capital-rule-step',
+        );
+
+        await expect(
+            reloadedRuleStep.getByRole('checkbox', {
+                name: 'Reduce the startup scope',
+                exact: true,
+            }),
+        ).toBeChecked();
+
+        await expect(
+            reloadedRuleStep.getByRole('checkbox', {
+                name: 'Consider a Capital Call later',
+                exact: true,
+            }),
+        ).toBeChecked();
+
+        await expect(
+            reloadedRuleStep.getByRole('textbox', {
+                name: 'Capital Call planning note',
+                exact: true,
+            }),
+        ).toHaveValue(
+            'Consider a future call only for the unresolved gap.',
+        );
+
+        // If Steps 1-5 change, the saved Step 6 rule becomes needs-review
+        // rather than silently remaining current.
+        await reloadedCapitalJourney
+            .getByRole('button', {
+                name: 'Funding Position & Gap',
+                exact: true,
+            })
+            .click();
+
+        await reloadedCapitalPanel
+            .getByRole('spinbutton', {
+                name: /^Confirmed Funding \(USD\)/,
+            })
+            .fill('2000.00');
+
+        const capitalRevisionResponse = page.waitForResponse(
+            (response) =>
+                response.url().endsWith(
+                    '/formation/capital/planning-draft',
+                )
+                && response.request().method() === 'PUT',
+        );
+
+        await reloadedCapitalPanel
+            .getByRole('button', {
+                name: 'Save Capital draft',
+                exact: true,
+            })
+            .click();
+
+        await capitalRevisionResponse;
+
+        await reloadedCapitalJourney
+            .getByRole('button', {
+                name: 'Capital Rule & Allocation',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            reloadedRuleStep.getByText(
+                'Review this rule again',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            reloadedRuleStep.getByText(
+                '20660.00 USD',
+                { exact: true },
+            ).first(),
+        ).toBeVisible();
 
         await reloadedCapitalJourney
             .getByRole('button', {
@@ -767,6 +965,13 @@ test(
             }),
         ).toHaveCount(0);
 
+        await reloadedCapitalJourney
+            .getByRole('button', {
+                name: 'Capital Rule & Allocation',
+                exact: true,
+            })
+            .click();
+
         // English / Myanmar / Mixed responsive smoke.
         const capitalLanguageSwitcher = page.locator(
             '#shell-language-switcher',
@@ -774,9 +979,25 @@ test(
 
         await capitalLanguageSwitcher.selectOption('my');
 
+        // Wait for the language-setting navigation to finish before moving
+        // from its default Step 1 focus back into Step 6.
         await expect(
             page.getByRole('heading', {
                 name: 'ဒီလုပ်ငန်းစဖို့ Capital ဘယ်လောက်လိုမလဲ အဆင့်လိုက်တွက်ပါ',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await reloadedCapitalJourney
+            .getByRole('button', {
+                name: 'Capital Rule & Allocation',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'Capital Rule & Allocation ကို သတ်မှတ်ပါ',
                 exact: true,
             }),
         ).toBeVisible();
@@ -798,11 +1019,39 @@ test(
             }),
         ).toBeVisible();
 
+        await reloadedCapitalJourney
+            .getByRole('button', {
+                name: 'Capital Rule & Allocation',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'Capital Rule & Allocation ကို set လုပ်ပါ',
+                exact: true,
+            }),
+        ).toBeVisible();
+
         await capitalLanguageSwitcher.selectOption('en');
 
         await expect(
             page.getByRole('heading', {
                 name: 'Work out how much Capital this Business needs to start',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await reloadedCapitalJourney
+            .getByRole('button', {
+                name: 'Capital Rule & Allocation',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'Set the Capital Rule & Allocation',
                 exact: true,
             }),
         ).toBeVisible();

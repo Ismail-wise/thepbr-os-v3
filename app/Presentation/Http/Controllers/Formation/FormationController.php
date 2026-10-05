@@ -12,6 +12,7 @@ use App\Application\Formation\GetFormationWorkspace;
 use App\Application\Formation\NewBusinessPlanning;
 use App\Application\Formation\RecordDeepFeasibilityAssessmentRun;
 use App\Application\Formation\SaveCapitalPlanningDraft;
+use App\Application\Formation\SaveCapitalRuleDraft;
 use App\Domain\Capital\ValueObjects\CapitalRequirement;
 use App\Domain\Records\Enums\FormalRecordState;
 use App\Domain\Records\Exceptions\StaleRevision;
@@ -708,6 +709,42 @@ final class FormationController
         return back()->with(
             'status',
             'Capital planning draft saved.',
+        );
+    }
+
+    public function saveCapitalRuleDraft(
+        Request $request,
+        SaveCapitalRuleDraft $drafts,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $data = $request->validate([
+            'expected_revision' => ['required', 'integer', 'min:0'],
+            'input' => ['required', 'array'],
+        ]);
+
+        try {
+            $result = $drafts->execute(
+                $user,
+                $business,
+                (int) $data['expected_revision'],
+                $data['input'],
+            );
+        } catch (StaleRevision) {
+            throw ValidationException::withMessages([
+                'capital_rule' => 'This Capital Rule draft changed after you opened it. Reload the latest saved rule, review it, and then save again.',
+            ]);
+        } catch (InvalidArgumentException) {
+            throw ValidationException::withMessages([
+                'capital_rule' => 'Complete the current Capital calculation and check the visible Capital Rule fields before saving.',
+            ]);
+        }
+
+        abort_if($result === null, 404);
+
+        return back()->with(
+            'status',
+            'Capital Rule draft saved.',
         );
     }
 

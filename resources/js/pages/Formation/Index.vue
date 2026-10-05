@@ -98,6 +98,8 @@ type FormationWorkspace = {
     capital: {
         planning_draft: GenericRow | null;
         planning_calculation: GenericRow | null;
+        rule_draft: GenericRow | null;
+        rule_read_model: GenericRow | null;
         scenarios: GenericRow[];
         promotions: GenericRow[];
         current_effective: GenericRow | null;
@@ -1173,6 +1175,8 @@ const selectFormationStep = (key: string) => {
                     <CapitalGuidedJourney
                         :draft="formation.capital.planning_draft"
                         :calculation="formation.capital.planning_calculation"
+                        :rule-draft="formation.capital.rule_draft"
+                        :rule-read-model="formation.capital.rule_read_model"
                         :business-model-foundation="formation.business_model_foundation"
                         :currency="formation.business.base_currency"
                         :can-manage="formation.permissions.can_manage_capital"
