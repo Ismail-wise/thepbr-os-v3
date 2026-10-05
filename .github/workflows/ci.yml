@@ -2237,3 +2237,112 @@ jobs:
             >/dev/null 2>&1 || true
 
           echo "Disposable Redis E2E cleanup: PASS"
+
+  telegram_notify:
+    name: Telegram notification
+    needs:
+      - integrity
+      - backend
+      - frontend
+      - e2e
+    if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/feature/pbr-new-system-redesign' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+
+    steps:
+      - name: Send Telegram CI completion notification
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          INTEGRITY_RESULT: ${{ needs.integrity.result }}
+          BACKEND_RESULT: ${{ needs.backend.result }}
+          FRONTEND_RESULT: ${{ needs.frontend.result }}
+          E2E_RESULT: ${{ needs.e2e.result }}
+          RUN_NUMBER: ${{ github.run_number }}
+          RUN_ID: ${{ github.run_id }}
+          BRANCH_NAME: ${{ github.ref_name }}
+          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -u -o pipefail
+
+          upper() {
+            printf '%s' "$1" | tr '[:lower:]' '[:upper:]'
+          }
+
+          integrity_result="$(upper "$INTEGRITY_RESULT")"
+          backend_result="$(upper "$BACKEND_RESULT")"
+          frontend_result="$(upper "$FRONTEND_RESULT")"
+          e2e_result="$(upper "$E2E_RESULT")"
+
+          overall="FAILED"
+          headline="thePBR Development - CI FAILED"
+          next_action=$'Do not rerun automatically.\nControl Room review required.'
+
+          if [[ "$INTEGRITY_RESULT" == "success" &&
+                "$BACKEND_RESULT" == "success" &&
+                "$FRONTEND_RESULT" == "success" &&
+                "$E2E_RESULT" == "success" ]]; then
+            overall="SUCCESS"
+            headline="thePBR Development - CI PASSED"
+            next_action="STOP - Control Room Review Required"
+          fi
+
+          short_sha="${COMMIT_SHA:0:7}"
+          commit_subject="$(
+            printf '%s' "$COMMIT_MESSAGE" |
+              tr '\r\n' '  ' |
+              awk '{$1=$1; print}' |
+              cut -c 1-120
+          )"
+
+          if [[ -z "$commit_subject" ]]; then
+            commit_subject="Commit message unavailable"
+          fi
+
+          run_url="https://github.com/${REPOSITORY}/actions/runs/${RUN_ID}"
+
+          printf -v message \
+            '%s\n\nRun: #%s\nBranch: %s\nCommit: %s - %s\n\nIntegrity / Scope: %s\nBackend / PostgreSQL: %s\nFrontend / Typecheck / Build: %s\nE2E / Chromium: %s\n\nResult: %s\n\nNext Action:\n%s\n\nGitHub Run:\n%s' \
+            "$headline" \
+            "$RUN_NUMBER" \
+            "$BRANCH_NAME" \
+            "$short_sha" \
+            "$commit_subject" \
+            "$integrity_result" \
+            "$backend_result" \
+            "$frontend_result" \
+            "$e2e_result" \
+            "$overall" \
+            "$next_action" \
+            "$run_url"
+
+          response_file="$(mktemp)"
+          trap 'rm -f "$response_file"' EXIT
+
+          curl_rc=0
+          http_code="$(
+            curl \
+              --silent \
+              --show-error \
+              --connect-timeout 15 \
+              --max-time 30 \
+              --retry 2 \
+              --retry-delay 2 \
+              --output "$response_file" \
+              --write-out '%{http_code}' \
+              --request POST \
+              "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+              --data-urlencode "text=${message}"
+          )" || curl_rc=$?
+
+          if [[ "$curl_rc" -eq 0 && "$http_code" == "200" ]]; then
+            echo "Telegram notification: SENT"
+          else
+            safe_http_code="${http_code:-000}"
+            echo "::warning::Telegram notification delivery failed (curl exit ${curl_rc}, HTTP ${safe_http_code})."
+          fi
+
+          exit 0
