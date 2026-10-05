@@ -220,6 +220,7 @@ final class EvidencePrivacyTest extends TestCase
                 'formal_record_version',
                 'proposal_version',
                 'contribution',
+                'business_valuation_run',
                 'finance_payment',
                 'finance_reconciliation',
                 'finance_exception',

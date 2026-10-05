@@ -13,6 +13,7 @@ use App\Infrastructure\Persistence\Eloquent\Exit\ExitCase;
 use App\Infrastructure\Persistence\Eloquent\Finance\FinanceException;
 use App\Infrastructure\Persistence\Eloquent\Finance\FinancePayment;
 use App\Infrastructure\Persistence\Eloquent\Finance\FinanceReconciliationReview;
+use App\Infrastructure\Persistence\Eloquent\Formation\BusinessValuationRun;
 use App\Infrastructure\Persistence\Eloquent\Partnership\Contribution;
 use App\Infrastructure\Persistence\Eloquent\Records\FormalRecordVersion;
 use App\Infrastructure\Persistence\Eloquent\Records\ProposalVersion;
@@ -32,6 +33,7 @@ final class EvidenceTargetRegistry
         'formal_record_version' => FormalRecordVersion::class,
         'proposal_version' => ProposalVersion::class,
         'contribution' => Contribution::class,
+        'business_valuation_run' => BusinessValuationRun::class,
         'finance_payment' => FinancePayment::class,
         'finance_reconciliation' => FinanceReconciliationReview::class,
         'finance_exception' => FinanceException::class,
@@ -65,6 +67,7 @@ final class EvidenceTargetRegistry
 
         return match ($targetType) {
             'contribution' => CapabilityCatalog::CONTRIBUTIONS_MANAGE,
+            'business_valuation_run' => CapabilityCatalog::FORMATION_MANAGE,
             'finance_payment',
             'finance_reconciliation',
             'finance_exception' => CapabilityCatalog::FINANCE_MANAGE,
