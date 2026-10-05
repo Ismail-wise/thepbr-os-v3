@@ -8,6 +8,7 @@ use App\Application\Formation\BusinessValuationPlanning;
 use App\Application\Formation\CapitalPlanning;
 use App\Application\Formation\ExistingBusinessBaseline;
 use App\Application\Formation\NewBusinessPlanning;
+use App\Application\Formation\RecordDeepFeasibilityAssessmentRun;
 use App\Application\Identity\ChangeAccountStatus;
 use App\Application\Identity\ProvisionAccount;
 use App\Domain\Businesses\Enums\BusinessOriginType;
@@ -67,6 +68,7 @@ foreach (
         'existing_business_profiles',
         'valuations',
         'business_valuation_runs',
+        'deep_feasibility_assessment_runs',
     ] as $table
 ) {
     $count = DB::table($table)->count();
@@ -162,6 +164,71 @@ $businessModel->saveBmc(
     ],
 );
 
+$businessModel->saveOperatingProfile(
+    $user,
+    $newBusiness,
+    0,
+    [
+        'business_purpose' => 'Make structured partnership setup easier.',
+        'market' => 'Myanmar-owned SMEs in Myanmar and Thailand.',
+        'location' => 'Myanmar and Thailand',
+        'competition_alternatives' => 'Spreadsheets and large ERP products.',
+        'operating_model' => 'Guided setup plus recurring support.',
+        'excluded_activities' => 'No guaranteed business success.',
+        'pricing_notes' => 'Average setup package used for planning.',
+        'unit_name' => 'setup package',
+        'average_selling_price' => '100.00',
+        'variable_cost_per_unit' => '40.00',
+        'monthly_fixed_cost' => '3000.00',
+        'expected_monthly_units' => '80.00',
+        'scalability_strategy' => 'Standardize delivery and reuse templates.',
+        'scalability_constraints' => 'Senior advisor capacity.',
+        'first_12_month_plan' => 'Validate, launch, standardize, expand.',
+    ],
+);
+
+$assumptionId = $newPlanning->addAssumption(
+    $user,
+    $newBusiness,
+    'market',
+    'SME owners will pay for guided partnership setup.',
+    'validated',
+);
+
+if ($assumptionId === null) {
+    throw new RuntimeException(
+        'F4 Deep Feasibility assumption fixture failed.',
+    );
+}
+
+$validationId = $newPlanning->addValidationActivity(
+    $user,
+    $newBusiness,
+    $assumptionId,
+    'Customer interviews and paid pilot',
+    'completed',
+    'Four interviews confirmed the problem and one pilot paid.',
+    '2026-10-05',
+);
+
+if ($validationId === null) {
+    throw new RuntimeException(
+        'F4 Deep Feasibility validation fixture failed.',
+    );
+}
+
+$initialDeepFeasibilityRun = $app
+    ->make(RecordDeepFeasibilityAssessmentRun::class)
+    ->execute($user, $newBusiness);
+
+if ($initialDeepFeasibilityRun === null) {
+    throw new RuntimeException(
+        'F4 Deep Feasibility history fixture failed.',
+    );
+}
+
+// Keep legacy scenario data present so browser regression proves the accepted
+// Guided Deep Feasibility experience remains the normal path.
 $newPlanning->addFeasibilityScenario(
     $user,
     $newBusiness,

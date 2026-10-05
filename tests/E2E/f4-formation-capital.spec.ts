@@ -53,6 +53,235 @@ test(
         await signIn(page);
         await switchBusiness(page, NEW_BUSINESS);
 
+        // Closure proof: Master Journey exposes Deep Feasibility in the New
+        // Business path without forcing historical Business Valuation.
+        await page.goto('/overview');
+
+        await page
+            .getByText('View full Business journey', { exact: true })
+            .click();
+
+        const masterJourney = page.getByRole('navigation', {
+            name: 'Master Business Journey',
+            exact: true,
+        });
+
+        await expect(
+            masterJourney.getByRole('button', {
+                name: /^Business Model, Demand, Scalability & Break-even/,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            masterJourney.getByRole('button', {
+                name: /^Deep Feasibility/,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            masterJourney.getByRole('button', {
+                name: /^Business Valuation/,
+            }),
+        ).toHaveCount(0);
+
+        await masterJourney
+            .getByRole('button', {
+                name: /^Deep Feasibility/,
+            })
+            .click();
+
+        await expect(page).toHaveURL(
+            /\/formation\?step=feasibility$/,
+        );
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'Understand how ready this Business is to start',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        const deepFeasibilityJourney = page.getByRole('navigation', {
+            name: 'Deep Feasibility guided journey',
+            exact: true,
+        });
+
+        for (const step of [
+            'Overview',
+            'What PBR knows',
+            'Feasibility areas',
+            'What to work on',
+            'Before GO can be evaluated',
+            'Assessment history',
+        ]) {
+            await expect(
+                deepFeasibilityJourney.getByRole('button', {
+                    name: step,
+                    exact: true,
+                }),
+            ).toBeVisible();
+        }
+
+        await deepFeasibilityJourney
+            .getByRole('button', {
+                name: 'Feasibility areas',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            page.getByText('Assessed', { exact: true }),
+        ).toHaveCount(4);
+
+        await expect(
+            page.getByText('Available later', { exact: true }),
+        ).toHaveCount(5);
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'Strengths',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await deepFeasibilityJourney
+            .getByRole('button', {
+                name: 'Before GO can be evaluated',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            page.getByText(
+                /does not guarantee business success or a GO result/i,
+            ).first(),
+        ).toBeVisible();
+
+        await deepFeasibilityJourney
+            .getByRole('button', {
+                name: 'Assessment history',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            page.getByText('Read-only historical snapshot', {
+                exact: true,
+            }),
+        ).toHaveCount(1);
+
+        const recordResponse = page.waitForResponse(
+            (response) =>
+                response.url().endsWith(
+                    '/formation/new/deep-feasibility/assessments',
+                )
+                && response.request().method() === 'POST',
+        );
+
+        await page
+            .getByRole('button', {
+                name: 'Record current assessment',
+                exact: true,
+            })
+            .click();
+
+        await recordResponse;
+
+        await page
+            .getByRole('navigation', {
+                name: 'Deep Feasibility guided journey',
+                exact: true,
+            })
+            .getByRole('button', {
+                name: 'Assessment history',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            page.getByText('Read-only historical snapshot', {
+                exact: true,
+            }),
+        ).toHaveCount(2);
+
+        // Leaving and returning through the existing Formation journey keeps
+        // the accepted canonical data and immutable history intact.
+        const closureSetupJourney = page.getByRole('navigation', {
+            name: 'Guided setup journey',
+            exact: true,
+        });
+
+        await closureSetupJourney
+            .getByRole('button', {
+                name: /Business Model Canvas/,
+            })
+            .click();
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'Build how this Business will work',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await closureSetupJourney
+            .getByRole('button', {
+                name: /Feasibility/,
+            })
+            .click();
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'Understand how ready this Business is to start',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        // Deep Feasibility multilingual closure smoke: English, Myanmar and
+        // Mixed all render through the same responsive guided component.
+        const languageSwitcher = page.locator(
+            '#shell-language-switcher',
+        );
+
+        await languageSwitcher.selectOption('my');
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'ဒီလုပ်ငန်းကို စဖို့ အခုဘယ်လောက်အဆင်သင့်ဖြစ်နေပြီလဲ',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        const guidedFeasibility = page.getByTestId(
+            'deep-feasibility-guided-journey',
+        );
+
+        expect(
+            await guidedFeasibility.evaluate(
+                (element) =>
+                    element.scrollWidth
+                    <= element.clientWidth + 1,
+            ),
+        ).toBeTruthy();
+
+        await languageSwitcher.selectOption('mixed');
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'ဒီ Business ကို အခု start လုပ်ဖို့ ဘယ်လောက် ready ဖြစ်နေပြီလဲ',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await languageSwitcher.selectOption('en');
+
+        await expect(
+            page.getByRole('heading', {
+                name: 'Understand how ready this Business is to start',
+                exact: true,
+            }),
+        ).toBeVisible();
+
         await page
             .getByRole('navigation', {
                 name: 'Workspace navigation',

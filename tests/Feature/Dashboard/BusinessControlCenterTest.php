@@ -136,6 +136,7 @@ final class BusinessControlCenterTest extends TestCase
         self::assertSame('new', $journey['variant']);
         self::assertSame([
             'business_model',
+            'deep_feasibility',
             'partner_dynamics',
             'capital',
             'contributions',
@@ -151,6 +152,16 @@ final class BusinessControlCenterTest extends TestCase
         ], $keys);
         self::assertNotContains('business_valuation', $keys);
         self::assertSame('current', $journey['steps'][0]['state']);
+
+        $deepFeasibility = collect($journey['steps'])
+            ->firstWhere('key', 'deep_feasibility');
+
+        self::assertIsArray($deepFeasibility);
+        self::assertFalse($deepFeasibility['disabled']);
+        self::assertSame(
+            '/formation?step=feasibility',
+            $deepFeasibility['route'],
+        );
 
         $partnerDynamics = collect($journey['steps'])
             ->firstWhere('key', 'partner_dynamics');

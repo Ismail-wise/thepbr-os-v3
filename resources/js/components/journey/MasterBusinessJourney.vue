@@ -16,6 +16,7 @@ const { t } = useI18n();
 const labelKeys: Record<string, TranslationKey> = {
     business_model: 'journey.step.businessModel',
     business_valuation: 'journey.step.businessValuation',
+    deep_feasibility: 'journey.step.deepFeasibility',
     partner_dynamics: 'journey.step.partnerDynamics',
     capital: 'journey.step.capital',
     contributions: 'journey.step.contributions',

@@ -490,8 +490,39 @@ const copy = {
 } as const;
 
 const c = computed(() => copy[mode.value]);
-const active = ref<'overview' | 'bmc' | 'validation' | 'feasibility' | 'fit' | 'direction' | 'baseline' | 'capital'>(
-    props.formation.journey === 'new' ? 'overview' : 'baseline',
+
+type FormationStep =
+    | 'overview'
+    | 'bmc'
+    | 'validation'
+    | 'feasibility'
+    | 'fit'
+    | 'direction'
+    | 'baseline'
+    | 'capital';
+
+const requestedStep = new URLSearchParams(
+    String(page.url).split('?')[1] ?? '',
+).get('step');
+
+const newBusinessSteps: FormationStep[] = [
+    'overview',
+    'bmc',
+    'validation',
+    'feasibility',
+    'fit',
+    'direction',
+    'capital',
+];
+
+const active = ref<FormationStep>(
+    props.formation.journey === 'new'
+        && requestedStep !== null
+        && newBusinessSteps.includes(requestedStep as FormationStep)
+        ? (requestedStep as FormationStep)
+        : props.formation.journey === 'new'
+          ? 'overview'
+          : 'baseline',
 );
 
 const field = (row: GenericRow | null | undefined, key: string): string =>

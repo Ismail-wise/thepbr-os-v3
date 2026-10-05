@@ -62,6 +62,15 @@ final class GetMasterBusinessJourney
                 'applicable' => $existingBusiness,
             ],
             [
+                'key' => 'deep_feasibility',
+                'route' => '/formation?step=feasibility',
+                'capabilities' => [
+                    CapabilityCatalog::FORMATION_VIEW,
+                    CapabilityCatalog::BUSINESS_MODEL_VIEW,
+                ],
+                'applicable' => ! $existingBusiness,
+            ],
+            [
                 'key' => 'partner_dynamics',
                 'route' => '/partner-dynamics',
                 'capabilities' => [CapabilityCatalog::PARTNERS_VIEW],
@@ -261,6 +270,11 @@ final class GetMasterBusinessJourney
                     ->where('business_id', $businessId)
                     ->exists(),
             'business_valuation' => DB::table('valuations')
+                ->where('business_id', $businessId)
+                ->exists(),
+            'deep_feasibility' => DB::table(
+                'deep_feasibility_assessment_runs',
+            )
                 ->where('business_id', $businessId)
                 ->exists(),
             'partner_dynamics' => DB::table('partner_dynamics_personal_assessments')
