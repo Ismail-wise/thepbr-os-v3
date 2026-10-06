@@ -106,6 +106,7 @@ type FormationWorkspace = {
         comparison_read_model: GenericRow | null;
         approval_read_model: GenericRow | null;
         decision_record_read_model: GenericRow | null;
+        action_plan_read_model: GenericRow | null;
         scenarios: GenericRow[];
         promotions: GenericRow[];
         current_effective: GenericRow | null;
@@ -1187,6 +1188,7 @@ const selectFormationStep = (key: string) => {
                         :comparison-read-model="formation.capital.comparison_read_model"
                         :approval-read-model="formation.capital.approval_read_model"
                         :decision-record-read-model="formation.capital.decision_record_read_model"
+                        :action-plan-read-model="formation.capital.action_plan_read_model"
                         :business-model-foundation="formation.business_model_foundation"
                         :currency="formation.business.base_currency"
                         :can-manage="formation.permissions.can_manage_capital"

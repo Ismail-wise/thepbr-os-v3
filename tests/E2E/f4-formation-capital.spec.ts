@@ -1218,10 +1218,127 @@ test(
             ),
         ).toBeVisible();
 
-        // Governed Approval + Decision Record still do not make Capital
-        // current/effective or complete the ACT stage in Master Journey.
-        // Governed Approval does not make Capital current/effective in the
-        // Master Business Journey.
+        // Capital Cycle 8: ACT reuses the generic Governance Action engine.
+        // The suggested Review Action is derived from the exact recorded
+        // Capital Decision and its recorded Review Date.
+        const capitalActionPlan = page.getByTestId(
+            'capital-action-plan-stage',
+        );
+
+        await expect(
+            capitalActionPlan.getByRole('heading', {
+                name: 'Capital Action Plan',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            capitalActionPlan.getByText('22660.00 USD', {
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            capitalActionPlan.getByText('21660.00 USD', {
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            capitalActionPlan.getByText(
+                'Review Approved Capital Decision',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            capitalActionPlan.getByText('2027-04-15', {
+                exact: true,
+            }).first(),
+        ).toBeVisible();
+
+        await capitalActionPlan
+            .getByTestId('capital-action-suggested-owner')
+            .selectOption({ label: 'F4 Browser Tester' });
+
+        const suggestedActionResponse = page.waitForResponse(
+            (response) =>
+                response.url().endsWith(
+                    '/formation/capital/action-plan/suggested',
+                )
+                && response.request().method() === 'POST',
+        );
+
+        await capitalActionPlan
+            .getByTestId(
+                'capital-action-suggestion-review_approved_decision',
+            )
+            .click();
+
+        await suggestedActionResponse;
+
+        await expect(
+            capitalActionPlan.getByTestId(
+                'capital-action-plan-established',
+            ),
+        ).toBeVisible();
+
+        await expect(
+            capitalActionPlan.getByText('Open', {
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        const actionInProgressResponse = page.waitForResponse(
+            (response) =>
+                response.url().includes(
+                    '/formation/capital/action-plan/actions/',
+                )
+                && response.url().endsWith('/status')
+                && response.request().method() === 'PUT',
+        );
+
+        await capitalActionPlan
+            .getByRole('button', {
+                name: 'Mark In Progress',
+                exact: true,
+            })
+            .click();
+
+        await actionInProgressResponse;
+
+        await expect(
+            capitalActionPlan.getByText('In Progress', {
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        const actionCompleteResponse = page.waitForResponse(
+            (response) =>
+                response.url().includes(
+                    '/formation/capital/action-plan/actions/',
+                )
+                && response.url().endsWith('/status')
+                && response.request().method() === 'PUT',
+        );
+
+        await capitalActionPlan
+            .getByRole('button', {
+                name: 'Mark Completed',
+                exact: true,
+            })
+            .click();
+
+        await actionCompleteResponse;
+
+        await expect(
+            capitalActionPlan.getByText('Completed', {
+                exact: true,
+            }).first(),
+        ).toBeVisible();
+
+        // The ACT stage now completes Chapter 1 workflow setup, while
+        // Signature and formal Effectivity remain separate.
         await page.goto('/overview');
 
         await page
@@ -1241,11 +1358,11 @@ test(
         );
 
         await expect(capitalJourneyStep).toBeVisible();
-        await expect(capitalJourneyStep).not.toContainText(
+        await expect(capitalJourneyStep).toContainText(
             'Information already recorded',
         );
 
-        // Saved draft survives normal reload. Explicit zero remains distinct
+        // Saved draft, Decision Record and Action Plan survive normal reload. Explicit zero remains distinct
         // from the untouched/missing state and hidden stale method values stay
         // out of the canonical draft.
         await page.goto('/formation?step=capital');
@@ -1268,6 +1385,9 @@ test(
         );
         const reloadedDecisionRecord = page.getByTestId(
             'capital-decision-record-stage',
+        );
+        const reloadedActionPlan = page.getByTestId(
+            'capital-action-plan-stage',
         );
 
         await expect(
@@ -1302,6 +1422,25 @@ test(
             reloadedDecisionRecord.getByText(
                 '2027-04-15',
                 { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            reloadedActionPlan.getByText(
+                'Review Approved Capital Decision',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            reloadedActionPlan.getByText('Completed', {
+                exact: true,
+            }).first(),
+        ).toBeVisible();
+
+        await expect(
+            reloadedActionPlan.getByTestId(
+                'capital-action-plan-established',
             ),
         ).toBeVisible();
 
@@ -1407,6 +1546,26 @@ test(
 
         await expect(
             reloadedDecisionRecord.getByText(
+                '21660.00 USD',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            reloadedActionPlan.getByTestId(
+                'capital-action-plan-stale-warning',
+            ),
+        ).toBeVisible();
+
+        await expect(
+            reloadedActionPlan.getByText(
+                '22660.00 USD',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            reloadedActionPlan.getByText(
                 '21660.00 USD',
                 { exact: true },
             ),
@@ -1578,6 +1737,28 @@ test(
             ),
         ).toBeTruthy();
 
+        await expect(
+            reloadedActionPlan.getByRole('heading', {
+                name: 'Capital Action Plan',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            reloadedActionPlan.getByText(
+                'Current Planning ပြောင်းထားသည်',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        expect(
+            await reloadedActionPlan.evaluate(
+                (element) =>
+                    element.scrollWidth
+                    <= element.clientWidth + 1,
+            ),
+        ).toBeTruthy();
+
         expect(
             await reloadedCapitalPanel.evaluate(
                 (element) =>
@@ -1655,6 +1836,28 @@ test(
 
         expect(
             await reloadedDecisionRecord.evaluate(
+                (element) =>
+                    element.scrollWidth
+                    <= element.clientWidth + 1,
+            ),
+        ).toBeTruthy();
+
+        await expect(
+            reloadedActionPlan.getByRole('heading', {
+                name: 'Capital Action Plan',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            reloadedActionPlan.getByText(
+                'Current Planning Has Changed',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        expect(
+            await reloadedActionPlan.evaluate(
                 (element) =>
                     element.scrollWidth
                     <= element.clientWidth + 1,

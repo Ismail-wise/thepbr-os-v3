@@ -5,6 +5,7 @@ import GuidedJourneyStepper from '../hybrid/GuidedJourneyStepper.vue';
 import ProgressiveReveal from '../hybrid/ProgressiveReveal.vue';
 import PbrErrorSummary from '../ui/PbrErrorSummary.vue';
 import PbrFormSection from '../ui/PbrFormSection.vue';
+import CapitalActionPlanStage from './CapitalActionPlanStage.vue';
 import CapitalApprovalStage from './CapitalApprovalStage.vue';
 import CapitalDecisionRecordStage from './CapitalDecisionRecordStage.vue';
 import CapitalPlanComparison from './CapitalPlanComparison.vue';
@@ -40,6 +41,7 @@ const props = defineProps<{
     comparisonReadModel: GenericRow | null;
     approvalReadModel: GenericRow | null;
     decisionRecordReadModel: GenericRow | null;
+    actionPlanReadModel: GenericRow | null;
     businessModelFoundation: GenericRow | null;
     currency: string;
     canManage: boolean;
@@ -1674,6 +1676,10 @@ const contingencyBase = computed(
 
             <CapitalDecisionRecordStage
                 :read-model="decisionRecordReadModel"
+            />
+
+            <CapitalActionPlanStage
+                :read-model="actionPlanReadModel"
             />
         </template>
 

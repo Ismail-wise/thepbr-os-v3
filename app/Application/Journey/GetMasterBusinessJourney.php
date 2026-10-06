@@ -8,6 +8,7 @@ use App\Application\Access\AuthorizeBusinessCapability;
 use App\Domain\Access\CapabilityCatalog;
 use App\Domain\Access\ValueObjects\Capability;
 use App\Domain\Businesses\Enums\BusinessOriginType;
+use App\Domain\Capital\CapitalApprovalContract;
 use App\Infrastructure\Persistence\Eloquent\Businesses\Business;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
 use Illuminate\Support\Facades\DB;
@@ -285,7 +286,9 @@ final class GetMasterBusinessJourney
                 ))
                 ->where('status', 'completed')
                 ->exists(),
-            'capital' => $this->hasEffectiveCapitalPlan($businessId),
+            'capital' => $this->hasEstablishedCapitalActionPlan(
+                $businessId,
+            ),
             'contributions' => DB::table('contributions')
                 ->where('business_id', $businessId)
                 ->where('status', 'accepted')
@@ -312,27 +315,72 @@ final class GetMasterBusinessJourney
         };
     }
 
-    private function hasEffectiveCapitalPlan(string $businessId): bool
-    {
-        return DB::table('capital_plan_promotions as promotion')
-            ->join(
-                'record_family_effective_heads as head',
-                function ($join): void {
-                    $join
-                        ->on('head.business_id', '=', 'promotion.business_id')
-                        ->on(
-                            'head.formal_record_family_id',
-                            '=',
-                            'promotion.formal_record_family_id',
-                        )
-                        ->on(
-                            'head.formal_record_version_id',
-                            '=',
-                            'promotion.formal_record_version_id',
-                        );
-                },
+    private function hasEstablishedCapitalActionPlan(
+        string $businessId,
+    ): bool {
+        $currentApprovedSnapshotId = DB::table(
+            'capital_approval_snapshots as snapshot',
+        )
+            ->join('decisions as decision', function ($join): void {
+                $join
+                    ->on(
+                        'decision.business_id',
+                        '=',
+                        'snapshot.business_id',
+                    )
+                    ->on(
+                        'decision.proposal_version_id',
+                        '=',
+                        'snapshot.proposal_version_id',
+                    );
+            })
+            ->where('snapshot.business_id', $businessId)
+            ->where(
+                'decision.decision_type',
+                CapitalApprovalContract::DECISION_TYPE,
             )
-            ->where('promotion.business_id', $businessId)
+            ->where('decision.status', 'decided')
+            ->where('decision.outcome', 'approved')
+            ->whereNotNull('decision.resolved_at')
+            ->orderByDesc('decision.resolved_at')
+            ->orderByDesc('snapshot.prepared_at')
+            ->orderByDesc('snapshot.id')
+            ->value('snapshot.id');
+
+        if (! is_string($currentApprovedSnapshotId)) {
+            return false;
+        }
+
+        $currentDecisionRecordId = DB::table(
+            'capital_decision_records',
+        )
+            ->where('business_id', $businessId)
+            ->where(
+                'capital_approval_snapshot_id',
+                $currentApprovedSnapshotId,
+            )
+            ->value('id');
+
+        if (! is_string($currentDecisionRecordId)) {
+            return false;
+        }
+
+        return DB::table('capital_action_links as link')
+            ->join('actions as action', function ($join): void {
+                $join
+                    ->on('action.id', '=', 'link.action_id')
+                    ->on(
+                        'action.business_id',
+                        '=',
+                        'link.business_id',
+                    );
+            })
+            ->where('link.business_id', $businessId)
+            ->where(
+                'link.capital_decision_record_id',
+                $currentDecisionRecordId,
+            )
+            ->where('action.status', '!=', 'cancelled')
             ->exists();
     }
 }

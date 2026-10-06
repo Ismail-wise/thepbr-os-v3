@@ -410,6 +410,21 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 [FormationController::class, 'createCapitalDecisionRecord'],
             )->name('formation.capital.decision-record.store');
 
+            Route::post(
+                '/formation/capital/action-plan/suggested',
+                [FormationController::class, 'createCapitalSuggestedAction'],
+            )->name('formation.capital.action-plan.suggested.store');
+
+            Route::post(
+                '/formation/capital/action-plan/custom',
+                [FormationController::class, 'createCapitalCustomAction'],
+            )->name('formation.capital.action-plan.custom.store');
+
+            Route::put(
+                '/formation/capital/action-plan/actions/{action}/status',
+                [FormationController::class, 'updateCapitalActionStatus'],
+            )->name('formation.capital.action-plan.actions.status');
+
             Route::put(
                 '/formation/capital/scenarios/{kind}',
                 [FormationController::class, 'saveCapitalScenario'],

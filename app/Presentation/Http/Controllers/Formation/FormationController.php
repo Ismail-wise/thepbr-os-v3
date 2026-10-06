@@ -6,6 +6,7 @@ namespace App\Presentation\Http\Controllers\Formation;
 
 use App\Application\Formation\BusinessModelPlanning;
 use App\Application\Formation\BusinessValuationPlanning;
+use App\Application\Formation\CapitalActionPlanWorkflow;
 use App\Application\Formation\CapitalApprovalWorkflow;
 use App\Application\Formation\CapitalDecisionRecordWorkflow;
 use App\Application\Formation\CapitalPlanning;
@@ -18,6 +19,7 @@ use App\Application\Formation\SaveCapitalComparisonDraft;
 use App\Application\Formation\SaveCapitalPlanningDraft;
 use App\Application\Formation\SaveCapitalRuleDraft;
 use App\Domain\Capital\ValueObjects\CapitalRequirement;
+use App\Domain\Governance\Enums\ActionStatus;
 use App\Domain\Governance\Enums\ProposalReviewOutcome;
 use App\Domain\Governance\Enums\VoteChoice;
 use App\Domain\Records\Enums\FormalRecordState;
@@ -1046,6 +1048,102 @@ final class FormationController
         );
     }
 
+    public function createCapitalSuggestedAction(
+        Request $request,
+        CapitalActionPlanWorkflow $workflow,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $data = $request->validate([
+            'suggestion_key' => ['required', 'string', 'max:80'],
+            'assigned_membership_id' => ['required', 'uuid'],
+        ]);
+
+        $result = $this->capitalActionPlanCall(
+            fn () => $workflow->createSuggested(
+                $user,
+                $business,
+                (string) $data['suggestion_key'],
+                (string) $data['assigned_membership_id'],
+            ),
+        );
+
+        abort_if($result === null, 404);
+
+        return redirect('/formation?step=capital')->with(
+            'status',
+            'Capital Action added.',
+        );
+    }
+
+    public function createCapitalCustomAction(
+        Request $request,
+        CapitalActionPlanWorkflow $workflow,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $data = $request->validate([
+            'assigned_membership_id' => ['required', 'uuid'],
+            'title' => ['required', 'string', 'max:240'],
+            'description' => ['nullable', 'string', 'max:4000'],
+            'due_date' => ['nullable', 'date_format:Y-m-d'],
+        ]);
+
+        $result = $this->capitalActionPlanCall(
+            fn () => $workflow->createCustom(
+                $user,
+                $business,
+                (string) $data['assigned_membership_id'],
+                (string) $data['title'],
+                $data['description'] ?? null,
+                $data['due_date'] ?? null,
+            ),
+        );
+
+        abort_if($result === null, 404);
+
+        return redirect('/formation?step=capital')->with(
+            'status',
+            'Capital Action added.',
+        );
+    }
+
+    public function updateCapitalActionStatus(
+        Request $request,
+        string $action,
+        CapitalActionPlanWorkflow $workflow,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $data = $request->validate([
+            'status' => [
+                'required',
+                Rule::in(array_map(
+                    static fn (ActionStatus $status): string => $status->value,
+                    ActionStatus::cases(),
+                )),
+            ],
+            'blocked_reason' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $result = $this->capitalActionPlanCall(
+            fn () => $workflow->updateStatus(
+                $user,
+                $business,
+                $action,
+                ActionStatus::from((string) $data['status']),
+                $data['blocked_reason'] ?? null,
+            ),
+        );
+
+        abort_if($result === null, 404);
+
+        return redirect('/formation?step=capital')->with(
+            'status',
+            'Capital Action status updated.',
+        );
+    }
+
     public function saveCapitalScenario(
         Request $request,
         string $kind,
@@ -1266,6 +1364,17 @@ final class FormationController
         } catch (RuntimeException|InvalidArgumentException $exception) {
             throw ValidationException::withMessages([
                 'capital_decision_record' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    private function capitalActionPlanCall(callable $callback): mixed
+    {
+        try {
+            return $callback();
+        } catch (RuntimeException|InvalidArgumentException $exception) {
+            throw ValidationException::withMessages([
+                'capital_action_plan' => $exception->getMessage(),
             ]);
         }
     }
