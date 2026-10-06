@@ -1624,6 +1624,7 @@ jobs:
 
           npm run test:e2e -- \
             --project=chromium-desktop \
+            --retries=0 \
             tests/E2E/f5-partnership-structure.spec.ts
 
           unset F5_E2E_PASSWORD

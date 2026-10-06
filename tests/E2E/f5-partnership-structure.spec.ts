@@ -487,12 +487,65 @@ test(
             '[data-contribution-step="approval"]',
         );
 
-        await approvalStage
-            .locator('select')
-            .selectOption({
-                label:
-                    'Prepared Partner · Prepared cash contribution · 4900.00 USD',
-            });
+        const approvalSelect =
+            approvalStage.locator('select');
+        const approvalOptions =
+            approvalSelect.locator(
+                'option:not([disabled])',
+            );
+
+        await expect(
+            approvalOptions,
+        ).toHaveCount(1);
+
+        const approvalCandidate =
+            approvalOptions.first();
+        const approvalCandidateValue =
+            await approvalCandidate.getAttribute(
+                'value',
+            );
+        const approvalCandidateLabel = (
+            await approvalCandidate.textContent()
+            ?? ''
+        )
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        expect(
+            approvalCandidateLabel,
+        ).toContain(PARTNER);
+        expect(
+            approvalCandidateLabel,
+        ).toContain(
+            'Prepared cash contribution',
+        );
+        expect(
+            approvalCandidateLabel,
+        ).toContain('USD');
+
+        const approvalValueMatch =
+            approvalCandidateLabel.match(
+                /·\s*([0-9]+(?:\.[0-9]+)?)\s+USD$/,
+            );
+
+        expect(
+            approvalValueMatch,
+        ).not.toBeNull();
+        expect(
+            Number(
+                approvalValueMatch?.[1],
+            ),
+        ).toBe(4900);
+
+        if (!approvalCandidateValue) {
+            throw new Error(
+                'Reviewed Approval candidate is missing its stable Contribution identity.',
+            );
+        }
+
+        await approvalSelect.selectOption(
+            approvalCandidateValue,
+        );
 
         const prepareApprovalResponse =
             page.waitForResponse(
