@@ -405,6 +405,11 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 [FormationController::class, 'resolveCapitalApproval'],
             )->name('formation.capital.approval.resolve');
 
+            Route::post(
+                '/formation/capital/decision-record',
+                [FormationController::class, 'createCapitalDecisionRecord'],
+            )->name('formation.capital.decision-record.store');
+
             Route::put(
                 '/formation/capital/scenarios/{kind}',
                 [FormationController::class, 'saveCapitalScenario'],

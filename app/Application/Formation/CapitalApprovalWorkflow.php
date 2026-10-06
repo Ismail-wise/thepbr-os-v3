@@ -738,6 +738,7 @@ final class CapitalApprovalWorkflow
         $snapshot = DB::table('capital_approval_snapshots')
             ->where('business_id', $business->getKey())
             ->orderByDesc('prepared_at')
+            ->orderByDesc('id')
             ->lockForUpdate()
             ->first();
 

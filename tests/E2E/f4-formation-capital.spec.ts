@@ -1106,6 +1106,120 @@ test(
             ).last(),
         ).toBeVisible();
 
+        // Capital Cycle 7: record the already-approved immutable Capital truth.
+        // The user supplies only the new Record-stage facts; governed approval
+        // evidence and Capital figures are displayed from the frozen snapshot.
+        const capitalDecisionRecord = page.getByTestId(
+            'capital-decision-record-stage',
+        );
+
+        await expect(
+            capitalDecisionRecord.getByRole('heading', {
+                name: 'Capital Decision Record',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            capitalDecisionRecord.getByText('22660.00 USD', {
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            capitalDecisionRecord.getByText('21660.00 USD', {
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            capitalDecisionRecord.getByText(
+                'F4 Browser Tester',
+                { exact: true },
+            ).first(),
+        ).toBeVisible();
+
+        await capitalDecisionRecord
+            .getByTestId('capital-decision-owner')
+            .selectOption({ label: 'F4 Browser Tester' });
+
+        await capitalDecisionRecord
+            .getByTestId('capital-decision-effective-date')
+            .fill('2027-01-15');
+
+        await capitalDecisionRecord
+            .getByTestId('capital-decision-review-date')
+            .fill('2027-04-15');
+
+        await capitalDecisionRecord
+            .getByTestId('capital-decision-summary')
+            .fill(
+                'Approved Base Capital Plan for the planned opening.',
+            );
+
+        await capitalDecisionRecord
+            .getByTestId('capital-decision-evidence')
+            .fill(
+                'Partner meeting note\nBank funding confirmation',
+            );
+
+        const decisionRecordResponse = page.waitForResponse(
+            (response) =>
+                response.url().endsWith(
+                    '/formation/capital/decision-record',
+                )
+                && response.request().method() === 'POST',
+        );
+
+        await capitalDecisionRecord
+            .getByTestId('capital-decision-record-submit')
+            .click();
+
+        await decisionRecordResponse;
+
+        await expect(
+            capitalDecisionRecord.getByTestId(
+                'capital-decision-record-summary',
+            ),
+        ).toBeVisible();
+
+        await expect(
+            capitalDecisionRecord.getByText(
+                'Approved Base Capital Plan for the planned opening.',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            capitalDecisionRecord.getByText(
+                '• Partner meeting note',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            capitalDecisionRecord.getByText(
+                '• Bank funding confirmation',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            capitalDecisionRecord.getByText(
+                'Approved — Awaiting Effectivity',
+                { exact: true },
+            ).first(),
+        ).toBeVisible();
+
+        await expect(
+            capitalDecisionRecord.getByText(
+                'Recorded does not mean Signed, Effective or Action Complete.',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        // Governed Approval + Decision Record still do not make Capital
+        // current/effective or complete the ACT stage in Master Journey.
         // Governed Approval does not make Capital current/effective in the
         // Master Business Journey.
         await page.goto('/overview');
@@ -1152,10 +1266,41 @@ test(
         const reloadedApproval = page.getByTestId(
             'capital-approval-stage',
         );
+        const reloadedDecisionRecord = page.getByTestId(
+            'capital-decision-record-stage',
+        );
 
         await expect(
             reloadedComparison.getByText(
                 'Preferred planning candidate: Base',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            reloadedDecisionRecord.getByText(
+                'Approved Base Capital Plan for the planned opening.',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            reloadedDecisionRecord.getByText(
+                '• Partner meeting note',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            reloadedDecisionRecord.getByText(
+                '2027-01-15',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            reloadedDecisionRecord.getByText(
+                '2027-04-15',
                 { exact: true },
             ),
         ).toBeVisible();
@@ -1246,6 +1391,26 @@ test(
                 'comparison-preferred-base',
             ),
         ).toBeDisabled();
+
+        await expect(
+            reloadedDecisionRecord.getByTestId(
+                'capital-decision-record-stale-warning',
+            ),
+        ).toBeVisible();
+
+        await expect(
+            reloadedDecisionRecord.getByText(
+                '22660.00 USD',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            reloadedDecisionRecord.getByText(
+                '21660.00 USD',
+                { exact: true },
+            ),
+        ).toBeVisible();
 
         await reloadedCapitalJourney
             .getByRole('button', {
@@ -1391,6 +1556,28 @@ test(
             ),
         ).toBeTruthy();
 
+        await expect(
+            reloadedDecisionRecord.getByRole('heading', {
+                name: 'Capital Decision Record',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            reloadedDecisionRecord.getByText(
+                'ဒီ Approval ပြီးနောက် Capital planning ပြောင်းထားပါတယ်။ ဒီ Record က အတည်ပြုခဲ့တဲ့ version ကို မှတ်တမ်းတင်တာဖြစ်ပြီး ပြောင်းထားတဲ့ plan အတွက် Approval အသစ်လိုပါတယ်။',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        expect(
+            await reloadedDecisionRecord.evaluate(
+                (element) =>
+                    element.scrollWidth
+                    <= element.clientWidth + 1,
+            ),
+        ).toBeTruthy();
+
         expect(
             await reloadedCapitalPanel.evaluate(
                 (element) =>
@@ -1446,6 +1633,28 @@ test(
 
         expect(
             await reloadedApproval.evaluate(
+                (element) =>
+                    element.scrollWidth
+                    <= element.clientWidth + 1,
+            ),
+        ).toBeTruthy();
+
+        await expect(
+            reloadedDecisionRecord.getByRole('heading', {
+                name: 'Capital Decision Record',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            reloadedDecisionRecord.getByText(
+                'Capital planning changed after this approval. ဒီ Record က approved historical version ကိုပြတာဖြစ်ပြီး changed plan အတွက် new approval လိုပါတယ်။',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        expect(
+            await reloadedDecisionRecord.evaluate(
                 (element) =>
                     element.scrollWidth
                     <= element.clientWidth + 1,

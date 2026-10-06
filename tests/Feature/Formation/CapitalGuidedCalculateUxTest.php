@@ -461,6 +461,9 @@ final class CapitalGuidedCalculateUxTest extends TestCase
         $approval = $this->source(
             'resources/js/components/capital/CapitalApprovalStage.vue',
         );
+        $decisionRecord = $this->source(
+            'resources/js/components/capital/CapitalDecisionRecordStage.vue',
+        );
 
         self::assertStringContainsString(
             '<CapitalGuidedJourney',
@@ -587,6 +590,52 @@ final class CapitalGuidedCalculateUxTest extends TestCase
         }
 
         foreach ([
+            'CapitalDecisionRecordStage',
+            ':read-model="decisionRecordReadModel"',
+        ] as $decisionRecordIntegration) {
+            self::assertStringContainsString(
+                $decisionRecordIntegration,
+                $guided,
+            );
+        }
+
+        foreach ([
+            'Capital Decision Record',
+            'Approved Capital Plan',
+            'Decision Owner',
+            'Effective Date',
+            'Review Date',
+            'Decision Summary',
+            'Evidence / References',
+            'Approved By',
+            'Approval Date',
+            'Last Updated',
+            '/formation/capital/decision-record',
+            'capital-decision-record-stage',
+            'Recorded does not mean Signed, Effective or Action Complete.',
+        ] as $decisionRecordContract) {
+            self::assertStringContainsString(
+                $decisionRecordContract,
+                $decisionRecord,
+            );
+        }
+
+        foreach ([
+            'SignatureRequest',
+            'record_family_effective_heads',
+            'MakeGovernedRecordEffective',
+            'PrepareGovernedRecordForEffect',
+            'Capital Call execution',
+            'Contribution',
+            'Ownership',
+        ] as $forbiddenDecisionRecordUx) {
+            self::assertStringNotContainsString(
+                $forbiddenDecisionRecordUx,
+                $decisionRecord,
+            );
+        }
+
+        foreach ([
             '/formation/capital/rule-draft',
             'Capital Allocation Summary',
             'Reduce the startup scope',
@@ -634,6 +683,9 @@ final class CapitalGuidedCalculateUxTest extends TestCase
         );
         $approval = $this->source(
             'resources/js/components/capital/CapitalApprovalStage.vue',
+        );
+        $decisionRecord = $this->source(
+            'resources/js/components/capital/CapitalDecisionRecordStage.vue',
         );
 
         foreach ([
@@ -713,6 +765,33 @@ final class CapitalGuidedCalculateUxTest extends TestCase
         self::assertStringNotContainsString(
             'reasonCode',
             $approval,
+        );
+
+        foreach ([
+            'uiLanguageMode',
+            'Capital Decision Record',
+            'Approved Capital Plan',
+            'Decision Owner',
+            'ဒီ Approval ပြီးနောက် Capital planning ပြောင်းထားပါတယ်',
+            'Recorded != Signed != Effective != Action Complete.',
+            'pbr-safe-copy',
+            'min-w-0',
+            'flex-wrap',
+            'sm:grid-cols-2',
+        ] as $decisionRecordContract) {
+            self::assertStringContainsString(
+                $decisionRecordContract,
+                $decisionRecord,
+            );
+        }
+
+        self::assertStringNotContainsString(
+            'w-[320px]',
+            $decisionRecord,
+        );
+        self::assertStringNotContainsString(
+            'reasonCode',
+            $decisionRecord,
         );
 
         self::assertStringNotContainsString(

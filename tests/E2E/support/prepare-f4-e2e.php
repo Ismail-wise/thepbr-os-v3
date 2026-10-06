@@ -72,6 +72,7 @@ foreach (
         'capital_rule_drafts',
         'capital_comparison_drafts',
         'capital_approval_snapshots',
+        'capital_decision_records',
         'existing_business_profiles',
         'valuations',
         'business_valuation_runs',

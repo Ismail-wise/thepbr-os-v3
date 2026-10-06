@@ -7,6 +7,7 @@ namespace App\Presentation\Http\Controllers\Formation;
 use App\Application\Formation\BusinessModelPlanning;
 use App\Application\Formation\BusinessValuationPlanning;
 use App\Application\Formation\CapitalApprovalWorkflow;
+use App\Application\Formation\CapitalDecisionRecordWorkflow;
 use App\Application\Formation\CapitalPlanning;
 use App\Application\Formation\ExistingBusinessBaseline;
 use App\Application\Formation\GetFormationWorkspace;
@@ -1002,6 +1003,49 @@ final class FormationController
         );
     }
 
+    public function createCapitalDecisionRecord(
+        Request $request,
+        CapitalDecisionRecordWorkflow $workflow,
+    ): RedirectResponse {
+        [$user, $business] = $this->context($request);
+
+        $data = $request->validate([
+            'decision_owner_membership_id' => ['required', 'uuid'],
+            'effective_date' => ['required', 'date_format:Y-m-d'],
+            'review_date' => [
+                'required',
+                'date_format:Y-m-d',
+                'after_or_equal:effective_date',
+            ],
+            'decision_summary' => ['required', 'string', 'max:2000'],
+            'evidence_references' => ['sometimes', 'array', 'max:20'],
+            'evidence_references.*' => ['string', 'max:500'],
+        ]);
+
+        $result = $this->capitalDecisionRecordCall(
+            fn () => $workflow->create(
+                $user,
+                $business,
+                [
+                    'decisionOwnerMembershipId' => $data['decision_owner_membership_id'],
+                    'effectiveDate' => $data['effective_date'],
+                    'reviewDate' => $data['review_date'],
+                    'decisionSummary' => $data['decision_summary'],
+                    'evidenceReferences' => $data['evidence_references'] ?? [],
+                ],
+            ),
+        );
+
+        abort_if($result === null, 404);
+
+        return redirect('/formation?step=capital')->with(
+            'status',
+            $result['created']
+                ? 'Capital Decision Record saved.'
+                : 'Capital Decision Record already exists for this approved version.',
+        );
+    }
+
     public function saveCapitalScenario(
         Request $request,
         string $kind,
@@ -1211,6 +1255,17 @@ final class FormationController
         } catch (RuntimeException|InvalidArgumentException $exception) {
             throw ValidationException::withMessages([
                 'capital_approval' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    private function capitalDecisionRecordCall(callable $callback): mixed
+    {
+        try {
+            return $callback();
+        } catch (RuntimeException|InvalidArgumentException $exception) {
+            throw ValidationException::withMessages([
+                'capital_decision_record' => $exception->getMessage(),
             ]);
         }
     }

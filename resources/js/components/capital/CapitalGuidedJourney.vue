@@ -6,6 +6,7 @@ import ProgressiveReveal from '../hybrid/ProgressiveReveal.vue';
 import PbrErrorSummary from '../ui/PbrErrorSummary.vue';
 import PbrFormSection from '../ui/PbrFormSection.vue';
 import CapitalApprovalStage from './CapitalApprovalStage.vue';
+import CapitalDecisionRecordStage from './CapitalDecisionRecordStage.vue';
 import CapitalPlanComparison from './CapitalPlanComparison.vue';
 import CapitalRuleAllocationStep from './CapitalRuleAllocationStep.vue';
 import { useI18n } from '../../i18n/useI18n';
@@ -38,6 +39,7 @@ const props = defineProps<{
     comparisonDraft: GenericRow | null;
     comparisonReadModel: GenericRow | null;
     approvalReadModel: GenericRow | null;
+    decisionRecordReadModel: GenericRow | null;
     businessModelFoundation: GenericRow | null;
     currency: string;
     canManage: boolean;
@@ -1668,6 +1670,10 @@ const contingencyBase = computed(
                 :can-manage-capital="canManage"
                 :can-manage-records="canManageRecords"
                 :can-manage-governance="canManageGovernance"
+            />
+
+            <CapitalDecisionRecordStage
+                :read-model="decisionRecordReadModel"
             />
         </template>
 
