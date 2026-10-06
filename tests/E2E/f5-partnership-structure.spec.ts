@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 const E2E_EMAIL = 'f5-browser@example.com';
 const BUSINESS = 'F5 Partnership Business';
@@ -14,7 +14,6 @@ if (!password) {
 
 const signIn = async (page: Page) => {
     await page.goto('/login');
-
     await page.locator('input[name="email"]').fill(E2E_EMAIL);
     await page.locator('input[name="password"]').fill(password);
 
@@ -34,13 +33,6 @@ const signIn = async (page: Page) => {
         .click();
 
     await homeNavigation;
-
-    await expect(
-        page.getByRole('heading', {
-            name: 'Account Home',
-            exact: true,
-        }),
-    ).toBeVisible();
 };
 
 const switchBusiness = async (
@@ -68,374 +60,330 @@ const switchBusiness = async (
     ).toBeVisible();
 };
 
+const openPartnership = async (page: Page) => {
+    await page
+        .getByRole('navigation', {
+            name: 'Workspace navigation',
+        })
+        .getByRole('link', {
+            name: 'Partners & Ownership',
+            exact: true,
+        })
+        .click();
+
+    await expect(page).toHaveURL(/\/partnership$/);
+
+    await page
+        .getByRole('button', {
+            name: 'Contribution Register',
+            exact: true,
+        })
+        .click();
+
+    await expect(
+        page.locator(
+            '[data-pbr-contribution-guided-journey]',
+        ),
+    ).toBeVisible();
+};
+
+const selectContributionStep = async (
+    page: Page,
+    name: string,
+) => {
+    const journey = page.getByRole('navigation', {
+        name: 'Partner Contribution Journey',
+        exact: true,
+    });
+
+    await journey
+        .getByRole('button', {
+            name,
+            exact: true,
+        })
+        .click();
+};
+
+const approveCurrentProposal = async (
+    page: Page,
+    decisionType: 'contribution_approval' | 'contribution_acceptance',
+) => {
+    await expect(page).toHaveURL(/\/governance$/);
+
+    const startReview = page.getByRole('button', {
+        name: 'Start my review',
+        exact: true,
+    });
+
+    await expect(startReview).toHaveCount(1);
+
+    const startReviewResponse = page.waitForResponse(
+        (response) =>
+            /\/governance\/proposal-versions\/[^/]+\/reviews$/.test(
+                new URL(response.url()).pathname,
+            )
+            && response.request().method() === 'POST',
+    );
+
+    await startReview.click();
+    await startReviewResponse;
+
+    const approveReview = page.getByRole('button', {
+        name: 'Approve review',
+        exact: true,
+    });
+
+    await expect(approveReview).toHaveCount(1);
+
+    const approveReviewResponse = page.waitForResponse(
+        (response) =>
+            /\/governance\/proposal-reviews\/[^/]+\/complete$/.test(
+                new URL(response.url()).pathname,
+            )
+            && response.request().method() === 'POST',
+    );
+
+    await approveReview.click();
+    await approveReviewResponse;
+
+    const openDecision = page.getByRole('button', {
+        name: 'Open decision',
+        exact: true,
+    });
+
+    await expect(openDecision).toHaveCount(1);
+
+    const openRow = openDecision.locator(
+        'xpath=ancestor::tr',
+    );
+    const decisionTypeSelect = openRow
+        .locator('select')
+        .first();
+
+    await decisionTypeSelect.selectOption(decisionType);
+
+    const openDecisionResponse = page.waitForResponse(
+        (response) =>
+            /\/governance\/proposal-versions\/[^/]+\/decisions$/.test(
+                new URL(response.url()).pathname,
+            )
+            && response.request().method() === 'POST',
+    );
+
+    await openDecision.click();
+    await openDecisionResponse;
+
+    const approve = page.getByRole('button', {
+        name: 'Approve',
+        exact: true,
+    });
+
+    await expect(approve).toHaveCount(1);
+
+    const approvalResponse = page.waitForResponse(
+        (response) =>
+            /\/governance\/decisions\/[^/]+\/approvals$/.test(
+                new URL(response.url()).pathname,
+            )
+            && response.request().method() === 'POST',
+    );
+
+    await approve.click();
+    await approvalResponse;
+
+    const resolve = page.getByRole('button', {
+        name: 'Resolve decision',
+        exact: true,
+    });
+
+    await expect(resolve).toHaveCount(1);
+
+    const resolveResponse = page.waitForResponse(
+        (response) =>
+            /\/governance\/decisions\/[^/]+\/resolve$/.test(
+                new URL(response.url()).pathname,
+            )
+            && response.request().method() === 'POST',
+    );
+
+    await resolve.click();
+    await resolveResponse;
+
+    await expect(
+        page.getByText(decisionType, {
+            exact: true,
+        }).last(),
+    ).toBeVisible();
+
+};
+
+const completeContributionContentReview = async (
+    stage: Locator,
+) => {
+    const start = stage.getByRole('button', {
+        name: 'Start content review',
+        exact: true,
+    });
+
+    await expect(start).toHaveCount(1);
+    await start.click();
+
+    const approve = stage.getByRole('button', {
+        name: 'Approve content',
+        exact: true,
+    });
+
+    await expect(approve).toHaveCount(1);
+    await approve.click();
+};
+
 test(
-    'F5 partnership workspace preserves Partner, Contribution and scenario boundaries',
+    'F5 Partner Contributions completes the governed Chapter 2 journey without creating Ownership',
     async ({ page }, testInfo) => {
         test.skip(
             testInfo.project.name !== 'chromium-desktop',
-            'F5 deterministic journey runs only in desktop Chromium.',
+            'F5 deterministic Chapter 2 journey runs only in desktop Chromium.',
         );
+
+        test.setTimeout(180_000);
 
         await signIn(page);
         await switchBusiness(page, BUSINESS);
-
-        await page
-            .getByRole('navigation', {
-                name: 'Workspace navigation',
-            })
-            .getByRole('link', {
-                name: 'Partners & Ownership',
-                exact: true,
-            })
-            .click();
-
-        await expect(page).toHaveURL(/\/partnership$/);
+        await openPartnership(page);
 
         await expect(
             page.getByRole('heading', {
-                name: 'Partners & Ownership',
+                name: 'Partner Contributions',
                 exact: true,
             }),
         ).toBeVisible();
 
         await expect(
-            page.getByText('Partner Foundation', { exact: true }),
-        ).toBeVisible();
-
-        await expect(
             page.getByText(
-                'Reference only. It never creates ownership, authority or workspace access.',
+                'Contribution is not Equity, Shares or Ownership. Only governed Accepted Contribution Value may feed later Ownership planning.',
                 { exact: true },
             ),
         ).toBeVisible();
 
-        const partnerRow = page
-            .getByRole('row')
-            .filter({
-                has: page.getByText(PARTNER, {
-                    exact: true,
-                }),
+        const setup = page.locator(
+            '[data-contribution-step="setup"]',
+        );
+
+        await expect(setup).toBeVisible();
+
+        await setup
+            .getByLabel('Valuation date', {
+                exact: true,
             })
-            .filter({
-                hasText: 'visionary',
+            .fill('2026-10-06');
+
+        await setup
+            .getByLabel('Currency', {
+                exact: true,
+            })
+            .fill('USD');
+
+        await setup
+            .getByLabel('Period start', {
+                exact: true,
+            })
+            .fill('2026-01-01');
+
+        await setup
+            .getByLabel('Period end', {
+                exact: true,
+            })
+            .fill('2026-12-31');
+
+        await setup
+            .locator('select')
+            .first()
+            .selectOption({
+                index: 1,
             });
 
-        await expect(partnerRow).toBeVisible();
+        await setup
+            .locator('input[type="checkbox"]')
+            .first()
+            .check();
 
-        await expect(
-            partnerRow.getByText(PARTNER, {
-                exact: true,
-            }),
-        ).toBeVisible();
-
-        await expect(
-            partnerRow.getByText('Not started', {
-                exact: true,
-            }),
-        ).toBeVisible();
-
-        await expect(
-            partnerRow.getByText('visionary', {
-                exact: true,
-            }),
-        ).toBeVisible();
-
-        await expect(
-            page.getByText(
-                'PartnerDynamics is a reference for partnership understanding. It never automatically determines equity, governance authority or system permissions.',
-                { exact: true },
-            ),
-        ).toBeVisible();
-
-        const workflow = page.getByRole('region', {
-            name: 'Workflow Actions',
-        });
-
-        const ddSummary = workflow
-            .locator('summary')
-            .filter({
-                hasText: /^Due Diligence$/,
-            });
-
-        const ddWorkflow = ddSummary.locator('..');
-
-        if ((await ddWorkflow.getAttribute('open')) === null) {
-            await ddSummary.click();
-        }
-
-        const ddForm = ddWorkflow.locator('form');
-        const ddSelects = ddForm.locator('select');
-        const ddTextareas = ddForm.locator('textarea');
-        const ddPartner = ddSelects.nth(0);
-        const ddStatus = ddSelects.nth(1);
-        const ddRisk = ddSelects.nth(2);
-        const ddRevision = ddForm.locator('input[type="number"]');
-        const ddIdentity = ddTextareas.nth(0);
-        const ddBackground = ddTextareas.nth(1);
-        const ddSubmit = ddForm.getByRole('button', {
-            name: 'Due Diligence',
-            exact: true,
-        });
-
-        await expect(ddWorkflow).toHaveAttribute('open', '');
-        await expect(ddSelects).toHaveCount(3);
-        await expect(ddTextareas).toHaveCount(2);
-
-        await ddPartner.selectOption({
-            label: PARTNER,
-        });
-
-        await expect(ddStatus).toHaveValue('draft');
-        await expect(ddRevision).toHaveValue('0');
-        await expect(ddRevision).toHaveAttribute('readonly', '');
-
-        await ddIdentity.fill('Browser identity evidence');
-        await ddBackground.fill('Browser background evidence');
-
-        const draftRequestPromise = page.waitForRequest(
-            (request) =>
-                request.method() === 'PUT'
-                && /\/partnership\/partners\/[^/]+\/due-diligence$/.test(
-                    new URL(request.url()).pathname,
-                ),
+        const setupResponse = page.waitForResponse(
+            (response) =>
+                response.url().endsWith(
+                    '/partnership/contributions/setup',
+                )
+                && response.request().method() === 'PUT',
         );
 
-        await ddSubmit.click();
-
-        const draftRequest = await draftRequestPromise;
-        const draftPayload = draftRequest.postDataJSON() as {
-            case_id?: string | null;
-            expected_revision: number;
-            status: string;
-        };
-
-        expect(draftPayload.case_id ?? '').toBe('');
-        expect(draftPayload.expected_revision).toBe(0);
-        expect(draftPayload.status).toBe('draft');
-
-        await expect(
-            partnerRow.getByText('draft', {
-                exact: true,
-            }),
-        ).toBeVisible();
-
-        await page.reload();
-
-        if ((await ddWorkflow.getAttribute('open')) === null) {
-            await ddSummary.click();
-        }
-
-        await ddPartner.selectOption({
-            label: PARTNER,
-        });
-
-        await expect(ddRevision).toHaveValue('1');
-        await expect(ddStatus).toHaveValue('draft');
-        await expect(ddIdentity).toHaveValue('Browser identity evidence');
-        await expect(ddBackground).toHaveValue(
-            'Browser background evidence',
-        );
-
-        await ddStatus.selectOption('in_review');
-        await ddRisk.selectOption('moderate');
-
-        const inReviewRequestPromise = page.waitForRequest(
-            (request) =>
-                request.method() === 'PUT'
-                && /\/partnership\/partners\/[^/]+\/due-diligence$/.test(
-                    new URL(request.url()).pathname,
-                ),
-        );
-
-        await ddSubmit.click();
-
-        const inReviewRequest = await inReviewRequestPromise;
-        const inReviewPayload = inReviewRequest.postDataJSON() as {
-            case_id: string;
-            expected_revision: number;
-            status: string;
-            risk_rating: string;
-        };
-
-        expect(inReviewPayload.case_id).toMatch(
-            /^[0-9a-f-]{36}$/i,
-        );
-        expect(inReviewPayload.expected_revision).toBe(1);
-        expect(inReviewPayload.status).toBe('in_review');
-        expect(inReviewPayload.risk_rating).toBe('moderate');
-
-        const dueDiligenceCaseId = inReviewPayload.case_id;
-
-        await expect(
-            partnerRow.getByText('in_review', {
-                exact: true,
-            }),
-        ).toBeVisible();
-
-        await page.reload();
-
-        if ((await ddWorkflow.getAttribute('open')) === null) {
-            await ddSummary.click();
-        }
-
-        await ddPartner.selectOption({
-            label: PARTNER,
-        });
-
-        await expect(ddRevision).toHaveValue('2');
-        await expect(ddStatus).toHaveValue('in_review');
-        await expect(ddRisk).toHaveValue('moderate');
-        await expect(ddIdentity).toHaveValue('Browser identity evidence');
-        await expect(ddBackground).toHaveValue(
-            'Browser background evidence',
-        );
-
-        await ddStatus.selectOption('completed');
-
-        const completedRequestPromise = page.waitForRequest(
-            (request) =>
-                request.method() === 'PUT'
-                && /\/partnership\/partners\/[^/]+\/due-diligence$/.test(
-                    new URL(request.url()).pathname,
-                ),
-        );
-
-        await ddSubmit.click();
-
-        const completedRequest = await completedRequestPromise;
-        const completedPayload = completedRequest.postDataJSON() as {
-            case_id: string;
-            expected_revision: number;
-            status: string;
-            risk_rating: string;
-        };
-
-        expect(completedPayload.case_id).toBe(dueDiligenceCaseId);
-        expect(completedPayload.expected_revision).toBe(2);
-        expect(completedPayload.status).toBe('completed');
-        expect(completedPayload.risk_rating).toBe('moderate');
-
-        await expect(
-            partnerRow.getByText('completed', {
-                exact: true,
-            }),
-        ).toBeVisible();
-
-        await expect(
-            partnerRow.getByText('Risk: moderate', {
-                exact: true,
-            }),
-        ).toBeVisible();
-
-        await page
+        await setup
             .getByRole('button', {
-                name: 'Contribution Register',
+                name: 'Save Contribution Setup',
                 exact: true,
             })
             .click();
 
-        await expect(
-            page.getByText(
-                'Prepared cash contribution',
-                { exact: true },
-            ),
-        ).toBeVisible();
+        await setupResponse;
+
+        await selectContributionStep(
+            page,
+            'Partners',
+        );
+
+        const partners = page.locator(
+            '[data-contribution-step="partners"]',
+        );
 
         await expect(
-            page.getByRole('columnheader', {
-                name: 'Reviewed',
-                exact: true,
-            }),
-        ).toBeVisible();
-        await expect(
-            page.getByRole('columnheader', {
-                name: 'Approved',
-                exact: true,
-            }),
-        ).toBeVisible();
-        await expect(
-            page.getByRole('heading', {
-                name: 'Accepted Contribution Matrix',
+            partners.getByText(PARTNER, {
                 exact: true,
             }),
         ).toBeVisible();
 
-        const reviewSummary = workflow
-            .locator('summary')
-            .filter({
-                hasText: /^Review Contribution$/,
+        await selectContributionStep(
+            page,
+            'Valuation',
+        );
+
+        const valuation = page.locator(
+            '[data-contribution-step="valuation"]',
+        );
+
+        await valuation
+            .locator('select')
+            .first()
+            .selectOption({
+                index: 1,
             });
-        const reviewWorkflow = reviewSummary.locator('..');
 
-        if ((await reviewWorkflow.getAttribute('open')) === null) {
-            await reviewSummary.click();
-        }
+        await valuation
+            .getByLabel('Reviewed Value', {
+                exact: true,
+            })
+            .fill('4900.00');
 
-        const reviewContribution = reviewWorkflow.getByLabel(
-            'Contribution',
-        );
-        const reviewRevision = reviewWorkflow.getByLabel(
-            'Revision',
-            { exact: true },
-        );
-        const reviewedValue = reviewWorkflow.getByLabel(
-            'Reviewed value',
-            { exact: true },
-        );
-        const valuationMethod = reviewWorkflow.getByLabel(
-            'Valuation method',
-            { exact: true },
-        );
-        const reviewButton = reviewWorkflow.getByRole('button', {
-            name: 'Review Contribution',
-            exact: true,
-        });
+        await valuation
+            .locator('select')
+            .nth(1)
+            .selectOption(
+                'bank_or_receipt_evidence',
+            );
 
-        await reviewContribution.selectOption({
-            label: 'Prepared cash contribution · proposed',
-        });
-
-        await expect(reviewRevision).toHaveValue('1');
-        await expect(reviewRevision).toHaveAttribute('readonly', '');
-        await expect(
-            reviewWorkflow.getByText(/Current status:\s*proposed/i),
-        ).toBeVisible();
-
-        await reviewedValue.fill('4900.00');
-        await valuationMethod.fill('Browser review basis');
-
-        const reviewRequestPromise = page.waitForRequest(
-            (request) =>
-                request.method() === 'PUT'
-                && /\/partnership\/contributions\/[^/]+\/review$/.test(
-                    new URL(request.url()).pathname,
-                ),
+        const reviewResponse = page.waitForResponse(
+            (response) =>
+                /\/partnership\/contributions\/[^/]+\/review$/.test(
+                    new URL(response.url()).pathname,
+                )
+                && response.request().method() === 'PUT',
         );
 
-        await reviewButton.click();
+        await valuation
+            .getByRole('button', {
+                name: 'Record Review',
+                exact: true,
+            })
+            .click();
 
-        const reviewRequest = await reviewRequestPromise;
-        const reviewPayload = reviewRequest.postDataJSON() as {
-            expected_revision: number;
-            reviewed_value: string;
-            valuation_method: string;
-        };
-
-        expect(reviewPayload.expected_revision).toBe(1);
-        expect(reviewPayload.reviewed_value).toBe('4900.00');
-        expect(reviewPayload.valuation_method).toBe(
-            'Browser review basis',
-        );
-
-        await expect(reviewRevision).toHaveValue('2');
-        await expect(reviewedValue).toHaveValue('4900.00');
-        await expect(valuationMethod).toHaveValue(
-            'Browser review basis',
-        );
-        await expect(
-            reviewWorkflow.getByText(/Current status:\s*reviewed/i),
-        ).toBeVisible();
-        await expect(reviewButton).toBeDisabled();
+        await reviewResponse;
 
         await page
             .getByRole('navigation', {
@@ -447,14 +395,17 @@ test(
             })
             .click();
 
-        await expect(page).toHaveURL(/\/records\/documents$/);
+        await expect(page).toHaveURL(
+            /\/records\/documents$/,
+        );
 
         const evidenceDocumentRow = page
             .getByRole('row')
             .filter({
-                has: page.getByText('F5 Contribution Evidence', {
-                    exact: true,
-                }),
+                has: page.getByText(
+                    'F5 Contribution Evidence',
+                    { exact: true },
+                ),
             });
 
         await evidenceDocumentRow
@@ -464,36 +415,42 @@ test(
             })
             .click();
 
-        await expect(page).toHaveURL(/\/records\/documents\//);
+        const targetType = page.getByRole(
+            'combobox',
+            {
+                name: 'Target type',
+                exact: true,
+            },
+        );
 
-        const targetType = page.getByRole('combobox', {
-            name: 'Target type',
-            exact: true,
-        });
+        await targetType.selectOption(
+            'contribution',
+        );
 
-        await targetType.selectOption('contribution');
-
-        const targetRecord = page.getByRole('combobox', {
-            name: 'Target record',
-            exact: true,
-        });
-
-        await expect(targetRecord).toHaveJSProperty(
-            'tagName',
-            'SELECT',
+        const targetRecord = page.getByRole(
+            'combobox',
+            {
+                name: 'Target record',
+                exact: true,
+            },
         );
 
         await targetRecord.selectOption({
-            label: 'Prepared cash contribution · Prepared Partner · cash · reviewed',
+            label:
+                'Prepared cash contribution · Prepared Partner · cash · reviewed',
         });
 
-        const evidenceLinkRequestPromise = page.waitForRequest(
-            (request) =>
-                request.method() === 'POST'
-                && /\/records\/evidence\/[^/]+\/links$/.test(
-                    new URL(request.url()).pathname,
-                ),
-        );
+        const linkEvidenceResponse =
+            page.waitForResponse(
+                (response) =>
+                    /\/records\/evidence\/[^/]+\/links$/.test(
+                        new URL(
+                            response.url(),
+                        ).pathname,
+                    )
+                    && response.request().method()
+                        === 'POST',
+            );
 
         await page
             .getByRole('button', {
@@ -502,169 +459,487 @@ test(
             })
             .click();
 
-        const evidenceLinkRequest = await evidenceLinkRequestPromise;
-        const evidenceLinkPayload = evidenceLinkRequest.postDataJSON() as {
-            target_type: string;
-            target_id: string;
-        };
+        await linkEvidenceResponse;
 
-        expect(evidenceLinkPayload.target_type).toBe('contribution');
-        expect(evidenceLinkPayload.target_id).toMatch(
-            /^[0-9a-f-]{36}$/i,
+        await openPartnership(page);
+
+        await selectContributionStep(
+            page,
+            'Evidence & Conditions',
         );
 
-        await page
-            .getByRole('navigation', {
-                name: 'Workspace navigation',
-            })
-            .getByRole('link', {
-                name: 'Partners & Ownership',
-                exact: true,
-            })
-            .click();
+        const evidenceStage = page.locator(
+            '[data-contribution-step="evidence"]',
+        );
 
-        await expect(page).toHaveURL(/\/partnership$/);
+        await expect(
+            evidenceStage.getByText(
+                /Evidence:\s*1 · Verified:\s*0/,
+            ),
+        ).toBeVisible();
 
-        await page
+        await selectContributionStep(
+            page,
+            'Approval',
+        );
+
+        let approvalStage = page.locator(
+            '[data-contribution-step="approval"]',
+        );
+
+        await approvalStage
+            .locator('select')
+            .selectOption({
+                label:
+                    'Prepared Partner · Prepared cash contribution · 4900.00 USD',
+            });
+
+        const prepareApprovalResponse =
+            page.waitForResponse(
+                (response) =>
+                    /\/partnership\/contributions\/[^/]+\/governance$/.test(
+                        new URL(
+                            response.url(),
+                        ).pathname,
+                    )
+                    && response.request().method()
+                        === 'POST',
+            );
+
+        await approvalStage
             .getByRole('button', {
-                name: 'Ownership',
+                name: 'Prepare Approval',
                 exact: true,
             })
             .click();
+
+        await prepareApprovalResponse;
+
+        approvalStage = page.locator(
+            '[data-contribution-step="approval"]',
+        );
+
+        await completeContributionContentReview(
+            approvalStage,
+        );
+
+        await approvalStage
+            .getByRole('link', {
+                name: 'Open Governance',
+                exact: true,
+            })
+            .click();
+
+        await approveCurrentProposal(
+            page,
+            'contribution_approval',
+        );
+
+        await openPartnership(page);
+
+        await selectContributionStep(
+            page,
+            'Approval',
+        );
+
+        approvalStage = page.locator(
+            '[data-contribution-step="approval"]',
+        );
+
+        const syncApprovalResponse =
+            page.waitForResponse(
+                (response) =>
+                    /\/partnership\/contribution-submissions\/[^/]+\/sync-decision$/.test(
+                        new URL(
+                            response.url(),
+                        ).pathname,
+                    )
+                    && response.request().method()
+                        === 'POST',
+            );
+
+        await approvalStage
+            .getByRole('button', {
+                name: 'Sync governed decision',
+                exact: true,
+            })
+            .click();
+
+        await syncApprovalResponse;
+
+        await selectContributionStep(
+            page,
+            'Delivery',
+        );
+
+        const delivery = page.locator(
+            '[data-contribution-step="delivery"]',
+        );
+
+        await delivery
+            .locator('select')
+            .first()
+            .selectOption({
+                index: 1,
+            });
+
+        await expect(
+            delivery.getByLabel(
+                'Delivered Value',
+                { exact: true },
+            ),
+        ).toHaveValue('4900.00');
+
+        const deliveryResponse =
+            page.waitForResponse(
+                (response) =>
+                    /\/partnership\/contributions\/[^/]+\/delivery$/.test(
+                        new URL(
+                            response.url(),
+                        ).pathname,
+                    )
+                    && response.request().method()
+                        === 'POST',
+            );
+
+        await delivery
+            .getByRole('button', {
+                name: 'Record Delivery',
+                exact: true,
+            })
+            .click();
+
+        await deliveryResponse;
+
+        const contributionJourney = page.getByRole(
+            'navigation',
+            {
+                name: 'Partner Contribution Journey',
+                exact: true,
+            },
+        );
+
+        await expect(
+            contributionJourney.getByRole(
+                'button',
+                {
+                    name: 'Acceptance',
+                    exact: true,
+                },
+            ),
+        ).toHaveAttribute(
+            'aria-current',
+            'step',
+        );
+
+        await selectContributionStep(
+            page,
+            'Acceptance',
+        );
+
+        let acceptanceStage = page.locator(
+            '[data-contribution-step="acceptance"]',
+        );
+
+        await expect(
+            acceptanceStage,
+        ).toBeVisible();
+
+        await acceptanceStage
+            .locator('select')
+            .first()
+            .selectOption({
+                index: 1,
+            });
+
+        await acceptanceStage
+            .locator('input[inputmode="decimal"]')
+            .fill('4800.00');
+
+        const prepareAcceptanceResponse =
+            page.waitForResponse(
+                (response) =>
+                    /\/partnership\/contributions\/[^/]+\/governance$/.test(
+                        new URL(
+                            response.url(),
+                        ).pathname,
+                    )
+                    && response.request().method()
+                        === 'POST',
+            );
+
+        await acceptanceStage
+            .getByRole('button', {
+                name: 'Prepare Acceptance',
+                exact: true,
+            })
+            .click();
+
+        await prepareAcceptanceResponse;
+
+        acceptanceStage = page.locator(
+            '[data-contribution-step="acceptance"]',
+        );
+
+        await completeContributionContentReview(
+            acceptanceStage,
+        );
+
+        await acceptanceStage
+            .getByRole('link', {
+                name: 'Open Governance',
+                exact: true,
+            })
+            .click();
+
+        await approveCurrentProposal(
+            page,
+            'contribution_acceptance',
+        );
+
+        await openPartnership(page);
+
+        await selectContributionStep(
+            page,
+            'Acceptance',
+        );
+
+        acceptanceStage = page.locator(
+            '[data-contribution-step="acceptance"]',
+        );
+
+        const syncAcceptanceResponse =
+            page.waitForResponse(
+                (response) =>
+                    /\/partnership\/contribution-submissions\/[^/]+\/sync-decision$/.test(
+                        new URL(
+                            response.url(),
+                        ).pathname,
+                    )
+                    && response.request().method()
+                        === 'POST',
+            );
+
+        await acceptanceStage
+            .getByRole('button', {
+                name: 'Sync governed decision',
+                exact: true,
+            })
+            .click();
+
+        await syncAcceptanceResponse;
 
         await expect(
             page.getByText(
-                'Ownership scenarios are planning only. They never change official ownership directly.',
+                'Next: Decision Record',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await selectContributionStep(
+            page,
+            'Matrix & Register',
+        );
+
+        const register = page.locator(
+            '[data-contribution-step="register"]',
+        );
+
+        await expect(
+            register,
+        ).toBeVisible();
+
+        await expect(
+            register.getByText(
+                '4800.00 USD',
                 { exact: true },
             ).first(),
         ).toBeVisible();
 
         await expect(
-            page.getByText('Governed Ownership', { exact: true }),
-        ).toBeVisible();
-
-        await expect(
-            page.getByText(
-                'No Effective Ownership Register yet.',
+            register.getByText(
+                'Accepted',
                 { exact: true },
-            ),
+            ).last(),
         ).toBeVisible();
 
-        const contributionSummary = workflow
-            .locator('summary')
-            .filter({
-                hasText: /^Add Contribution$/,
-            });
+        await selectContributionStep(
+            page,
+            'Decision Record',
+        );
 
-        const contributionWorkflow = contributionSummary.locator('..');
+        const decision = page.locator(
+            '[data-contribution-step="decision-record"]',
+        );
 
-        await expect(contributionWorkflow).toHaveAttribute('open', '');
-
-        const contributionForm = contributionWorkflow.locator('form');
-        const contributionSelects = contributionForm.locator('select');
-
-        await expect(contributionSelects).toHaveCount(2);
-
-        await contributionSelects.first().selectOption({
-            label: PARTNER,
-        });
-
-        await contributionSelects.nth(1).selectOption('cash');
-
-        await contributionWorkflow
-            .getByLabel('Proposed value', {
-                exact: true,
-            })
-            .fill('2500.00');
-
-        await contributionWorkflow
-            .getByLabel('Description', {
-                exact: true,
-            })
-            .fill('Browser cash contribution');
-
-        await contributionWorkflow
-            .getByLabel('Amount committed', {
-                exact: true,
-            })
-            .fill('2500.00');
-
-        await contributionWorkflow
-            .getByRole('button', {
-                name: 'Add Contribution',
-                exact: true,
-            })
-            .click();
-
-        await page
-            .getByRole('button', {
-                name: 'Contribution Register',
-                exact: true,
-            })
-            .click();
-
-        await expect(
-            page.getByText(
-                'Browser cash contribution',
-                { exact: true },
-            ),
-        ).toBeVisible();
-
-        const scenarioSummary = workflow
-            .locator('summary')
-            .filter({
-                hasText: /^Create Ownership Scenario$/,
-            });
-
-        const scenarioWorkflow = scenarioSummary.locator('..');
-
-        if ((await scenarioWorkflow.getAttribute('open')) === null) {
-            await scenarioSummary.click();
-        }
-
-        await expect(scenarioWorkflow).toHaveAttribute('open', '');
-
-        await scenarioWorkflow
-            .getByLabel('Scenario name', {
-                exact: true,
-            })
-            .fill('Must Not Apply Scenario');
-
-        await scenarioWorkflow
-            .getByRole('button', {
-                name: 'Create Ownership Scenario',
-                exact: true,
-            })
-            .click();
-
-        await expect(
-            workflow.getByText(
-                /requires at least one Accepted Contribution/i,
-            ),
-        ).toBeVisible();
-
-        await page
-            .getByRole('button', {
-                name: 'Ownership',
-                exact: true,
-            })
-            .click();
-
-        await expect(
-            page.getByText(
-                'No Effective Ownership Register yet.',
-                { exact: true },
-            ),
-        ).toBeVisible();
-
-        await page
-            .getByRole('link', {
-                name: 'Governance',
-                exact: true,
-            })
+        await decision
+            .locator('select')
             .first()
+            .selectOption({
+                index: 1,
+            });
+
+        await decision
+            .getByLabel('Effective Date', {
+                exact: true,
+            })
+            .fill('2026-10-07');
+
+        await decision
+            .getByLabel('Review Date', {
+                exact: true,
+            })
+            .fill('2027-04-07');
+
+        await decision
+            .getByLabel('Decision Summary', {
+                exact: true,
+            })
+            .fill(
+                'Governed Accepted Contribution Register recorded for the current Partner Contribution decision.',
+            );
+
+        const decisionResponse =
+            page.waitForResponse(
+                (response) =>
+                    response.url().endsWith(
+                        '/partnership/contributions/decision-record',
+                    )
+                    && response.request().method()
+                        === 'POST',
+            );
+
+        await decision
+            .getByRole('button', {
+                name: 'Record Contribution Decision',
+                exact: true,
+            })
             .click();
 
-        await expect(page).toHaveURL(/\/governance$/);
+        await decisionResponse;
+
+        await expect(
+            page.getByText(
+                'Chapter 2 complete',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await selectContributionStep(
+            page,
+            'Action Plan',
+        );
+
+        const actionPlan = page.locator(
+            '[data-contribution-step="action-plan"]',
+        );
+
+        await expect(
+            actionPlan.getByText(
+                'No Action is required. The chapter can still be complete once the current Decision is recorded.',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await actionPlan
+            .locator('select')
+            .first()
+            .selectOption({
+                index: 1,
+            });
+
+        const reviewSuggestion = actionPlan.locator(
+            '[data-contribution-suggestion="review_contribution_decision"]',
+        );
+
+        await expect(
+            reviewSuggestion,
+        ).toBeVisible();
+
+        const actionResponse =
+            page.waitForResponse(
+                (response) =>
+                    response.url().endsWith(
+                        '/partnership/contributions/actions/suggested',
+                    )
+                    && response.request().method()
+                        === 'POST',
+            );
+
+        await reviewSuggestion
+            .getByRole('button', {
+                name: 'Add Action',
+                exact: true,
+            })
+            .click();
+
+        await actionResponse;
+
+        const actionCard = actionPlan
+            .locator(
+                '[data-contribution-action-id]',
+            )
+            .filter({
+                hasText:
+                    'Review current Partner Contribution decision',
+            })
+            .first();
+
+        await expect(
+            actionCard,
+        ).toBeVisible();
+
+        await actionCard
+            .locator('select')
+            .selectOption('completed');
+
+        const updateActionResponse =
+            page.waitForResponse(
+                (response) =>
+                    /\/partnership\/contributions\/actions\/[^/]+$/.test(
+                        new URL(
+                            response.url(),
+                        ).pathname,
+                    )
+                    && response.request().method()
+                        === 'PUT',
+            );
+
+        await actionCard
+            .getByRole('button', {
+                name: 'Update',
+                exact: true,
+            })
+            .click();
+
+        await updateActionResponse;
+
+        await expect(
+            actionPlan.getByText(
+                'completed',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            actionPlan.getByText(
+                'Accepted Contributions can now be used as input to later Ownership planning. This chapter itself creates no shares or ownership.',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await actionPlan
+            .getByRole('link', {
+                name: 'Continue to Ownership',
+                exact: true,
+            })
+            .click();
+
+        await expect(
+            page.getByText(
+                'No Effective Ownership Register yet.',
+                { exact: true },
+            ),
+        ).toBeVisible();
     },
 );

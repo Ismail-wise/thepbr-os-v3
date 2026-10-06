@@ -13,6 +13,7 @@ use App\Application\Records\TransitionFormalRecordVersion;
 use App\Domain\Access\CapabilityCatalog;
 use App\Domain\Access\ValueObjects\Capability;
 use App\Domain\Governance\Exceptions\MissingGovernanceDecision;
+use App\Domain\Partnership\ContributionValuationCatalog;
 use App\Domain\Partnership\Enums\ContributionStatus;
 use App\Domain\Partnership\Enums\ContributionType;
 use App\Domain\Partnership\ValueObjects\ContributionValue;
@@ -38,6 +39,7 @@ final class ContributionWorkflow
         private readonly CreateProposal $createProposal,
         private readonly FreezeProposalVersion $freezeProposal,
         private readonly TransitionFormalRecordVersion $transitionRecord,
+        private readonly ContributionValuationCatalog $valuationCatalog,
     ) {}
 
     /**
@@ -79,6 +81,19 @@ final class ContributionWorkflow
         if (preg_match('/\A[A-Z]{3}\z/', $currency) !== 1) {
             throw new InvalidArgumentException(
                 'Contribution currency must be a three-letter uppercase code.',
+            );
+        }
+
+        $configuredCurrency = DB::table('contribution_setups')
+            ->where('business_id', $business->getKey())
+            ->value('currency');
+
+        if (
+            is_string($configuredCurrency)
+            && $configuredCurrency !== $currency
+        ) {
+            throw new InvalidArgumentException(
+                'Contribution currency must match the current Contribution Setup currency. No FX conversion is inferred.',
             );
         }
 
@@ -187,12 +202,6 @@ final class ContributionWorkflow
 
         $valuationMethod = trim($valuationMethod);
 
-        if ($valuationMethod === '') {
-            throw new InvalidArgumentException(
-                'A valuation method is required before Contribution review.',
-            );
-        }
-
         return DB::transaction(function () use (
             $user,
             $business,
@@ -225,6 +234,17 @@ final class ContributionWorkflow
                     'Only Proposed Contributions may be reviewed.',
                 );
             }
+
+            $valuationMethod =
+                $this->valuationCatalog
+                    ->normalizeMethod(
+                        ContributionType::from(
+                            (string)
+                                $row
+                                    ->contribution_type,
+                        ),
+                        $valuationMethod,
+                    );
 
             DB::table('contributions')
                 ->where('id', $contributionId)
@@ -851,6 +871,9 @@ final class ContributionWorkflow
         DateTimeInterface $deliveredAt,
         ?string $notes,
         bool $markDelivered,
+        string $deliveryExtent = 'full',
+        ?string $deliveredScope = null,
+        ?string $adjustmentBasis = null,
     ): ?string {
         $membership = $this->actor->membership(
             $user,
@@ -868,6 +891,27 @@ final class ContributionWorkflow
             );
         }
 
+        if (! in_array($deliveryExtent, ['full', 'partial'], true)) {
+            throw new InvalidArgumentException(
+                'Delivery extent must be Full or Partial.',
+            );
+        }
+
+        $deliveredScope = $this->nullableTrim($deliveredScope);
+        $adjustmentBasis = $this->nullableTrim($adjustmentBasis);
+
+        if (
+            $deliveryExtent === 'partial'
+            && (
+                $deliveredScope === null
+                || $adjustmentBasis === null
+            )
+        ) {
+            throw new InvalidArgumentException(
+                'Partial delivery requires the delivered scope and adjustment basis. The system does not prorate automatically.',
+            );
+        }
+
         return DB::transaction(function () use (
             $user,
             $business,
@@ -877,6 +921,9 @@ final class ContributionWorkflow
             $deliveredAt,
             $notes,
             $markDelivered,
+            $deliveryExtent,
+            $deliveredScope,
+            $adjustmentBasis,
             $membership,
         ): ?string {
             $row = $this->lockContribution(
@@ -912,6 +959,50 @@ final class ContributionWorkflow
                 );
             }
 
+            $approvedValue = new ContributionValue(
+                (string) $row->approved_value,
+            );
+            $existingDeliveredMinor =
+                $this->deliveredTotalMinorUnits(
+                    $business,
+                    $contributionId,
+                );
+            $newDeliveredMinor =
+                $deliveredValue->minorUnits();
+
+            if (
+                $newDeliveredMinor
+                > PHP_INT_MAX
+                    - $existingDeliveredMinor
+            ) {
+                throw new InvalidArgumentException(
+                    'Delivered Contribution total exceeds exact integer capacity.',
+                );
+            }
+
+            $cumulativeDeliveredMinor =
+                $existingDeliveredMinor
+                + $newDeliveredMinor;
+
+            if (
+                $cumulativeDeliveredMinor
+                > $approvedValue->minorUnits()
+            ) {
+                throw new InvalidArgumentException(
+                    'Cumulative delivered value cannot exceed the governed Approved Contribution Value.',
+                );
+            }
+
+            if (
+                $markDelivered
+                && $cumulativeDeliveredMinor
+                    < $approvedValue->minorUnits()
+            ) {
+                throw new InvalidArgumentException(
+                    'A Contribution can be marked Delivered only when cumulative delivery reaches the Approved Contribution Value.',
+                );
+            }
+
             $eventId = (string) Str::uuid7();
 
             DB::table('contribution_delivery_events')->insert([
@@ -920,6 +1011,9 @@ final class ContributionWorkflow
                 'contribution_id' => $contributionId,
                 'delivered_value' => $deliveredValue->amount,
                 'delivered_at' => $deliveredAt,
+                'delivery_extent' => $deliveryExtent,
+                'delivered_scope' => $deliveredScope,
+                'adjustment_basis' => $adjustmentBasis,
                 'notes' => $this->nullableTrim($notes),
                 'recorded_by_membership_id' => $membership->getKey(),
                 'created_at' => now(),
@@ -966,6 +1060,145 @@ final class ContributionWorkflow
             );
 
             return $eventId;
+        });
+    }
+
+    public function transitionTerminal(
+        User $user,
+        Business $business,
+        string $contributionId,
+        int $expectedRevision,
+        ContributionStatus $target,
+        string $reason,
+    ): ?bool {
+        if (! in_array(
+            $target,
+            [
+                ContributionStatus::Rejected,
+                ContributionStatus::Cancelled,
+                ContributionStatus::Defaulted,
+            ],
+            true,
+        )) {
+            throw new InvalidArgumentException(
+                'Choose Rejected, Cancelled or Defaulted for a terminal Contribution transition.',
+            );
+        }
+
+        $membership = $this->actor->membership(
+            $user,
+            $business,
+            CapabilityCatalog::CONTRIBUTIONS_MANAGE,
+        );
+
+        if ($membership === null) {
+            return null;
+        }
+
+        $reason = trim($reason);
+
+        if ($reason === '' || mb_strlen($reason) > 4000) {
+            throw new InvalidArgumentException(
+                'A clear terminal transition reason is required.',
+            );
+        }
+
+        return DB::transaction(function () use (
+            $user,
+            $business,
+            $contributionId,
+            $expectedRevision,
+            $target,
+            $reason,
+            $membership,
+        ): ?bool {
+            $row = $this->lockContribution(
+                $business,
+                $contributionId,
+            );
+
+            if ($row === null) {
+                return null;
+            }
+
+            $this->assertRevision(
+                $expectedRevision,
+                (int) $row->revision,
+            );
+
+            $current = ContributionStatus::from(
+                (string) $row->status,
+            );
+
+            if ($current->isTerminal()) {
+                throw new InvalidArgumentException(
+                    'Terminal Contribution history is immutable.',
+                );
+            }
+
+            $allowed = match ($current) {
+                ContributionStatus::Proposed,
+                ContributionStatus::Reviewed => in_array(
+                    $target,
+                    [
+                        ContributionStatus::Rejected,
+                        ContributionStatus::Cancelled,
+                    ],
+                    true,
+                ),
+                ContributionStatus::Approved => in_array(
+                    $target,
+                    [
+                        ContributionStatus::Cancelled,
+                        ContributionStatus::Defaulted,
+                    ],
+                    true,
+                ),
+                ContributionStatus::Delivered => $target === ContributionStatus::Defaulted,
+                default => false,
+            };
+
+            if (! $allowed) {
+                throw new InvalidArgumentException(
+                    'That terminal Contribution transition is not valid from the current state.',
+                );
+            }
+
+            DB::table('contributions')
+                ->where(
+                    'business_id',
+                    $business->getKey(),
+                )
+                ->where('id', $contributionId)
+                ->update([
+                    'status' => $target->value,
+                    'revision' => ((int) $row->revision) + 1,
+                    'updated_at' => now(),
+                ]);
+
+            $this->appendStatusTransition(
+                $business,
+                $contributionId,
+                $membership->getKey(),
+                $current,
+                $target,
+                $reason,
+            );
+
+            $this->occurrence->record(
+                $user,
+                $business,
+                'partnership.contribution.terminal_transition',
+                'contribution',
+                $contributionId,
+                [
+                    'from_status' => $current->value,
+                    'to_status' => $target->value,
+                    'revision' => ((int) $row->revision) + 1,
+                ],
+            );
+
+            return true;
         });
     }
 
@@ -1057,6 +1290,109 @@ final class ContributionWorkflow
     ): void {
         $businessId = $business->getKey();
 
+        if ($type === ContributionType::Cash) {
+            $received = $this->optionalAmount(
+                $details,
+                'amount_received',
+            );
+
+            if (
+                $received !== null
+                && (new ContributionValue($received))
+                    ->minorUnits() > 0
+                && empty($details['payment_date'])
+            ) {
+                throw new InvalidArgumentException(
+                    'Cash received requires the Payment Date that supports the received amount.',
+                );
+            }
+        }
+
+        if ($type === ContributionType::TimeSkill) {
+            $start = $details['start_date'] ?? null;
+            $end = $details['end_date'] ?? null;
+
+            if (
+                is_string($start)
+                && is_string($end)
+                && $start !== ''
+                && $end !== ''
+                && $end < $start
+            ) {
+                throw new InvalidArgumentException(
+                    'Time and Skill end date must be on or after its start date.',
+                );
+            }
+        }
+
+        if ($type === ContributionType::PropertyAsset) {
+            $this->requiredText(
+                $details,
+                'asset_owner',
+            );
+
+            $ownershipTransferred =
+                $this->requiredBoolean(
+                    $details,
+                    'ownership_transferred',
+                );
+
+            if ($ownershipTransferred) {
+                if (
+                    $this->optionalAmount(
+                        $details,
+                        'market_value',
+                    ) === null
+                ) {
+                    throw new InvalidArgumentException(
+                        'Transferred Property or Asset requires a Market Value.',
+                    );
+                }
+            } else {
+                $this->requiredText(
+                    $details,
+                    'usage_period',
+                );
+
+                if (
+                    $this->optionalAmount(
+                        $details,
+                        'fair_rental_use_value',
+                    ) === null
+                ) {
+                    throw new InvalidArgumentException(
+                        'Right-to-use Property or Asset requires a Fair Rental / Use Value.',
+                    );
+                }
+            }
+        }
+
+        if ($type === ContributionType::IpIntangible) {
+            $subtype = $this->requiredText(
+                $details,
+                'intangible_kind',
+            );
+
+            if (! in_array(
+                $subtype,
+                [
+                    'ip',
+                    'brand',
+                    'software_system',
+                    'customer_database',
+                    'network_introductions',
+                    'customer_access',
+                    'know_how',
+                    'business_process',
+                ],
+                true,
+            )) {
+                throw new InvalidArgumentException(
+                    'Choose a supported IP / Intangible subtype.',
+                );
+            }
+        }
+
         match ($type) {
             ContributionType::Cash => DB::table('cash_contribution_details')->insert([
                 'contribution_id' => $contributionId,
@@ -1069,6 +1405,10 @@ final class ContributionWorkflow
                     $details,
                     'amount_received',
                 ) ?? '0.00',
+                'amount_received_recorded' => $this->optionalAmount(
+                    $details,
+                    'amount_received',
+                ) !== null,
                 'payment_date' => $details['payment_date'] ?? null,
             ]),
 
@@ -1117,6 +1457,10 @@ final class ContributionWorkflow
                 'asset_description' => $this->requiredText(
                     $details,
                     'asset_description',
+                ),
+                'asset_owner' => $this->optionalText(
+                    $details,
+                    'asset_owner',
                 ),
                 'ownership_transferred' => $this->requiredBoolean(
                     $details,
@@ -1236,6 +1580,33 @@ final class ContributionWorkflow
                 )
                 ->all();
 
+        $deliveryEvents = DB::table('contribution_delivery_events')
+            ->where('business_id', $business->getKey())
+            ->where('contribution_id', $row->id)
+            ->orderBy('delivered_at')
+            ->orderBy('id')
+            ->get([
+                'id',
+                'delivered_value',
+                'delivered_at',
+                'delivery_extent',
+                'delivered_scope',
+                'adjustment_basis',
+            ])
+            ->map(
+                static fn (object $event): array => [
+                    'id' => (string) $event->id,
+                    'delivered_value' => (string) $event->delivered_value,
+                    'delivered_at' => $event->delivered_at instanceof DateTimeInterface
+                        ? $event->delivered_at->format(DATE_ATOM)
+                        : (string) $event->delivered_at,
+                    'delivery_extent' => (string) $event->delivery_extent,
+                    'delivered_scope' => $event->delivered_scope,
+                    'adjustment_basis' => $event->adjustment_basis,
+                ],
+            )
+            ->all();
+
         return [
             'business_id' => (string) $business->getKey(),
             'contribution_id' => (string) $row->id,
@@ -1254,6 +1625,7 @@ final class ContributionWorkflow
                     : (string) $row->approved_value,
             'proposed_accepted_value' => $proposedAcceptedValue?->amount,
             'delivered_total_minor_units' => $deliveredTotalMinor,
+            'delivery_events' => $deliveryEvents,
             'valuation_method' => $row->valuation_method,
             'conditions' => $row->conditions,
             'committed_date' => $row->committed_date,

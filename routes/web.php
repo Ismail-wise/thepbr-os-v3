@@ -27,6 +27,7 @@ use App\Presentation\Http\Controllers\Legal\LegalArchitectureController;
 use App\Presentation\Http\Controllers\Operations\OperationsWorkspaceController;
 use App\Presentation\Http\Controllers\PartnerChanges\PartnerChangesWorkspaceController;
 use App\Presentation\Http\Controllers\PartnerDynamics\PartnerDynamicsController;
+use App\Presentation\Http\Controllers\Partnership\ContributionChapterController;
 use App\Presentation\Http\Controllers\Partnership\PartnershipWorkflowController;
 use App\Presentation\Http\Controllers\Partnership\PartnershipWorkspaceController;
 use App\Presentation\Http\Controllers\Portability\PortabilityController;
@@ -495,6 +496,11 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 [PartnershipWorkspaceController::class, 'recordPartnerDynamics'],
             )->name('partnership.partners.partner-dynamics.store');
 
+            Route::put(
+                '/partnership/contributions/setup',
+                [ContributionChapterController::class, 'saveSetup'],
+            )->name('partnership.contributions.setup');
+
             Route::post(
                 '/partnership/contributions',
                 [PartnershipWorkflowController::class, 'createContribution'],
@@ -524,6 +530,31 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 '/partnership/contributions/{contribution}/delivery',
                 [PartnershipWorkflowController::class, 'recordDelivery'],
             )->name('partnership.contributions.delivery');
+
+            Route::put(
+                '/partnership/contributions/{contribution}/terminal',
+                [ContributionChapterController::class, 'transitionTerminal'],
+            )->name('partnership.contributions.terminal');
+
+            Route::post(
+                '/partnership/contributions/decision-record',
+                [ContributionChapterController::class, 'createDecisionRecord'],
+            )->name('partnership.contributions.decision-record');
+
+            Route::post(
+                '/partnership/contributions/actions/suggested',
+                [ContributionChapterController::class, 'createSuggestedAction'],
+            )->name('partnership.contributions.actions.suggested');
+
+            Route::post(
+                '/partnership/contributions/actions/custom',
+                [ContributionChapterController::class, 'createCustomAction'],
+            )->name('partnership.contributions.actions.custom');
+
+            Route::put(
+                '/partnership/contributions/actions/{action}',
+                [ContributionChapterController::class, 'updateActionStatus'],
+            )->name('partnership.contributions.actions.update');
 
             Route::post(
                 '/partnership/ownership/scenarios',

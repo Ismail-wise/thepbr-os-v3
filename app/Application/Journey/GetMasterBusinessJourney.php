@@ -289,10 +289,9 @@ final class GetMasterBusinessJourney
             'capital' => $this->hasEstablishedCapitalActionPlan(
                 $businessId,
             ),
-            'contributions' => DB::table('contributions')
-                ->where('business_id', $businessId)
-                ->where('status', 'accepted')
-                ->exists(),
+            'contributions' => $this->hasCompletedContributionChapter(
+                $businessId,
+            ),
             'equity' => isset($currentAreas['ownership']),
             'governance' => isset($currentAreas['governance']),
             'roles_operations' => isset($currentAreas['operations']),
@@ -313,6 +312,93 @@ final class GetMasterBusinessJourney
                 ->exists(),
             default => false,
         };
+    }
+
+    private function hasCompletedContributionChapter(
+        string $businessId,
+    ): bool {
+        $setup = DB::table('contribution_setups')
+            ->where('business_id', $businessId)
+            ->first([
+                'id',
+                'revision',
+                'currency',
+            ]);
+
+        if ($setup === null) {
+            return false;
+        }
+
+        $accepted = DB::table('contributions')
+            ->where('business_id', $businessId)
+            ->where('status', 'accepted')
+            ->whereNotNull('accepted_value')
+            ->get([
+                'id',
+                'revision',
+                'currency',
+            ]);
+
+        if ($accepted->isEmpty()) {
+            return false;
+        }
+
+        if (
+            $accepted->contains(
+                static fn (object $row): bool => (string) $row->currency
+                    !== (string) $setup->currency,
+            )
+        ) {
+            return false;
+        }
+
+        $record = DB::table('contribution_decision_records')
+            ->where('business_id', $businessId)
+            ->where('contribution_setup_id', $setup->id)
+            ->where(
+                'contribution_setup_revision',
+                $setup->revision,
+            )
+            ->orderByDesc('created_at')
+            ->first();
+
+        if ($record === null) {
+            return false;
+        }
+
+        $sources = DB::table(
+            'contribution_decision_record_sources',
+        )
+            ->where('business_id', $businessId)
+            ->where(
+                'contribution_decision_record_id',
+                $record->id,
+            )
+            ->get([
+                'contribution_id',
+                'contribution_revision',
+            ])
+            ->keyBy('contribution_id');
+
+        if ($sources->count() !== $accepted->count()) {
+            return false;
+        }
+
+        foreach ($accepted as $row) {
+            $source = $sources->get(
+                (string) $row->id,
+            );
+
+            if (
+                $source === null
+                || (int) $source->contribution_revision
+                    !== (int) $row->revision
+            ) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function hasEstablishedCapitalActionPlan(

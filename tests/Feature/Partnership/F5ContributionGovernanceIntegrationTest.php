@@ -8,11 +8,20 @@ use App\Application\Evidence\LinkEvidence;
 use App\Application\Governance\OpenGovernanceDecision;
 use App\Application\Governance\RecordGovernanceApproval;
 use App\Application\Governance\ResolveGovernanceDecision;
+use App\Application\Journey\GetMasterBusinessJourney;
+use App\Application\Partnership\ContributionActionPlanWorkflow;
+use App\Application\Partnership\ContributionDecisionRecordWorkflow;
+use App\Application\Partnership\ContributionSetupWorkflow;
 use App\Application\Partnership\ContributionWorkflow;
+use App\Application\Partnership\GetAcceptedContributionRegister;
+use App\Application\Partnership\GetContributionActionPlanReadModel;
+use App\Application\Partnership\GetContributionDecisionRecordReadModel;
+use App\Application\Partnership\GetContributionRegisterReadModel;
 use App\Domain\Access\CapabilityCatalog;
 use App\Domain\Documents\Enums\DocumentAccessRight;
 use App\Domain\Documents\Enums\DocumentCategory;
 use App\Domain\Evidence\Enums\EvidenceConfidentiality;
+use App\Domain\Governance\Enums\ActionStatus;
 use App\Domain\Governance\Enums\ApprovalOutcome;
 use App\Domain\Governance\Enums\DecisionMethod;
 use App\Domain\Governance\ValueObjects\DecisionType;
@@ -27,6 +36,7 @@ use App\Infrastructure\Persistence\Eloquent\Documents\Document;
 use App\Infrastructure\Persistence\Eloquent\Documents\DocumentAccessGrant;
 use App\Infrastructure\Persistence\Eloquent\Documents\DocumentVersion;
 use App\Infrastructure\Persistence\Eloquent\Evidence\Evidence;
+use App\Infrastructure\Persistence\Eloquent\Governance\Action;
 use App\Infrastructure\Persistence\Eloquent\Governance\Decision;
 use App\Infrastructure\Persistence\Eloquent\Governance\FormationAuthorityEstablishment;
 use App\Infrastructure\Persistence\Eloquent\Governance\FormationAuthorityPolicyActor;
@@ -336,6 +346,44 @@ final class F5ContributionGovernanceIntegrationTest extends TestCase
         [$user, $business, $membership] =
             $this->governanceContext('lifecycle');
 
+        $this->grant(
+            $business,
+            $membership,
+            CapabilityCatalog::RECORDS_VIEW,
+        );
+
+        $this->grant(
+            $business,
+            $membership,
+            CapabilityCatalog::GOVERNANCE_ACTION_MANAGE,
+            [
+                Action::class,
+                Decision::class,
+                FormalRecordVersion::class,
+            ],
+        );
+
+        $setup = $this->app->make(
+            ContributionSetupWorkflow::class,
+        )->save(
+            $user,
+            $business,
+            0,
+            [
+                'valuationDate' => '2026-09-26',
+                'currency' => 'USD',
+                'periodStart' => '2026-01-01',
+                'periodEnd' => '2026-12-31',
+                'valuationOwnerMembershipId' => (string) $membership->getKey(),
+                'approverMembershipIds' => [
+                    (string) $membership->getKey(),
+                ],
+            ],
+        );
+
+        self::assertNotNull($setup);
+        self::assertTrue($setup['created']);
+
         $this->establishFormationAuthority(
             $business,
             $user,
@@ -373,6 +421,24 @@ final class F5ContributionGovernanceIntegrationTest extends TestCase
         );
 
         self::assertNotNull($approvalSubmission);
+
+        self::assertTrue(
+            $workflow->advanceContentReview(
+                $user,
+                $business,
+                $approvalSubmission['id'],
+                FormalRecordState::UnderReview,
+            ),
+        );
+
+        self::assertTrue(
+            $workflow->advanceContentReview(
+                $user,
+                $business,
+                $approvalSubmission['id'],
+                FormalRecordState::Approved,
+            ),
+        );
 
         $this->approveProposalVersion(
             $business,
@@ -412,16 +478,76 @@ final class F5ContributionGovernanceIntegrationTest extends TestCase
             ),
         );
 
+        $partialDeliveryId = $workflow->recordDelivery(
+            $user,
+            $business,
+            $contributionId,
+            $this->contributionRevision($contributionId),
+            new ContributionValue('400.00'),
+            new DateTimeImmutable(
+                '2026-09-26T09:30:00+00:00',
+            ),
+            'First delivery tranche.',
+            false,
+            'partial',
+            'First delivery tranche only.',
+            'Exact delivered tranche recorded; no automatic proration.',
+        );
+
+        self::assertNotNull($partialDeliveryId);
+
+        $this->assertDatabaseHas(
+            'contribution_delivery_events',
+            [
+                'id' => $partialDeliveryId,
+                'delivery_extent' => 'partial',
+                'delivered_value' => '400.00',
+            ],
+        );
+
+        $this->assertDatabaseHas('contributions', [
+            'id' => $contributionId,
+            'status' => 'approved',
+            'accepted_value' => null,
+        ]);
+
+        try {
+            $workflow->recordDelivery(
+                $user,
+                $business,
+                $contributionId,
+                $this->contributionRevision($contributionId),
+                new ContributionValue('300.00'),
+                new DateTimeImmutable(
+                    '2026-09-26T10:00:00+00:00',
+                ),
+                'Insufficient cumulative delivery.',
+                true,
+                'partial',
+                'Second partial tranche.',
+                'Cannot mark Delivered below the Approved Value.',
+            );
+
+            self::fail(
+                'A partial cumulative delivery must not be marked fully Delivered below the Approved Value.',
+            );
+        } catch (\InvalidArgumentException $exception) {
+            self::assertStringContainsString(
+                'only when cumulative delivery reaches',
+                $exception->getMessage(),
+            );
+        }
+
         $deliveryId = $workflow->recordDelivery(
             $user,
             $business,
             $contributionId,
             $this->contributionRevision($contributionId),
-            new ContributionValue('900.00'),
+            new ContributionValue('500.00'),
             new DateTimeImmutable(
-                '2026-09-26T09:30:00+00:00',
+                '2026-09-26T10:30:00+00:00',
             ),
-            'Full approved value delivered.',
+            'Remaining approved value delivered.',
             true,
         );
 
@@ -433,6 +559,16 @@ final class F5ContributionGovernanceIntegrationTest extends TestCase
             'accepted_value' => null,
         ]);
 
+        self::assertSame(
+            '900.00',
+            $this->app->make(
+                GetContributionRegisterReadModel::class,
+            )->execute(
+                $user,
+                $business,
+            )['rows'][0]['deliveredTotal'],
+        );
+
         $acceptanceSubmission = $workflow->submitGovernance(
             $user,
             $business,
@@ -442,6 +578,24 @@ final class F5ContributionGovernanceIntegrationTest extends TestCase
         );
 
         self::assertNotNull($acceptanceSubmission);
+
+        self::assertTrue(
+            $workflow->advanceContentReview(
+                $user,
+                $business,
+                $acceptanceSubmission['id'],
+                FormalRecordState::UnderReview,
+            ),
+        );
+
+        self::assertTrue(
+            $workflow->advanceContentReview(
+                $user,
+                $business,
+                $acceptanceSubmission['id'],
+                FormalRecordState::Approved,
+            ),
+        );
 
         $this->approveProposalVersion(
             $business,
@@ -489,6 +643,178 @@ final class F5ContributionGovernanceIntegrationTest extends TestCase
         self::assertSame(
             '850.00',
             $accepted[0]['accepted_value'],
+        );
+
+        $register = $this->app->make(
+            GetAcceptedContributionRegister::class,
+        )->execute(
+            $user,
+            $business,
+        );
+
+        self::assertNotNull($register);
+        self::assertTrue($register['available']);
+        self::assertTrue($register['decisionReady']);
+        self::assertSame(
+            1,
+            $register['acceptedCount'],
+        );
+        self::assertSame(
+            '850.00',
+            $register['currencyTotals'][0]['total'],
+        );
+        self::assertSame(
+            '850.00',
+            $register['matrix'][0]['currencies'][0]['cash'],
+        );
+
+        $journeyBeforeDecision = $this->app->make(
+            GetMasterBusinessJourney::class,
+        )->execute(
+            $user,
+            $business,
+            null,
+        );
+
+        $contributionStepBefore = collect(
+            $journeyBeforeDecision['steps'],
+        )->firstWhere(
+            'key',
+            'contributions',
+        );
+
+        self::assertNotNull(
+            $contributionStepBefore,
+        );
+        self::assertSame(
+            'current',
+            $contributionStepBefore['state'],
+        );
+
+        $decision = $this->app->make(
+            ContributionDecisionRecordWorkflow::class,
+        )->create(
+            $user,
+            $business,
+            [
+                'decisionOwnerMembershipId' => (string) $membership->getKey(),
+                'effectiveDate' => '2026-09-27',
+                'reviewDate' => '2027-03-27',
+                'decisionSummary' => 'Record the governed Accepted Contribution Register as the current Partner Contribution decision source.',
+                'evidenceReferences' => [
+                    'Governed acceptance evidence',
+                ],
+            ],
+        );
+
+        self::assertNotNull($decision);
+        self::assertTrue($decision['created']);
+
+        $decisionRead = $this->app->make(
+            GetContributionDecisionRecordReadModel::class,
+        )->execute(
+            $user,
+            $business,
+        );
+
+        self::assertNotNull($decisionRead);
+        self::assertTrue($decisionRead['recorded']);
+        self::assertFalse($decisionRead['stale']);
+        self::assertSame(
+            '850.00',
+            $decisionRead['record']['acceptedTotal'],
+        );
+
+        $actionReadBefore = $this->app->make(
+            GetContributionActionPlanReadModel::class,
+        )->execute(
+            $user,
+            $business,
+        );
+
+        self::assertNotNull($actionReadBefore);
+        self::assertTrue($actionReadBefore['available']);
+        self::assertSame(
+            0,
+            count($actionReadBefore['actions']),
+        );
+        self::assertTrue(
+            $actionReadBefore['semantics'][
+                'zeroActionsAllowed'
+            ],
+        );
+
+        $journeyAfterDecision = $this->app->make(
+            GetMasterBusinessJourney::class,
+        )->execute(
+            $user,
+            $business,
+            null,
+        );
+
+        $contributionStepAfter = collect(
+            $journeyAfterDecision['steps'],
+        )->firstWhere(
+            'key',
+            'contributions',
+        );
+
+        self::assertNotNull(
+            $contributionStepAfter,
+        );
+        self::assertSame(
+            'recorded',
+            $contributionStepAfter['state'],
+        );
+
+        $action = $this->app->make(
+            ContributionActionPlanWorkflow::class,
+        )->createSuggested(
+            $user,
+            $business,
+            'review_contribution_decision',
+            (string) $membership->getKey(),
+        );
+
+        self::assertNotNull($action);
+
+        $completed = $this->app->make(
+            ContributionActionPlanWorkflow::class,
+        )->updateStatus(
+            $user,
+            $business,
+            (string) $action->getKey(),
+            ActionStatus::Completed,
+        );
+
+        self::assertNotNull($completed);
+        self::assertSame(
+            ActionStatus::Completed,
+            $completed->status,
+        );
+
+        self::assertSame(
+            '850.00',
+            DB::table('contributions')
+                ->where('id', $contributionId)
+                ->value('accepted_value'),
+        );
+
+        $journeyAfterAction = $this->app->make(
+            GetMasterBusinessJourney::class,
+        )->execute(
+            $user,
+            $business,
+            null,
+        );
+
+        self::assertSame(
+            'recorded',
+            collect($journeyAfterAction['steps'])
+                ->firstWhere(
+                    'key',
+                    'contributions',
+                )['state'],
         );
     }
 

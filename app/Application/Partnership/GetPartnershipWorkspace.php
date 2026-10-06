@@ -15,6 +15,7 @@ final class GetPartnershipWorkspace
     public function __construct(
         private readonly PartnershipActorContext $actor,
         private readonly GetPartnerDynamicsWorkspace $partnerDynamicsWorkspace,
+        private readonly GetContributionChapterWorkspace $contributionChapter,
     ) {}
 
     /**
@@ -238,6 +239,16 @@ final class GetPartnershipWorkspace
             ? $this->partnerDynamicsWorkspace->execute($user, $business)
             : null;
 
+        $contributionChapter = $canViewContributions
+            ? $this->contributionChapter->execute(
+                $user,
+                $business,
+                (int) DB::table('partners')
+                    ->where('business_id', $businessId)
+                    ->count(),
+            )
+            : null;
+
         return [
             'business' => [
                 'id' => $businessId,
@@ -273,6 +284,7 @@ final class GetPartnershipWorkspace
             'due_diligence' => $dueDiligence,
             'partner_dynamics' => $partnerDynamics,
             'partner_dynamics_workspace' => $partnerDynamicsWorkspace,
+            'contribution_chapter' => $contributionChapter,
             'contributions' => $contributions,
             'contribution_submissions' => $contributionSubmissions,
             'ownership_scenarios' => $scenarios,

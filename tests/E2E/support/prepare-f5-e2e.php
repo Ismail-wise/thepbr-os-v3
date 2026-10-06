@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Application\Businesses\CreateBusiness;
+use App\Application\Governance\EstablishInitialFormationAuthority;
+use App\Application\Governance\FormationAuthorityPolicyWorkflow;
 use App\Application\Identity\ChangeAccountStatus;
 use App\Application\Identity\ProvisionAccount;
 use App\Application\Partnership\ContributionWorkflow;
@@ -15,6 +17,7 @@ use App\Domain\Identity\Enums\LanguageMode;
 use App\Domain\Partnership\Enums\ContributionType;
 use App\Domain\Partnership\ValueObjects\ContributionValue;
 use App\Infrastructure\Persistence\Eloquent\Identity\User;
+use App\Infrastructure\Persistence\Eloquent\Members\Membership;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Application;
@@ -160,6 +163,93 @@ if ($pd === null) {
     );
 }
 
+$ownerMembership = Membership::query()
+    ->where('user_id', $user->getKey())
+    ->where('business_id', $business->getKey())
+    ->where('access_status', 'active')
+    ->sole();
+
+$formationAuthority = $app->make(
+    FormationAuthorityPolicyWorkflow::class,
+);
+
+$authorityDraft = $formationAuthority->createDraft(
+    $user,
+    $business,
+    [
+        [
+            'decision_type' => 'contribution_approval',
+            'decision_method' => 'approval',
+            'required_approvals' => 1,
+            'required_votes' => 0,
+            'quorum_count' => 1,
+            'signature_required' => false,
+            'reserved_matter' => false,
+            'amount_min' => null,
+            'amount_max' => null,
+            'actors' => [[
+                'membership_id' => (string) $ownerMembership->getKey(),
+                'capacity' => 'Contribution Approver',
+                'can_approve' => true,
+                'can_vote' => false,
+                'can_sign' => false,
+            ]],
+        ],
+        [
+            'decision_type' => 'contribution_acceptance',
+            'decision_method' => 'approval',
+            'required_approvals' => 1,
+            'required_votes' => 0,
+            'quorum_count' => 1,
+            'signature_required' => false,
+            'reserved_matter' => false,
+            'amount_min' => null,
+            'amount_max' => null,
+            'actors' => [[
+                'membership_id' => (string) $ownerMembership->getKey(),
+                'capacity' => 'Contribution Acceptor',
+                'can_approve' => true,
+                'can_vote' => false,
+                'can_sign' => false,
+            ]],
+        ],
+    ],
+    now()->subMinute(),
+);
+
+if ($authorityDraft === null) {
+    throw new RuntimeException(
+        'F5 Contribution authority draft fixture failed.',
+    );
+}
+
+$authorityFrozen = $formationAuthority->freezeForBootstrap(
+    $user,
+    $business,
+    $authorityDraft['formal_record_version_id'],
+    $authorityDraft['revision'],
+);
+
+if ($authorityFrozen === null) {
+    throw new RuntimeException(
+        'F5 Contribution authority freeze fixture failed.',
+    );
+}
+
+$authorityEstablished = $app
+    ->make(EstablishInitialFormationAuthority::class)
+    ->execute(
+        $user,
+        $business,
+        $authorityDraft['formal_record_version_id'],
+    );
+
+if ($authorityEstablished === null) {
+    throw new RuntimeException(
+        'F5 Contribution authority establishment fixture failed.',
+    );
+}
+
 $contribution = $app
     ->make(ContributionWorkflow::class)
     ->create(
@@ -186,17 +276,7 @@ if ($contribution === null) {
     );
 }
 
-$membershipId = DB::table('memberships')
-    ->where('user_id', $user->getKey())
-    ->where('business_id', $business->getKey())
-    ->where('access_status', 'active')
-    ->value('id');
-
-if (! is_string($membershipId) || $membershipId === '') {
-    throw new RuntimeException(
-        'F5 active Membership fixture lookup failed.',
-    );
-}
+$membershipId = (string) $ownerMembership->getKey();
 
 $documentId = (string) Str::uuid7();
 $versionId = (string) Str::uuid7();

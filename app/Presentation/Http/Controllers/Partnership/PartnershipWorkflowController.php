@@ -102,6 +102,12 @@ final class PartnershipWorkflowController
                 'string',
                 'max:300',
             ],
+            'asset_owner' => [
+                'required_if:contribution_type,property_asset',
+                'nullable',
+                'string',
+                'max:300',
+            ],
             'ownership_transferred' => [
                 'required_if:contribution_type,property_asset',
                 'nullable',
@@ -125,8 +131,16 @@ final class PartnershipWorkflowController
             'intangible_kind' => [
                 'required_if:contribution_type,ip_intangible',
                 'nullable',
-                'string',
-                'max:200',
+                Rule::in([
+                    'ip',
+                    'brand',
+                    'software_system',
+                    'customer_database',
+                    'network_introductions',
+                    'customer_access',
+                    'know_how',
+                    'business_process',
+                ]),
             ],
             'intangible_description' => [
                 'required_if:contribution_type,ip_intangible',
@@ -186,6 +200,7 @@ final class PartnershipWorkflowController
             ],
             ContributionType::PropertyAsset => [
                 'asset_description' => $data['asset_description'],
+                'asset_owner' => $data['asset_owner'],
                 'ownership_transferred' => (bool) $data['ownership_transferred'],
                 'usage_period' => $data['usage_period'] ?? null,
                 'market_value' => isset($data['market_value'])
@@ -387,6 +402,20 @@ final class PartnershipWorkflowController
             'delivered_at' => ['required', 'date'],
             'notes' => ['nullable', 'string', 'max:4000'],
             'mark_delivered' => ['required', 'boolean'],
+            'delivery_extent' => [
+                'nullable',
+                Rule::in(['full', 'partial']),
+            ],
+            'delivered_scope' => [
+                'nullable',
+                'string',
+                'max:4000',
+            ],
+            'adjustment_basis' => [
+                'nullable',
+                'string',
+                'max:4000',
+            ],
         ]);
 
         $result = $this->validatedCall(
@@ -401,6 +430,9 @@ final class PartnershipWorkflowController
                 CarbonImmutable::parse($data['delivered_at']),
                 $data['notes'] ?? null,
                 (bool) $data['mark_delivered'],
+                $data['delivery_extent'] ?? 'full',
+                $data['delivered_scope'] ?? null,
+                $data['adjustment_basis'] ?? null,
             ),
             'delivery',
         );

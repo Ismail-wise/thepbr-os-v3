@@ -12,6 +12,7 @@ use App\Domain\Access\CapabilityCatalog;
 use App\Domain\Businesses\Enums\BusinessOriginType;
 use App\Domain\Businesses\Enums\BusinessStage;
 use App\Domain\Identity\Enums\AccountStatus;
+use App\Domain\Partnership\Enums\ContributionStatus;
 use App\Domain\Partnership\Enums\ContributionType;
 use App\Domain\Partnership\ValueObjects\ContributionValue;
 use App\Domain\Records\Exceptions\StaleRevision;
@@ -469,6 +470,87 @@ final class F5ContributionWorkflowTest extends TestCase
                 ->where('to_status', 'reviewed')
                 ->count(),
         );
+    }
+
+    public function test_terminal_contribution_transition_records_reason_and_cannot_be_reopened(): void
+    {
+        [$user, $business, $partner] =
+            $this->fixture(
+                'f5-terminal-contribution@example.test',
+            );
+
+        $workflow = $this->app->make(
+            ContributionWorkflow::class,
+        );
+
+        $contribution = $workflow->create(
+            $user,
+            $business,
+            $partner['id'],
+            ContributionType::Cash,
+            'USD',
+            'Terminal contribution',
+            new ContributionValue('250.00'),
+            null,
+            null,
+            null,
+            [
+                'amount_committed' => '250.00',
+            ],
+        );
+
+        self::assertNotNull($contribution);
+
+        self::assertTrue(
+            $workflow->transitionTerminal(
+                $user,
+                $business,
+                $contribution['id'],
+                1,
+                ContributionStatus::Rejected,
+                'Documented commercial reason.',
+            ),
+        );
+
+        $this->assertDatabaseHas(
+            'contributions',
+            [
+                'id' => $contribution['id'],
+                'status' => 'rejected',
+                'revision' => 2,
+                'accepted_value' => null,
+            ],
+        );
+
+        $this->assertDatabaseHas(
+            'contribution_status_transitions',
+            [
+                'contribution_id' => $contribution['id'],
+                'from_status' => 'proposed',
+                'to_status' => 'rejected',
+                'note' => 'Documented commercial reason.',
+            ],
+        );
+
+        try {
+            $workflow->transitionTerminal(
+                $user,
+                $business,
+                $contribution['id'],
+                2,
+                ContributionStatus::Cancelled,
+                'Attempt to reopen terminal truth.',
+            );
+
+            self::fail(
+                'Terminal Contribution history must remain immutable.',
+            );
+        } catch (InvalidArgumentException $exception) {
+            self::assertStringContainsString(
+                'immutable',
+                $exception->getMessage(),
+            );
+        }
     }
 
     public function test_contribution_evidence_target_requires_contribution_manage_capability(): void

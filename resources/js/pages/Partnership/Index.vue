@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { computed, ref, watch } from 'vue';
+import ContributionGuidedJourney from '../../components/ContributionGuidedJourney.vue';
 import PartnershipWorkflowPanel from '../../components/PartnershipWorkflowPanel.vue';
 import GuidedJourneyStepper from '../../components/hybrid/GuidedJourneyStepper.vue';
 import PartnerDynamicsWorkspacePanel from '../../components/partner-dynamics/PartnerDynamicsWorkspacePanel.vue';
@@ -202,6 +203,7 @@ const props = defineProps<{
         due_diligence: DueDiligence[];
         partner_dynamics: PartnerDynamics[];
         partner_dynamics_workspace: PartnerDynamicsWorkspace | null;
+        contribution_chapter: any;
         contributions: Contribution[];
         contribution_submissions: GovernanceSubmission[];
         ownership_scenarios: OwnershipScenario[];
@@ -214,10 +216,43 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const page = usePage();
 
-const activeSection = ref<
-    'partners' | 'contributions' | 'ownership'
->('partners');
+type PartnershipSection =
+    | 'partners'
+    | 'contributions'
+    | 'ownership';
+
+const sectionFromUrl = (
+    url: string,
+): PartnershipSection => {
+    const query =
+        url.split('?', 2)[1]
+        ?? '';
+
+    const requested =
+        new URLSearchParams(query).get(
+            'section',
+        );
+
+    return requested === 'contributions'
+        || requested === 'ownership'
+        || requested === 'partners'
+        ? requested
+        : 'partners';
+};
+
+const activeSection = ref<PartnershipSection>(
+    sectionFromUrl(page.url),
+);
+
+watch(
+    () => page.url,
+    (url) => {
+        activeSection.value =
+            sectionFromUrl(url);
+    },
+);
 
 const partnerForm = useForm({
     display_name: '',
@@ -225,11 +260,6 @@ const partnerForm = useForm({
     email: '',
     notes: '',
 });
-
-const partnerName = (partnerId: string): string =>
-    props.partnership.partners.find(
-        (partner) => partner.id === partnerId,
-    )?.display_name ?? 'Unknown Partner';
 
 const latestDueDiligence = computed(() => {
     const map = new Map<string, DueDiligence>();
@@ -303,31 +333,72 @@ const selectPartnershipSection = (key: string): void => {
     }
 };
 
-const contributionSteps = computed(() => {
-    const hasContributions = props.partnership.contributions.length > 0;
-    const hasReviewed = props.partnership.contributions.some(
-        (row) => row.reviewed_value !== null,
-    );
-    const hasConditions = props.partnership.contributions.some(
-        (row) => Boolean(row.conditions?.trim()),
-    );
-    const hasApproved = props.partnership.contributions.some(
-        (row) => row.approved_value !== null || row.accepted_value !== null,
-    );
-    const hasAccepted = props.partnership.contributions.some(
-        (row) => row.accepted_value !== null,
-    );
+const partnerName = (partnerId: string): string =>
+    props.partnership.partners.find(
+        (partner) => partner.id === partnerId,
+    )?.display_name ?? 'Unknown Partner';
 
-    return [
-        { key: 'setup', label: t('partnership.setup'), state: (hasContributions ? 'recorded' : 'current') as StepState },
-        { key: 'partners', label: t('partnership.partners'), state: (props.partnership.partners.length > 0 ? 'recorded' : 'next') as StepState },
-        { key: 'contributions', label: t('partnership.contributionsStep'), state: (hasContributions ? 'recorded' : 'available') as StepState },
-        { key: 'valuation', label: t('partnership.valuation'), state: (hasReviewed ? 'recorded' : hasContributions ? 'current' : 'available') as StepState },
-        { key: 'evidence', label: t('partnership.evidenceConditions'), state: (hasConditions ? 'recorded' : 'available') as StepState },
-        { key: 'approval', label: t('partnership.approval'), state: (hasApproved ? 'recorded' : 'available') as StepState },
-        { key: 'matrix', label: t('partnership.acceptedMatrix'), state: (hasAccepted ? 'recorded' : 'available') as StepState },
-    ];
-});
+const contributionSteps = computed(() =>
+    (props.partnership.contribution_chapter?.progress?.steps ?? []).map(
+        (step: { key: string; state: StepState }) => ({
+            key: step.key,
+            label:
+                step.key === 'matrix_register'
+                    ? t('partnership.acceptedMatrix')
+                    : step.key === 'evidence_conditions'
+                      ? t('partnership.evidenceConditions')
+                      : step.key === 'decision_record'
+                        ? 'Decision Record'
+                        : step.key === 'action_plan'
+                          ? 'Action Plan'
+                          : step.key === 'delivery'
+                            ? t('partnership.delivery')
+                            : step.key === 'acceptance'
+                              ? 'Acceptance'
+                              : step.key === 'contributions'
+                                ? t('partnership.contributionsStep')
+                                : step.key === 'partners'
+                                  ? t('partnership.partners')
+                                  : step.key === 'valuation'
+                                    ? t('partnership.valuation')
+                                    : step.key === 'approval'
+                                      ? t('partnership.approval')
+                                      : t('partnership.setup'),
+            state: step.state,
+        }),
+    ),
+);
+
+const acceptedMatrix = computed(() =>
+    (props.partnership.contribution_chapter?.acceptedRegister?.matrix ?? [])
+        .flatMap(
+            (row: {
+                partnerId: string;
+                partnerName: string;
+                currencies: Array<{
+                    currency: string;
+                    cash: string;
+                    timeSkill: string;
+                    propertyAsset: string;
+                    ipIntangible: string;
+                    total: string;
+                }>;
+            }) =>
+                row.currencies.map((currency) => ({
+                    partner: {
+                        id: row.partnerId + '-' + currency.currency,
+                        display_name: row.partnerName,
+                    },
+                    cash: currency.cash + ' ' + currency.currency,
+                    timeSkill: currency.timeSkill + ' ' + currency.currency,
+                    propertyAsset:
+                        currency.propertyAsset + ' ' + currency.currency,
+                    intangible:
+                        currency.ipIntangible + ' ' + currency.currency,
+                    total: currency.total + ' ' + currency.currency,
+                })),
+        ),
+);
 
 const ownershipSteps = computed(() => {
     const hasAccepted = props.partnership.contributions.some(
@@ -357,69 +428,6 @@ const ownershipSteps = computed(() => {
         { key: 'effective', label: t('partnership.effectiveRegister'), state: (hasEffective ? 'recorded' : 'available') as StepState },
     ];
 });
-
-type MoneyBucket = Record<string, number>;
-
-const addMoney = (
-    bucket: MoneyBucket,
-    currency: string,
-    value: string | null,
-): void => {
-    if (value === null) {
-        return;
-    }
-
-    const amount = Number(value);
-
-    if (Number.isFinite(amount)) {
-        bucket[currency] = (bucket[currency] ?? 0) + amount;
-    }
-};
-
-const formatMoneyBucket = (bucket: MoneyBucket): string => {
-    const entries = Object.entries(bucket);
-
-    return entries.length === 0
-        ? '—'
-        : entries
-              .map(([currency, amount]) => `${amount.toFixed(2)} ${currency}`)
-              .join(' · ');
-};
-
-const acceptedMatrix = computed(() =>
-    props.partnership.partners.map((partner) => {
-        const buckets = {
-            cash: {} as MoneyBucket,
-            time_skill: {} as MoneyBucket,
-            property_asset: {} as MoneyBucket,
-            ip_intangible: {} as MoneyBucket,
-            total: {} as MoneyBucket,
-        };
-
-        for (const row of props.partnership.contributions) {
-            if (row.partner_id !== partner.id || row.accepted_value === null) {
-                continue;
-            }
-
-            const key = row.contribution_type as keyof typeof buckets;
-
-            if (key !== 'total' && key in buckets) {
-                addMoney(buckets[key], row.currency, row.accepted_value);
-            }
-
-            addMoney(buckets.total, row.currency, row.accepted_value);
-        }
-
-        return {
-            partner,
-            cash: formatMoneyBucket(buckets.cash),
-            timeSkill: formatMoneyBucket(buckets.time_skill),
-            propertyAsset: formatMoneyBucket(buckets.property_asset),
-            intangible: formatMoneyBucket(buckets.ip_intangible),
-            total: formatMoneyBucket(buckets.total),
-        };
-    }),
-);
 
 const partnerFoundationSummary = computed(() => {
     const total = props.partnership.partners.length;
@@ -533,9 +541,20 @@ const createPartner = () => {
                 />
             </section>
 
-            <PartnershipWorkflowPanel
-                :partnership="partnership"
-            />
+            <details
+                class="mt-5 rounded-[20px] border border-[#d9e3db] bg-white/80"
+            >
+                <summary
+                    class="cursor-pointer px-5 py-4 text-sm font-black text-[var(--pbr-ink)]"
+                >
+                    Advanced workflow controls
+                </summary>
+                <div class="border-t border-[#e3eae4]">
+                    <PartnershipWorkflowPanel
+                        :partnership="partnership"
+                    />
+                </div>
+            </details>
 
             <div class="mt-6">
                 <section v-if="activeSection === 'partners'">
@@ -751,6 +770,22 @@ const createPartner = () => {
                 </section>
 
                 <section v-else-if="activeSection === 'contributions'">
+                    <ContributionGuidedJourney
+                        v-if="partnership.contribution_chapter"
+                        :chapter="partnership.contribution_chapter"
+                        :partners="partnership.partners"
+                        :permissions="partnership.permissions"
+                    />
+
+                    <details
+                        class="mt-6 rounded-[20px] border border-[#d9e3db] bg-white/80"
+                    >
+                        <summary
+                            class="cursor-pointer px-5 py-4 text-sm font-black text-[var(--pbr-ink)]"
+                        >
+                            Legacy register view
+                        </summary>
+                        <div class="border-t border-[#e3eae4] p-5">
                     <div>
                         <h2 class="text-lg font-bold text-slate-950">
                             {{ t('partnership.contributions') }}
@@ -919,6 +954,8 @@ const createPartner = () => {
                             Open Document Vault
                         </Link>
                     </div>
+                        </div>
+                    </details>
                 </section>
 
                 <section v-else>
