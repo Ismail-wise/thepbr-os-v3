@@ -348,42 +348,72 @@ test(
             '[data-contribution-step="valuation"]',
         );
 
-        await valuation
+        const contributionSelect = valuation
             .locator('select')
-            .first()
-            .selectOption({
-                index: 1,
-            });
+            .first();
 
-        await valuation
-            .getByLabel('Reviewed Value', {
+        await contributionSelect.selectOption({
+            index: 1,
+        });
+
+        const reviewedValue = valuation.getByLabel(
+            'Reviewed Value',
+            {
                 exact: true,
-            })
-            .fill('4900.00');
-
-        await valuation
-            .locator('select')
-            .nth(1)
-            .selectOption(
-                'bank_or_receipt_evidence',
-            );
-
-        const reviewResponse = page.waitForResponse(
-            (response) =>
-                /\/partnership\/contributions\/[^/]+\/review$/.test(
-                    new URL(response.url()).pathname,
-                )
-                && response.request().method() === 'PUT',
+            },
         );
 
-        await valuation
-            .getByRole('button', {
-                name: 'Record Review',
-                exact: true,
-            })
-            .click();
+        await expect(reviewedValue).toHaveValue(
+            '5000.00',
+        );
 
-        await reviewResponse;
+        const valuationMethod = valuation
+            .locator('select')
+            .nth(1);
+
+        await expect(valuationMethod).toContainText(
+            'Bank / receipt evidence',
+        );
+
+        await reviewedValue.fill('4900.00');
+
+        await valuationMethod.selectOption(
+            'bank_or_receipt_evidence',
+        );
+
+        await expect(reviewedValue).toHaveValue(
+            '4900.00',
+        );
+
+        await expect(valuationMethod).toHaveValue(
+            'bank_or_receipt_evidence',
+        );
+
+        await expect.poll(
+            async () => valuation
+                .locator('form')
+                .evaluate(
+                    (form) => (
+                        form as HTMLFormElement
+                    ).checkValidity(),
+                ),
+        ).toBe(true);
+
+        await Promise.all([
+            page.waitForResponse(
+                (response) =>
+                    /\/partnership\/contributions\/[^/]+\/review$/.test(
+                        new URL(response.url()).pathname,
+                    )
+                    && response.request().method() === 'PUT',
+            ),
+            valuation
+                .getByRole('button', {
+                    name: 'Record Review',
+                    exact: true,
+                })
+                .click(),
+        ]);
 
         await page
             .getByRole('navigation', {
