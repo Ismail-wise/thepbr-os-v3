@@ -132,7 +132,7 @@ const guide = guides[props.step];
 </script>
 
 <template>
-    <section class="mx-auto mt-5 w-full max-w-[1500px] px-4 sm:px-6 lg:px-8">
+    <section data-grade6-mvp-guide class="mx-auto mt-5 w-full max-w-[1500px] px-4 sm:px-6 lg:px-8">
         <div class="rounded-[22px] border border-[#cfe0d4] bg-[linear-gradient(145deg,#ffffff_0%,#f5f9f6_70%,#fffaf0_100%)] p-5 shadow-[0_12px_30px_rgb(16_35_26_/_5%)] sm:p-6">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div class="max-w-4xl">

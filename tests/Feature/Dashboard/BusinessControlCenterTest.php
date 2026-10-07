@@ -201,6 +201,68 @@ final class BusinessControlCenterTest extends TestCase
         self::assertCount(17, $keys);
     }
 
+    public function test_one_day_mvp_master_journey_routes_are_reachable_without_dead_ends(): void
+    {
+        $this->withoutVite();
+
+        $user = $this->activeUser('overview-mvp-journey@example.test');
+        $business = $this->createOwnedBusiness(
+            $user,
+            'One Day MVP Journey Business',
+        );
+
+        $session = [
+            EnsureCurrentBusinessContext::SESSION_KEY => (string) $business->getKey(),
+        ];
+
+        $overview = $this->actingAs($user)
+            ->withSession($session)
+            ->get('/overview');
+
+        $overview->assertOk();
+
+        $journey = $overview->viewData('page')['props']['controlCenter']['journey'];
+        $steps = $journey['steps'];
+
+        self::assertSame([
+            'business_model',
+            'deep_feasibility',
+            'partner_dynamics',
+            'capital',
+            'contributions',
+            'equity',
+            'governance',
+            'roles_operations',
+            'finance',
+            'rewards',
+            'risk',
+            'transfer',
+            'exit',
+            'conflict',
+            'continuity',
+            'closure',
+            'implementation_review',
+        ], array_column($steps, 'key'));
+
+        foreach ($steps as $step) {
+            self::assertIsString($step['route']);
+            self::assertNotSame('', $step['route']);
+
+            $response = $this->actingAs($user)
+                ->withSession($session)
+                ->get($step['route']);
+
+            self::assertLessThan(
+                400,
+                $response->getStatusCode(),
+                sprintf(
+                    'Master Journey step [%s] must be reachable without a dead end.',
+                    $step['key'],
+                ),
+            );
+        }
+    }
+
     public function test_overview_is_tenant_scoped_to_selected_business(): void
     {
         $user = $this->activeUser('overview-tenant@example.test');
