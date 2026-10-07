@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from '../../i18n/useI18n';
 import { humanErrorMessages } from '../../support/humanErrors';
@@ -23,6 +23,10 @@ const copy = {
             'Record the approved Capital Decision before creating its Action Plan.',
         chapterComplete:
             'Chapter 1 Capital setup is complete. Actions may still remain Open or In Progress.',
+        nextTitle: 'What happens next?',
+        nextHelp:
+            'Move to Partner Contributions. Capital planning does not create Contribution, Equity or Ownership truth.',
+        nextCta: 'Continue to Partner Contributions',
         boundary:
             'Action Plan is not Signature, Effectivity, funding received, Contribution accepted, Equity assigned or Ownership changed.',
         approvedPlan: 'Approved Plan',
@@ -110,6 +114,10 @@ const copy = {
             'Approved Capital Decision ကို Record လုပ်ပြီးမှ Action Plan ပြုလုပ်နိုင်ပါတယ်။',
         chapterComplete:
             'Chapter 1 Capital setup ပြီးပါပြီ။ Actions တွေ Open / In Progress အဖြစ် ဆက်ရှိနေနိုင်ပါတယ်။',
+        nextTitle: 'နောက်တစ်ဆင့် ဘာလုပ်မလဲ?',
+        nextHelp:
+            'Partner Contributions ကို ဆက်လုပ်ပါ။ Capital planning က Contribution, Equity သို့မဟုတ် Ownership truth ကို မဖန်တီးပါ။',
+        nextCta: 'Partner Contributions ကို ဆက်လုပ်မည်',
         boundary:
             'Action Plan က Signature, Effectivity, funding received, Contribution accepted, Equity assigned သို့မဟုတ် Ownership changed မဟုတ်ပါ။',
         approvedPlan: 'Approved Plan',
@@ -197,6 +205,10 @@ const copy = {
             'Approved Capital Decision ကို Record လုပ်ပြီးမှ Action Plan ရပါမယ်။',
         chapterComplete:
             'Chapter 1 Capital setup complete. Actions က Open / In Progress အဖြစ် ဆက်ရှိနိုင်ပါတယ်။',
+        nextTitle: 'What happens next?',
+        nextHelp:
+            'Partner Contributions ကို ဆက်လုပ်ပါ။ Capital planning က Contribution / Equity / Ownership truth ကို မဖန်တီးပါ။',
+        nextCta: 'Continue to Partner Contributions',
         boundary:
             'Action Plan != Signature != Effective. Funding / Contribution / Equity / Ownership truth ကို မပြောင်းပါ။',
         approvedPlan: 'Approved Plan',
@@ -517,6 +529,22 @@ const updateStatus = (
                 class="pbr-safe-copy mt-5 rounded-2xl border border-[#b9d6c0] bg-[#eef8f1] p-4 text-sm font-semibold leading-6 text-[#155f39]"
             >
                 {{ c.chapterComplete }}
+            </div>
+
+            <div
+                v-if="readModel.established"
+                class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#cfe0d4] bg-white p-4"
+            >
+                <div class="max-w-3xl">
+                    <p class="text-sm font-black text-[var(--pbr-green-dark)]">{{ c.nextTitle }}</p>
+                    <p class="pbr-safe-copy mt-1 text-xs leading-5 text-[var(--pbr-muted)]">{{ c.nextHelp }}</p>
+                </div>
+                <Link
+                    href="/partnership"
+                    class="inline-flex min-h-11 items-center rounded-xl bg-[var(--pbr-green-dark)] px-4 text-sm font-black text-white"
+                >
+                    {{ c.nextCta }}
+                </Link>
             </div>
 
             <div

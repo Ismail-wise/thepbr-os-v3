@@ -8,6 +8,12 @@ Baseline strategy: complete the full safe user journey first, then harden and po
 - The issue is test synchronization under slower CI conditions. Do not hide it with retries or a larger timeout.
 - Product canonical Contribution logic remains unchanged by the One-Day MVP journey work.
 
+## Resolved during the MVP sprint
+
+- CI #184 exposed a stale F4 browser expectation after the Master Journey was intentionally changed to open by default.
+- The Product behavior stays open by default. The test now preserves an already-open journey and only expands it when needed.
+- The F4 journey passes locally against a fresh deterministic fixture after that repair.
+
 ## Deferred after MVP
 
 - Perfect visual polish and animation

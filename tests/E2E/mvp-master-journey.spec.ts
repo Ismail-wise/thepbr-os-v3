@@ -102,6 +102,29 @@ test(
             ).toBeVisible();
         }
 
+        await page.goto('/partner-dynamics');
+
+        const partnerDynamicsGuide = page.locator(
+            '[data-grade6-mvp-guide]',
+        );
+
+        await expect(
+            partnerDynamicsGuide.getByRole('heading', {
+                name: 'Partner Dynamics',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            partnerDynamicsGuide.getByRole('link', {
+                name: 'Continue to Capital',
+                exact: true,
+            }),
+        ).toHaveAttribute(
+            'href',
+            '/formation?step=capital',
+        );
+
         await page.goto('/governance');
 
         const journey = [
@@ -174,6 +197,7 @@ test(
                 'Why does this matter?',
                 'What does the system already know?',
                 'What do I need to decide?',
+                'What happens next?',
             ]) {
                 await expect(
                     guide.getByText(prompt, {
@@ -206,6 +230,13 @@ test(
         await expect(
             finalGuide.getByText(
                 'What am I doing?',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            finalGuide.getByText(
+                'What happens next?',
                 { exact: true },
             ),
         ).toBeVisible();

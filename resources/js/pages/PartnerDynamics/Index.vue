@@ -4,6 +4,7 @@ import AccountNav from '../../components/account/AccountNav.vue';
 import PbrButton from '../../components/ui/PbrButton.vue';
 import PbrFormSection from '../../components/ui/PbrFormSection.vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
+import Grade6MvpGuide from '../../components/journey/Grade6MvpGuide.vue';
 import { useI18n } from '../../i18n/useI18n';
 import type { TranslationKey } from '../../i18n/catalog';
 
@@ -59,6 +60,7 @@ const retake = () => {
 <template>
     <AuthenticatedLayout>
         <Head :title="t('partnerDynamics.title')" />
+        <Grade6MvpGuide step="partner_dynamics" />
 
         <main
             class="pbr-app-canvas min-h-screen px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7"

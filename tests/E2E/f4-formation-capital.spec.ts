@@ -1307,6 +1307,13 @@ test(
         ).toBeVisible();
 
         await expect(
+            capitalActionPlan.getByRole('link', {
+                name: 'Continue to Partner Contributions',
+                exact: true,
+            }),
+        ).toHaveAttribute('href', '/partnership');
+
+        await expect(
             capitalActionPlan.getByText('Open', {
                 exact: true,
             }),

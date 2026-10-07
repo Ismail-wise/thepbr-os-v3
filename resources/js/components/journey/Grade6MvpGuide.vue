@@ -13,6 +13,7 @@ type Guide = {
 
 const props = defineProps<{
     step:
+        | 'partner_dynamics'
         | 'governance'
         | 'operations'
         | 'finance'
@@ -27,6 +28,15 @@ const props = defineProps<{
 }>();
 
 const guides: Record<typeof props.step, Guide> = {
+    partner_dynamics: {
+        title: 'Partner Dynamics',
+        what: 'Understand how each partner naturally works, decides and collaborates with the team.',
+        why: 'Working-style differences can create avoidable friction. This assessment helps the team discuss them early without turning personality results into official authority.',
+        known: 'The system can reuse your latest confirmed assessment across Businesses. Raw questionnaire answers remain private to you.',
+        decide: 'Complete or review your assessment and discuss useful team differences. Partner Dynamics stays advisory and does not grant Ownership, Role or Governance authority.',
+        nextLabel: 'Continue to Capital',
+        nextHref: '/formation?step=capital',
+    },
     governance: {
         title: 'Governance / Decision Rules',
         what: 'Set the simple rules for who can decide, approve, vote and sign.',
@@ -143,7 +153,7 @@ const guide = guides[props.step];
                 <span class="rounded-full border border-[#dfd2a8] bg-[#fff8e8] px-3 py-1 text-xs font-black text-[#755f27]">Grade-6 guide</span>
             </div>
 
-            <div class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
                 <div class="rounded-[16px] border border-[#dfe8e1] bg-white p-4">
                     <p class="text-xs font-black text-[var(--pbr-green-dark)]">What am I doing?</p>
                     <p class="mt-2 text-sm leading-6 text-slate-600">{{ guide.what }}</p>
@@ -159,6 +169,10 @@ const guide = guides[props.step];
                 <div class="rounded-[16px] border border-[#dfe8e1] bg-white p-4">
                     <p class="text-xs font-black text-[var(--pbr-green-dark)]">What do I need to decide?</p>
                     <p class="mt-2 text-sm leading-6 text-slate-600">{{ guide.decide }}</p>
+                </div>
+                <div class="rounded-[16px] border border-[#dfe8e1] bg-white p-4">
+                    <p class="text-xs font-black text-[var(--pbr-green-dark)]">What happens next?</p>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">{{ guide.nextLabel }}</p>
                 </div>
             </div>
 
