@@ -3,6 +3,7 @@ import OptionalTemporalInput from '../../components/OptionalTemporalInput.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
+import Grade6MvpGuide from '../../components/journey/Grade6MvpGuide.vue';
 import { useI18n } from '../../i18n/useI18n';
 
 type Membership = { id: string; email: string };
@@ -139,6 +140,7 @@ const nextIncident = (row: IncidentRow): string | null => ({
 <template>
     <Head :title="t('risk.title')" />
     <AuthenticatedLayout>
+        <Grade6MvpGuide step="risk" />
         <main class="min-h-screen px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
             <div class="mx-auto w-full max-w-[1500px]">
             <header class="pbr-surface p-5 sm:p-6">

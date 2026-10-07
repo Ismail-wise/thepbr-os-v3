@@ -145,10 +145,13 @@ final class BusinessControlCenterTest extends TestCase
             'roles_operations',
             'finance',
             'rewards',
+            'risk',
             'transfer',
             'exit',
             'conflict',
+            'continuity',
             'closure',
+            'implementation_review',
         ], $keys);
         self::assertNotContains('business_valuation', $keys);
         self::assertSame('current', $journey['steps'][0]['state']);
@@ -195,7 +198,7 @@ final class BusinessControlCenterTest extends TestCase
         self::assertSame('business_model', $keys[0]);
         self::assertSame('business_valuation', $keys[1]);
         self::assertSame('partner_dynamics', $keys[2]);
-        self::assertCount(14, $keys);
+        self::assertCount(17, $keys);
     }
 
     public function test_overview_is_tenant_scoped_to_selected_business(): void

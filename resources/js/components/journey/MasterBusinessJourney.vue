@@ -25,10 +25,13 @@ const labelKeys: Record<string, TranslationKey> = {
     roles_operations: 'journey.step.rolesOperations',
     finance: 'journey.step.finance',
     rewards: 'journey.step.rewards',
+    risk: 'journey.step.risk',
     transfer: 'journey.step.transfer',
     exit: 'journey.step.exit',
     conflict: 'journey.step.conflict',
+    continuity: 'journey.step.continuity',
     closure: 'journey.step.closure',
+    implementation_review: 'journey.step.implementationReview',
 };
 
 const labelFor = (step: MasterJourneyStep): string =>
@@ -177,7 +180,7 @@ const openStep = (key: string) => {
                 </p>
             </div>
 
-            <details v-if="steps.length > 0" class="group mt-5">
+            <details v-if="steps.length > 0" open class="group mt-5">
                 <summary
                     class="pbr-touch flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 rounded-xl border border-[#d3dfd6] bg-white px-4 text-sm font-black text-[var(--pbr-green-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pbr-green)]"
                 >

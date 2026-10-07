@@ -6,6 +6,7 @@ import BusinessHero from '../../components/control-center/BusinessHero.vue';
 import BusinessSnapshotGrid from '../../components/control-center/BusinessSnapshotGrid.vue';
 import HealthReadinessStrip from '../../components/control-center/HealthReadinessStrip.vue';
 import MasterBusinessJourney from '../../components/journey/MasterBusinessJourney.vue';
+import Grade6MvpGuide from '../../components/journey/Grade6MvpGuide.vue';
 import NextBestActionCard from '../../components/control-center/NextBestActionCard.vue';
 import OperatingAreaCard from '../../components/control-center/OperatingAreaCard.vue';
 import RecentActivityPanel from '../../components/control-center/RecentActivityPanel.vue';
@@ -66,6 +67,8 @@ const operatingAreas = computed(() =>
                     :health-available="controlCenter.health !== null"
                     :governance-available="controlCenter.governance !== null"
                 />
+
+                <Grade6MvpGuide step="implementation_review" />
 
                 <MasterBusinessJourney
                     :variant="controlCenter.journey.variant"

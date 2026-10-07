@@ -3,6 +3,7 @@ import OptionalTemporalInput from '../../components/OptionalTemporalInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
+import Grade6MvpGuide from '../../components/journey/Grade6MvpGuide.vue';
 import { useI18n } from '../../i18n/useI18n';
 
 type Partner = {
@@ -446,6 +447,7 @@ watch(
     <Head :title="t('exit.title')" />
 
     <AuthenticatedLayout>
+        <Grade6MvpGuide step="exit" />
         <div class="mx-auto max-w-[1600px] space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
             <header class="pbr-surface p-5 sm:p-6">
                 <div class="flex flex-wrap items-start justify-between gap-4">

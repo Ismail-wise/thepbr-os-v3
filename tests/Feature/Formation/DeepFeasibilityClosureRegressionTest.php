@@ -99,7 +99,7 @@ final class DeepFeasibilityClosureRegressionTest extends TestCase
         self::assertSame('current', $partnerDynamics['state']);
 
         self::assertSame(
-            'Information already recorded',
+            'Completed — information is recorded',
             $this->englishJourneyRecordedCopy(),
         );
     }

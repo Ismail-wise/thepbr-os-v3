@@ -3,6 +3,7 @@ import OptionalTemporalInput from '../../components/OptionalTemporalInput.vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, reactive } from 'vue';
 import AuthenticatedLayout from '../../layouts/AuthenticatedLayout.vue';
+import Grade6MvpGuide from '../../components/journey/Grade6MvpGuide.vue';
 
 type LanguageMode = 'en' | 'my' | 'mixed';
 
@@ -587,6 +588,7 @@ const makeEffective = (decision: DecisionRow, versionId: string) => {
 
 <template>
     <AuthenticatedLayout>
+        <Grade6MvpGuide step="governance" />
         <main class="min-h-screen bg-[radial-gradient(circle_at_88%_0%,rgb(210_167_67_/_8%),transparent_26rem),linear-gradient(180deg,#f7f9f6_0%,#f1f5f1_100%)] px-4 py-5 text-[var(--pbr-ink)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
             <div class="mx-auto w-full max-w-[1500px]">
             <header class="rounded-[24px] border border-[#d8e4da] bg-white/90 p-5 shadow-[0_14px_34px_rgb(16_35_26_/_5%)] sm:p-6">

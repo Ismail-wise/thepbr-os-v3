@@ -123,6 +123,12 @@ final class GetMasterBusinessJourney
                 'applicable' => true,
             ],
             [
+                'key' => 'risk',
+                'route' => '/risk',
+                'capabilities' => [CapabilityCatalog::RISK_VIEW],
+                'applicable' => true,
+            ],
+            [
                 'key' => 'transfer',
                 'route' => '/changes/partner-changes',
                 'capabilities' => [CapabilityCatalog::PARTNER_CHANGES_VIEW],
@@ -141,9 +147,21 @@ final class GetMasterBusinessJourney
                 'applicable' => true,
             ],
             [
+                'key' => 'continuity',
+                'route' => '/continuity',
+                'capabilities' => [CapabilityCatalog::CONTINUITY_VIEW],
+                'applicable' => true,
+            ],
+            [
                 'key' => 'closure',
                 'route' => '/changes/closure',
                 'capabilities' => [CapabilityCatalog::CLOSURE_VIEW],
+                'applicable' => true,
+            ],
+            [
+                'key' => 'implementation_review',
+                'route' => '/overview',
+                'capabilities' => [CapabilityCatalog::BUSINESS_HEALTH_VIEW],
                 'applicable' => true,
             ],
         ];
@@ -299,6 +317,7 @@ final class GetMasterBusinessJourney
             'roles_operations' => isset($currentAreas['operations']),
             'finance' => isset($currentAreas['finance']),
             'rewards' => isset($currentAreas['rewards']),
+            'risk' => isset($currentAreas['risk']),
             'transfer' => DB::table('partner_change_cases')
                 ->where('business_id', $businessId)
                 ->exists(),
@@ -309,6 +328,7 @@ final class GetMasterBusinessJourney
                 || DB::table('conflict_cases')
                     ->where('business_id', $businessId)
                     ->exists(),
+            'continuity' => isset($currentAreas['continuity']),
             'closure' => DB::table('closure_cases')
                 ->where('business_id', $businessId)
                 ->exists(),
