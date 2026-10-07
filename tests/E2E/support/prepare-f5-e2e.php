@@ -52,6 +52,7 @@ $target = implode('|', [
 $allowedTargets = [
     'pgsql|127.0.0.1|5434|thepbr_os_v3_test|thepbr_os_v3_test_app',
     'pgsql|127.0.0.1|5432|pbr_ci|pbr_ci',
+    'pgsql|/var/run/postgresql|5432|pbr_c3_e2e|root',
 ];
 
 if (! in_array($target, $allowedTargets, true)) {
@@ -208,6 +209,24 @@ $authorityDraft = $formationAuthority->createDraft(
             'actors' => [[
                 'membership_id' => (string) $ownerMembership->getKey(),
                 'capacity' => 'Contribution Acceptor',
+                'can_approve' => true,
+                'can_vote' => false,
+                'can_sign' => false,
+            ]],
+        ],
+        [
+            'decision_type' => 'ownership_approval',
+            'decision_method' => 'approval',
+            'required_approvals' => 1,
+            'required_votes' => 0,
+            'quorum_count' => 1,
+            'signature_required' => false,
+            'reserved_matter' => false,
+            'amount_min' => null,
+            'amount_max' => null,
+            'actors' => [[
+                'membership_id' => (string) $ownerMembership->getKey(),
+                'capacity' => 'Ownership Approver',
                 'can_approve' => true,
                 'can_vote' => false,
                 'can_sign' => false,

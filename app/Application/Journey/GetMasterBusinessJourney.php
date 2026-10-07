@@ -292,7 +292,9 @@ final class GetMasterBusinessJourney
             'contributions' => $this->hasCompletedContributionChapter(
                 $businessId,
             ),
-            'equity' => isset($currentAreas['ownership']),
+            'equity' => $this->hasCompletedOwnershipChapter(
+                $businessId,
+            ),
             'governance' => isset($currentAreas['governance']),
             'roles_operations' => isset($currentAreas['operations']),
             'finance' => isset($currentAreas['finance']),
@@ -399,6 +401,63 @@ final class GetMasterBusinessJourney
         }
 
         return true;
+    }
+
+    private function hasCompletedOwnershipChapter(
+        string $businessId,
+    ): bool {
+        $register = DB::table('ownership_register_versions')
+            ->where('business_id', $businessId)
+            ->where('status', 'effective')
+            ->where('effective_from', '<=', now())
+            ->where(function ($query): void {
+                $query->whereNull('effective_until')
+                    ->orWhere('effective_until', '>', now());
+            })
+            ->orderByDesc('effective_from')
+            ->first();
+
+        if (
+            $register === null
+            || $register->source_accepted_register_hash === null
+            || $register->source_contribution_decision_record_id === null
+        ) {
+            return false;
+        }
+
+        $sourceDecision = DB::table('contribution_decision_records')
+            ->where('id', $register->source_contribution_decision_record_id)
+            ->where('business_id', $businessId)
+            ->where(
+                'accepted_register_hash',
+                $register->source_accepted_register_hash,
+            )
+            ->exists();
+
+        if (! $sourceDecision) {
+            return false;
+        }
+
+        return DB::table('ownership_decision_records')
+            ->where('business_id', $businessId)
+            ->where('ownership_register_version_id', $register->id)
+            ->where(
+                'source_accepted_register_hash',
+                $register->source_accepted_register_hash,
+            )
+            ->where(
+                'source_ownership_scenario_id',
+                $register->source_ownership_scenario_id,
+            )
+            ->where(
+                'proposal_version_id',
+                $register->proposal_version_id,
+            )
+            ->where(
+                'governance_decision_id',
+                $register->governance_decision_id,
+            )
+            ->exists();
     }
 
     private function hasEstablishedCapitalActionPlan(

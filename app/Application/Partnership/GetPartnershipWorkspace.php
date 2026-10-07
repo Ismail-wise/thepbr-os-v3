@@ -16,6 +16,7 @@ final class GetPartnershipWorkspace
         private readonly PartnershipActorContext $actor,
         private readonly GetPartnerDynamicsWorkspace $partnerDynamicsWorkspace,
         private readonly GetContributionChapterWorkspace $contributionChapter,
+        private readonly GetOwnershipChapterWorkspace $ownershipChapter,
     ) {}
 
     /**
@@ -249,6 +250,14 @@ final class GetPartnershipWorkspace
             )
             : null;
 
+        $ownershipChapter = $canViewOwnership
+            && $canViewContributions
+            ? $this->ownershipChapter->execute(
+                $user,
+                $business,
+            )
+            : null;
+
         return [
             'business' => [
                 'id' => $businessId,
@@ -285,6 +294,7 @@ final class GetPartnershipWorkspace
             'partner_dynamics' => $partnerDynamics,
             'partner_dynamics_workspace' => $partnerDynamicsWorkspace,
             'contribution_chapter' => $contributionChapter,
+            'ownership_chapter' => $ownershipChapter,
             'contributions' => $contributions,
             'contribution_submissions' => $contributionSubmissions,
             'ownership_scenarios' => $scenarios,

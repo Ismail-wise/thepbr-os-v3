@@ -400,13 +400,27 @@ final class F7OwnershipTransferIntegrityTest extends TestCase
 
         self::assertSame('75.00000000', (string) $seller->shares_issued);
         self::assertSame('75.00000000', (string) $seller->shares_vested);
+        self::assertFalse((bool) $seller->vesting_applies);
         self::assertSame('75.00000000', (string) $seller->voting_rights);
         self::assertSame('37.50000000', (string) $seller->profit_rights);
 
         self::assertSame('25.00000000', (string) $buyer->shares_issued);
         self::assertSame('25.00000000', (string) $buyer->shares_vested);
+        self::assertFalse((bool) $buyer->vesting_applies);
         self::assertSame('25.00000000', (string) $buyer->voting_rights);
         self::assertSame('12.50000000', (string) $buyer->profit_rights);
+
+        $carriedIssuanceRule = DB::table('ownership_register_issuance_rules')
+            ->where('business_id', $context['business']->getKey())
+            ->where('ownership_register_version_id', $new->id)
+            ->sole();
+
+        self::assertSame(
+            '75.00',
+            (string) $carriedIssuanceRule->approval_threshold_percent,
+        );
+        self::assertTrue((bool) $carriedIssuanceRule->preemption_right);
+        self::assertTrue((bool) $carriedIssuanceRule->dilution_acknowledged);
         $oldPositionAfter = DB::table('ownership_register_positions')
             ->where('id', $sourcePosition->id)
             ->sole();
@@ -910,6 +924,7 @@ SQL
             'accepted_contribution_minor_units' => 0,
             'shares_issued' => '100',
             'shares_vested' => '100',
+            'vesting_applies' => false,
             'voting_rights' => '100',
             'profit_rights' => '50',
             'issue_date' => now()->subYear()->toDateString(),
@@ -918,6 +933,19 @@ SQL
             'vesting_cliff_months' => null,
             'vesting_conditions' => null,
             'early_exit_treatment' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('ownership_scenario_issuance_rules')->insert([
+            'id' => (string) Str::uuid7(),
+            'business_id' => $business->getKey(),
+            'ownership_scenario_id' => $scenarioId,
+            'approval_rule' => 'Governed approval required for new shares.',
+            'approval_threshold_percent' => '75',
+            'preemption_right' => true,
+            'valuation_method' => 'Independent agreed valuation.',
+            'dilution_acknowledged' => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);

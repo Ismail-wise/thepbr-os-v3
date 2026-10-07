@@ -46,6 +46,7 @@ const groups: NavGroup[] = [
             { href: '/overview', label: 'nav.businessControlCenter' },
             { href: '/search', label: 'nav.search' },
             { href: '/ai', label: 'nav.ai' },
+            { href: '/tools', label: 'nav.tools' },
             { href: '/health', label: 'nav.health' },
             { href: '/reports', label: 'nav.reports' },
         ],

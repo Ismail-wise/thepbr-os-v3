@@ -2,6 +2,7 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import ContributionGuidedJourney from '../../components/ContributionGuidedJourney.vue';
+import OwnershipEquityGuidedJourney from '../../components/OwnershipEquityGuidedJourney.vue';
 import PartnershipWorkflowPanel from '../../components/PartnershipWorkflowPanel.vue';
 import GuidedJourneyStepper from '../../components/hybrid/GuidedJourneyStepper.vue';
 import PartnerDynamicsWorkspacePanel from '../../components/partner-dynamics/PartnerDynamicsWorkspacePanel.vue';
@@ -204,6 +205,7 @@ const props = defineProps<{
         partner_dynamics: PartnerDynamics[];
         partner_dynamics_workspace: PartnerDynamicsWorkspace | null;
         contribution_chapter: any;
+        ownership_chapter: any;
         contributions: Contribution[];
         contribution_submissions: GovernanceSubmission[];
         ownership_scenarios: OwnershipScenario[];
@@ -399,35 +401,6 @@ const acceptedMatrix = computed(() =>
                 })),
         ),
 );
-
-const ownershipSteps = computed(() => {
-    const hasAccepted = props.partnership.contributions.some(
-        (row) => row.accepted_value !== null,
-    );
-    const hasScenario = props.partnership.ownership_scenarios.length > 0;
-    const hasClasses = props.partnership.ownership_scenario_share_classes.length > 0;
-    const hasPositions = props.partnership.ownership_scenario_positions.length > 0;
-    const hasVesting = props.partnership.ownership_scenario_positions.some(
-        (row) => Number(row.vested_shares ?? 0) > 0,
-    );
-    const hasFrozen = props.partnership.ownership_scenarios.some(
-        (row) => row.status === 'frozen',
-    );
-    const hasSubmission = props.partnership.ownership_submissions.length > 0;
-    const hasEffective = props.partnership.current_ownership_register !== null;
-
-    return [
-        { key: 'accepted', label: t('partnership.acceptedContributions'), state: (hasAccepted ? 'recorded' : 'current') as StepState },
-        { key: 'structure', label: t('partnership.shareStructure'), state: (hasScenario ? 'recorded' : hasAccepted ? 'current' : 'available') as StepState },
-        { key: 'classes', label: t('partnership.shareClasses'), state: (hasClasses ? 'recorded' : 'available') as StepState },
-        { key: 'allocation', label: t('partnership.allocation'), state: (hasPositions ? 'recorded' : 'available') as StepState },
-        { key: 'vesting', label: t('partnership.vesting'), state: (hasVesting ? 'recorded' : 'available') as StepState },
-        { key: 'scenario', label: t('partnership.scenario'), state: (hasFrozen ? 'recorded' : hasScenario ? 'current' : 'available') as StepState },
-        { key: 'proposal', label: t('partnership.proposal'), state: (hasSubmission ? 'recorded' : 'available') as StepState },
-        { key: 'governance', label: t('partnership.openGovernance'), state: (hasEffective ? 'recorded' : hasSubmission ? 'current' : 'available') as StepState },
-        { key: 'effective', label: t('partnership.effectiveRegister'), state: (hasEffective ? 'recorded' : 'available') as StepState },
-    ];
-});
 
 const partnerFoundationSummary = computed(() => {
     const total = props.partnership.partners.length;
@@ -959,189 +932,22 @@ const createPartner = () => {
                 </section>
 
                 <section v-else>
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-950">
+                    <OwnershipEquityGuidedJourney
+                        v-if="partnership.ownership_chapter"
+                        :chapter="partnership.ownership_chapter"
+                        :permissions="partnership.permissions"
+                    />
+
+                    <div
+                        v-else
+                        class="rounded-[22px] border border-slate-200 bg-white p-5"
+                    >
+                        <h2 class="text-lg font-black text-slate-950">
                             {{ t('partnership.ownership') }}
                         </h2>
-                        <p class="mt-1 text-sm text-slate-600">
-                            {{ t('partnership.scenarioNotice') }}
+                        <p class="mt-2 text-sm leading-6 text-slate-600">
+                            Ownership & Equity is unavailable with the current access or source state.
                         </p>
-                    </div>
-
-                    <div class="mt-5">
-                        <GuidedJourneyStepper
-                            :steps="ownershipSteps"
-                            :label="t('partnership.ownershipJourney')"
-                            @select="() => undefined"
-                        />
-                    </div>
-
-                    <div class="mt-5 rounded-[18px] border border-[#cfe1d3] bg-[#f3f8f4] p-4">
-                        <p class="text-sm font-black text-[var(--pbr-green-dark)]">
-                            {{ t('partnership.governedOwnershipTitle') }}
-                        </p>
-                        <p class="mt-1 max-w-4xl text-sm leading-6 text-[var(--pbr-muted)]">
-                            {{ t('partnership.governedOwnershipHelp') }}
-                        </p>
-                    </div>
-
-                    <div
-                        class="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
-                    >
-                        <div class="border border-slate-200 bg-white">
-                            <div class="border-b border-slate-200 px-4 py-3">
-                                <h3 class="font-bold text-slate-950">
-                                    {{ t('partnership.scenarios') }}
-                                </h3>
-                            </div>
-
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-slate-200 text-sm">
-                                    <thead class="bg-slate-50 text-left">
-                                        <tr>
-                                            <th class="px-4 py-3">Name</th>
-                                            <th class="px-4 py-3">Status</th>
-                                            <th class="px-4 py-3">Issued</th>
-                                        </tr>
-                                    </thead>
-
-                                    <tbody class="divide-y divide-slate-200">
-                                        <tr
-                                            v-for="scenario in partnership.ownership_scenarios"
-                                            :key="scenario.id"
-                                        >
-                                            <td class="px-4 py-3 font-medium">
-                                                {{ scenario.name }}
-                                            </td>
-                                            <td class="px-4 py-3">
-                                                {{ scenario.status }}
-                                            </td>
-                                            <td class="px-4 py-3">
-                                                {{ scenario.issued_shares }}
-                                            </td>
-                                        </tr>
-
-                                        <tr
-                                            v-if="
-                                                partnership
-                                                    .ownership_scenarios
-                                                    .length === 0
-                                            "
-                                        >
-                                            <td
-                                                colspan="3"
-                                                class="px-4 py-8 text-center text-slate-500"
-                                            >
-                                                No Ownership Scenario yet.
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div class="border border-slate-200 bg-white">
-                            <div class="border-b border-slate-200 px-4 py-3">
-                                <h3 class="font-bold text-slate-950">
-                                    {{ t('partnership.currentRegister') }}
-                                </h3>
-                            </div>
-
-                            <div
-                                v-if="
-                                    partnership.current_ownership_register
-                                "
-                                class="space-y-4 p-4"
-                            >
-                                <dl
-                                    class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm"
-                                >
-                                    <div>
-                                        <dt class="text-slate-500">
-                                            {{ t('partnership.effectiveSince') }}
-                                        </dt>
-                                        <dd class="font-semibold">
-                                            {{
-                                                partnership
-                                                    .current_ownership_register
-                                                    .effective_from || '—'
-                                            }}
-                                        </dd>
-                                    </div>
-
-                                    <div>
-                                        <dt class="text-slate-500">
-                                            Status
-                                        </dt>
-                                        <dd class="font-semibold">
-                                            {{
-                                                partnership
-                                                    .current_ownership_register
-                                                    .status
-                                            }}
-                                        </dd>
-                                    </div>
-
-                                    <div>
-                                        <dt class="text-slate-500">
-                                            Issued shares
-                                        </dt>
-                                        <dd class="font-semibold">
-                                            {{
-                                                partnership
-                                                    .current_ownership_register
-                                                    .issued_shares
-                                            }}
-                                        </dd>
-                                    </div>
-
-                                    <div>
-                                        <dt class="text-slate-500">
-                                            Available shares
-                                        </dt>
-                                        <dd class="font-semibold">
-                                            {{
-                                                partnership
-                                                    .current_ownership_register
-                                                    .available_shares
-                                            }}
-                                        </dd>
-                                    </div>
-                                </dl>
-
-                                <p class="text-sm text-slate-600">
-                                    This Effective Register is the canonical
-                                    current ownership source.
-                                </p>
-                            </div>
-
-                            <p
-                                v-else
-                                class="p-4 text-sm text-slate-500"
-                            >
-                                {{
-                                    t(
-                                        'partnership.noCurrentRegister',
-                                    )
-                                }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div
-                        class="mt-5 flex flex-wrap items-center justify-between gap-3 border border-slate-200 bg-slate-50 p-4"
-                    >
-                        <p class="text-sm text-slate-600">
-                            Ownership approval, decision and signature remain
-                            separate governance actions.
-                        </p>
-
-                        <Link
-                            href="/governance"
-                            class="text-sm font-semibold text-slate-950 underline underline-offset-4"
-                        >
-                            Open Governance
-                        </Link>
                     </div>
                 </section>
             </div>

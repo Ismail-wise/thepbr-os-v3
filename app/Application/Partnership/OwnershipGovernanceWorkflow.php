@@ -630,6 +630,8 @@ SQL,
                 'source_ownership_scenario_id' => $scenario->id,
                 'proposal_version_id' => $submission->proposal_version_id,
                 'governance_decision_id' => $decision->id,
+                'source_accepted_register_hash' => $scenario->source_accepted_register_hash,
+                'source_contribution_decision_record_id' => $scenario->source_contribution_decision_record_id,
                 'currency' => $scenario->currency,
                 'share_value_minor_units' => $scenario->share_value_minor_units,
                 'authorized_shares' => $capacity->authorized_shares,
@@ -715,6 +717,7 @@ SQL,
                     'accepted_contribution_minor_units' => $position->accepted_contribution_minor_units,
                     'shares_issued' => $position->shares_issued,
                     'shares_vested' => $position->shares_vested,
+                    'vesting_applies' => $position->vesting_applies,
                     'voting_rights' => $position->voting_rights,
                     'profit_rights' => $position->profit_rights,
                     'issue_date' => $position->issue_date,
@@ -749,6 +752,25 @@ SQL,
                     'contribution_revision' => $source->contribution_revision,
                     'currency' => $source->currency,
                     'accepted_value_minor_units' => $source->accepted_value_minor_units,
+                ]);
+            }
+
+            $issuanceRule = DB::table('ownership_scenario_issuance_rules')
+                ->where('business_id', $businessId)
+                ->where('ownership_scenario_id', $scenario->id)
+                ->first();
+
+            if ($issuanceRule !== null) {
+                DB::table('ownership_register_issuance_rules')->insert([
+                    'id' => (string) Str::uuid7(),
+                    'business_id' => $businessId,
+                    'ownership_register_version_id' => $registerVersionId,
+                    'approval_rule' => $issuanceRule->approval_rule,
+                    'approval_threshold_percent' => $issuanceRule->approval_threshold_percent,
+                    'preemption_right' => $issuanceRule->preemption_right,
+                    'valuation_method' => $issuanceRule->valuation_method,
+                    'dilution_acknowledged' => $issuanceRule->dilution_acknowledged,
+                    'created_at' => now(),
                 ]);
             }
 
@@ -869,6 +891,16 @@ SQL,
             )
             ->all();
 
+        $issuanceRule = DB::table(
+            'ownership_scenario_issuance_rules',
+        )
+            ->where('business_id', $businessId)
+            ->where(
+                'ownership_scenario_id',
+                $scenarioId,
+            )
+            ->first();
+
         $sources = DB::table(
             'ownership_scenario_contribution_sources',
         )
@@ -889,6 +921,9 @@ SQL,
             'scenario' => (array) $scenario,
             'share_classes' => $classes,
             'positions' => $positions,
+            'new_share_issuance_rule' => $issuanceRule === null
+                ? null
+                : (array) $issuanceRule,
             'accepted_contribution_sources' => $sources,
         ];
     }

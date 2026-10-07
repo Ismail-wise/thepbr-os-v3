@@ -106,7 +106,7 @@ const selectContributionStep = async (
 
 const approveCurrentProposal = async (
     page: Page,
-    decisionType: 'contribution_approval' | 'contribution_acceptance',
+    decisionType: 'contribution_approval' | 'contribution_acceptance' | 'ownership_approval',
 ) => {
     await expect(page).toHaveURL(/\/governance$/);
 
@@ -989,10 +989,667 @@ test(
             .click();
 
         await expect(
-            page.getByText(
-                'No Effective Ownership Register yet.',
+            page.locator(
+                '[data-pbr-ownership-equity-guided-journey]',
+            ),
+        ).toBeVisible();
+
+        const ownershipJourney = page.getByRole(
+            'navigation',
+            {
+                name: 'Ownership & Equity journey',
+                exact: true,
+            },
+        );
+
+        await ownershipJourney
+            .getByRole('button', {
+                name: 'Accepted Contributions',
+                exact: true,
+            })
+            .click();
+
+        const acceptedStage = page.locator(
+            '[data-ownership-step="accepted_contributions"]',
+        );
+
+        await expect(
+            acceptedStage.getByText(
+                '4800.00 USD',
                 { exact: true },
             ),
+        ).toBeVisible();
+
+        await ownershipJourney
+            .getByRole('button', {
+                name: 'Share Value',
+                exact: true,
+            })
+            .click();
+
+        const shareValueStage = page.locator(
+            '[data-ownership-step="share_value"]',
+        );
+
+        await shareValueStage
+            .getByLabel('Scenario name', {
+                exact: true,
+            })
+            .fill('F5 Governed Ownership');
+
+        await shareValueStage
+            .getByLabel('Share Value', {
+                exact: true,
+            })
+            .fill('100.00');
+
+        await shareValueStage
+            .getByLabel('Authorized Shares', {
+                exact: true,
+            })
+            .fill('100');
+
+        await shareValueStage
+            .getByLabel('Reserved / Unissued', {
+                exact: true,
+            })
+            .fill('10');
+
+        const createOwnershipResponse =
+            page.waitForResponse(
+                (response) =>
+                    response.url().endsWith(
+                        '/partnership/ownership/chapter/scenarios',
+                    )
+                    && response.request().method()
+                        === 'POST',
+            );
+
+        await shareValueStage
+            .getByRole('button', {
+                name: 'Create Share Allocation',
+                exact: true,
+            })
+            .click();
+
+        await createOwnershipResponse;
+
+        const refreshedOwnershipJourney =
+            page.getByRole(
+                'navigation',
+                {
+                    name: 'Ownership & Equity journey',
+                    exact: true,
+                },
+            );
+
+        await refreshedOwnershipJourney
+            .getByRole('button', {
+                name: 'Share Allocation',
+                exact: true,
+            })
+            .click();
+
+        const allocationStage = page.locator(
+            '[data-ownership-step="allocation"]',
+        );
+
+        await expect(
+            allocationStage.getByText(
+                '48.00000000',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            allocationStage.getByText(
+                '100.0000%',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await refreshedOwnershipJourney
+            .getByRole('button', {
+                name: 'Share Classes & Rights',
+                exact: true,
+            })
+            .click();
+
+        const rightsStage = page.locator(
+            '[data-ownership-step="share_classes_rights"]',
+        );
+
+        await rightsStage
+            .getByLabel('Voting Right per Share', {
+                exact: true,
+            })
+            .fill('1');
+
+        await rightsStage
+            .getByLabel('Profit Right per Share', {
+                exact: true,
+            })
+            .fill('0.75');
+
+        await rightsStage
+            .getByLabel('Transfer allowed', {
+                exact: true,
+            })
+            .check();
+
+        await rightsStage
+            .getByLabel('Restrictions', {
+                exact: true,
+            })
+            .fill('Transfers require the agreed process.');
+
+        await rightsStage
+            .getByLabel('Special Rights', {
+                exact: true,
+            })
+            .fill('No additional Governance authority is created.');
+
+        const rightsResponse = page.waitForResponse(
+            (response) =>
+                /\/partnership\/ownership\/chapter\/scenarios\/[^/]+\/share-classes\/[^/]+$/.test(
+                    new URL(response.url()).pathname,
+                )
+                && response.request().method() === 'PUT',
+        );
+
+        await rightsStage
+            .getByRole('button', {
+                name: 'Save Rights Review',
+                exact: true,
+            })
+            .click();
+
+        await rightsResponse;
+
+        await page
+            .getByRole('navigation', {
+                name: 'Ownership & Equity journey',
+                exact: true,
+            })
+            .getByRole('button', {
+                name: 'Vesting',
+                exact: true,
+            })
+            .click();
+
+        const vestingStage = page.locator(
+            '[data-ownership-step="vesting"]',
+        );
+
+        await vestingStage
+            .getByLabel(
+                'No — these shares are fully vested',
+                { exact: true },
+            )
+            .check();
+
+        const vestingResponse = page.waitForResponse(
+            (response) =>
+                /\/partnership\/ownership\/chapter\/scenarios\/[^/]+\/positions\/[^/]+\/vesting$/.test(
+                    new URL(response.url()).pathname,
+                )
+                && response.request().method() === 'PUT',
+        );
+
+        await vestingStage
+            .getByRole('button', {
+                name: 'Save Vesting Decision',
+                exact: true,
+            })
+            .click();
+
+        await vestingResponse;
+
+        await page
+            .getByRole('navigation', {
+                name: 'Ownership & Equity journey',
+                exact: true,
+            })
+            .getByRole('button', {
+                name: 'Voting & Profit Rights',
+                exact: true,
+            })
+            .click();
+
+        const votingProfitStage = page.locator(
+            '[data-ownership-step="voting_profit_rights"]',
+        );
+
+        await expect(
+            votingProfitStage.getByText(
+                '48.00000000',
+                { exact: true },
+            ).first(),
+        ).toBeVisible();
+
+        await expect(
+            votingProfitStage.getByText(
+                '36.00000000',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await votingProfitStage
+            .getByRole('button', {
+                name: 'Continue',
+                exact: true,
+            })
+            .click();
+
+        const capacityStage = page.locator(
+            '[data-ownership-step="share_capacity"]',
+        );
+
+        const capacityResponse = page.waitForResponse(
+            (response) =>
+                /\/partnership\/ownership\/chapter\/scenarios\/[^/]+\/capacity$/.test(
+                    new URL(response.url()).pathname,
+                )
+                && response.request().method() === 'PUT',
+        );
+
+        await capacityStage
+            .getByRole('button', {
+                name: 'Save Capacity Review',
+                exact: true,
+            })
+            .click();
+
+        await capacityResponse;
+
+        await page
+            .getByRole('navigation', {
+                name: 'Ownership & Equity journey',
+                exact: true,
+            })
+            .getByRole('button', {
+                name: 'New Share Rule',
+                exact: true,
+            })
+            .click();
+
+        const issuanceStage = page.locator(
+            '[data-ownership-step="new_share_rule"]',
+        );
+
+        await issuanceStage
+            .getByLabel(
+                'Who should approve new shares?',
+                { exact: true },
+            )
+            .fill(
+                'Existing Partners through the agreed Governance process.',
+            );
+
+        await issuanceStage
+            .getByLabel('Approval threshold (%)', {
+                exact: true,
+            })
+            .fill('75');
+
+        await issuanceStage
+            .getByLabel(
+                'Existing Partners get the agreed first opportunity',
+                { exact: true },
+            )
+            .check();
+
+        await issuanceStage
+            .getByLabel('New Share valuation method', {
+                exact: true,
+            })
+            .fill(
+                'Independent agreed valuation at the time of issuance.',
+            );
+
+        await issuanceStage
+            .getByLabel(
+                /future new shares may reduce existing Partners/,
+            )
+            .check();
+
+        const issuanceResponse = page.waitForResponse(
+            (response) =>
+                /\/partnership\/ownership\/chapter\/scenarios\/[^/]+\/issuance-rule$/.test(
+                    new URL(response.url()).pathname,
+                )
+                && response.request().method() === 'PUT',
+        );
+
+        await issuanceStage
+            .getByRole('button', {
+                name: 'Save New Share Rule',
+                exact: true,
+            })
+            .click();
+
+        await issuanceResponse;
+
+        await expect(
+            issuanceStage.getByRole('button', {
+                name: 'Continue',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await page
+            .getByRole('navigation', {
+                name: 'Ownership & Equity journey',
+                exact: true,
+            })
+            .getByRole('button', {
+                name: 'Review & Approve',
+                exact: true,
+            })
+            .click();
+
+        let ownershipApprovalStage = page.locator(
+            '[data-ownership-step="review_approve"]',
+        );
+
+        const freezeResponse = page.waitForResponse(
+            (response) =>
+                /\/partnership\/ownership\/scenarios\/[^/]+\/freeze$/.test(
+                    new URL(response.url()).pathname,
+                )
+                && response.request().method() === 'POST',
+        );
+
+        await ownershipApprovalStage
+            .getByRole('button', {
+                name: 'Freeze for Review',
+                exact: true,
+            })
+            .click();
+
+        await freezeResponse;
+
+        ownershipApprovalStage = page.locator(
+            '[data-ownership-step="review_approve"]',
+        );
+
+        await ownershipApprovalStage
+            .getByLabel('Effective Date', {
+                exact: true,
+            })
+            .fill('2026-10-07');
+
+        const submitOwnershipResponse =
+            page.waitForResponse(
+                (response) =>
+                    /\/partnership\/ownership\/scenarios\/[^/]+\/governance$/.test(
+                        new URL(response.url()).pathname,
+                    )
+                    && response.request().method()
+                        === 'POST',
+            );
+
+        await ownershipApprovalStage
+            .getByRole('button', {
+                name: 'Submit for Approval',
+                exact: true,
+            })
+            .click();
+
+        await submitOwnershipResponse;
+
+        ownershipApprovalStage = page.locator(
+            '[data-ownership-step="review_approve"]',
+        );
+
+        const startOwnershipReviewResponse =
+            page.waitForResponse(
+                (response) =>
+                    /\/partnership\/ownership-submissions\/[^/]+\/content-review$/.test(
+                        new URL(response.url()).pathname,
+                    )
+                    && response.request().method()
+                        === 'POST',
+            );
+
+        await ownershipApprovalStage
+            .getByRole('button', {
+                name: 'Start Ownership Review',
+                exact: true,
+            })
+            .click();
+
+        await startOwnershipReviewResponse;
+
+        ownershipApprovalStage = page.locator(
+            '[data-ownership-step="review_approve"]',
+        );
+
+        const confirmOwnershipReviewResponse =
+            page.waitForResponse(
+                (response) =>
+                    /\/partnership\/ownership-submissions\/[^/]+\/content-review$/.test(
+                        new URL(response.url()).pathname,
+                    )
+                    && response.request().method()
+                        === 'POST',
+            );
+
+        await ownershipApprovalStage
+            .getByRole('button', {
+                name: 'Confirm Ownership Review',
+                exact: true,
+            })
+            .click();
+
+        await confirmOwnershipReviewResponse;
+
+        ownershipApprovalStage = page.locator(
+            '[data-ownership-step="review_approve"]',
+        );
+
+        await ownershipApprovalStage
+            .getByRole('link', {
+                name: 'Open Governance Review',
+                exact: true,
+            })
+            .click();
+
+        await approveCurrentProposal(
+            page,
+            'ownership_approval',
+        );
+
+        await page.goto(
+            '/partnership?section=ownership',
+        );
+
+        await expect(
+            page.locator(
+                '[data-pbr-ownership-equity-guided-journey]',
+            ),
+        ).toBeVisible();
+
+        await page
+            .getByRole('navigation', {
+                name: 'Ownership & Equity journey',
+                exact: true,
+            })
+            .getByRole('button', {
+                name: 'Review & Approve',
+                exact: true,
+            })
+            .click();
+
+        ownershipApprovalStage = page.locator(
+            '[data-ownership-step="review_approve"]',
+        );
+
+        await expect(
+            ownershipApprovalStage
+                .getByText(
+                    'Approved — Ready for Effect',
+                    { exact: true },
+                )
+                .first(),
+        ).toBeVisible();
+
+        const effectOwnershipResponse =
+            page.waitForResponse(
+                (response) =>
+                    /\/partnership\/ownership-submissions\/[^/]+\/effect$/.test(
+                        new URL(response.url()).pathname,
+                    )
+                    && response.request().method()
+                        === 'POST',
+            );
+
+        await ownershipApprovalStage
+            .getByRole('button', {
+                name: 'Make Current when Eligible',
+                exact: true,
+            })
+            .click();
+
+        await effectOwnershipResponse;
+
+        await page
+            .getByRole('navigation', {
+                name: 'Ownership & Equity journey',
+                exact: true,
+            })
+            .getByRole('button', {
+                name: 'Share Register',
+                exact: true,
+            })
+            .click();
+
+        const ownershipRegister = page.locator(
+            '[data-ownership-step="share_register"]',
+        );
+
+        await expect(
+            ownershipRegister.getByText(
+                'Current / Effective',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await expect(
+            ownershipRegister.getByText(
+                '48.00000000',
+                { exact: true },
+            ).first(),
+        ).toBeVisible();
+
+        await page
+            .getByRole('navigation', {
+                name: 'Ownership & Equity journey',
+                exact: true,
+            })
+            .getByRole('button', {
+                name: 'Decision Record',
+                exact: true,
+            })
+            .click();
+
+        const ownershipDecision = page.locator(
+            '[data-ownership-step="decision_record"]',
+        );
+
+        const ownershipDecisionOwner =
+            ownershipDecision.getByRole(
+                'combobox',
+            );
+
+        await expect(
+            ownershipDecisionOwner,
+        ).toBeVisible();
+
+        await expect(
+            ownershipDecisionOwner,
+        ).toHaveValue(/.+/);
+
+        await ownershipDecision
+            .getByRole('textbox', {
+                name: 'Review Date',
+                exact: true,
+            })
+            .fill('2027-10-07');
+
+        await ownershipDecision
+            .getByRole('textbox', {
+                name: 'Decision Summary',
+                exact: true,
+            })
+            .fill(
+                'Current governed Ownership and Equity terms recorded for F5.',
+            );
+
+        const ownershipDecisionResponse =
+            page.waitForResponse(
+                (response) =>
+                    response.url().endsWith(
+                        '/partnership/ownership/chapter/decision-record',
+                    )
+                    && response.request().method()
+                        === 'POST',
+            );
+
+        await ownershipDecision
+            .getByRole('button', {
+                name: 'Save Ownership Decision Record',
+                exact: true,
+            })
+            .click();
+
+        await ownershipDecisionResponse;
+
+        await page
+            .getByRole('navigation', {
+                name: 'Ownership & Equity journey',
+                exact: true,
+            })
+            .getByRole('button', {
+                name: 'Action Plan',
+                exact: true,
+            })
+            .click();
+
+        const ownershipActions = page.locator(
+            '[data-ownership-step="action_plan"]',
+        );
+
+        await expect(
+            ownershipActions.getByText(
+                'No Ownership Actions are required right now. This does not block Chapter completion.',
+                { exact: true },
+            ),
+        ).toBeVisible();
+
+        await ownershipActions
+            .getByRole('button', {
+                name: 'Continue',
+                exact: true,
+            })
+            .click();
+
+        const ownershipContinue = page.locator(
+            '[data-ownership-step="continue_governance"]',
+        );
+
+        await expect(
+            ownershipContinue.getByRole('link', {
+                name: 'Continue to Governance / Decision Rules',
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        await expect(
+            ownershipContinue.getByRole('link', {
+                name: 'Open Equity Scenario Simulator',
+                exact: true,
+            }),
         ).toBeVisible();
     },
 );

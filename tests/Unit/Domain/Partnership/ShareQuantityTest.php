@@ -46,6 +46,17 @@ final class ShareQuantityTest extends TestCase
         );
     }
 
+    public function test_zero_accepted_value_produces_zero_shares_without_fabricating_value(): void
+    {
+        self::assertSame(
+            '0',
+            ShareQuantity::fromAcceptedValue(
+                0,
+                10_000,
+            )->value(),
+        );
+    }
+
     public function test_share_value_must_be_positive(): void
     {
         $this->expectException(InvalidArgumentException::class);

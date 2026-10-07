@@ -28,6 +28,7 @@ use App\Presentation\Http\Controllers\Operations\OperationsWorkspaceController;
 use App\Presentation\Http\Controllers\PartnerChanges\PartnerChangesWorkspaceController;
 use App\Presentation\Http\Controllers\PartnerDynamics\PartnerDynamicsController;
 use App\Presentation\Http\Controllers\Partnership\ContributionChapterController;
+use App\Presentation\Http\Controllers\Partnership\OwnershipChapterController;
 use App\Presentation\Http\Controllers\Partnership\PartnershipWorkflowController;
 use App\Presentation\Http\Controllers\Partnership\PartnershipWorkspaceController;
 use App\Presentation\Http\Controllers\Portability\PortabilityController;
@@ -38,6 +39,7 @@ use App\Presentation\Http\Controllers\Reporting\ReportsController;
 use App\Presentation\Http\Controllers\Rewards\RewardsWorkspaceController;
 use App\Presentation\Http\Controllers\Risk\RiskWorkspaceController;
 use App\Presentation\Http\Controllers\Search\SearchController;
+use App\Presentation\Http\Controllers\Tools\ToolsController;
 use App\Presentation\Http\Middleware\EnsureActiveAccount;
 use Illuminate\Support\Facades\Route;
 
@@ -555,6 +557,56 @@ Route::middleware(['auth', EnsureActiveAccount::class])->group(function (): void
                 '/partnership/contributions/actions/{action}',
                 [ContributionChapterController::class, 'updateActionStatus'],
             )->name('partnership.contributions.actions.update');
+
+            Route::get(
+                '/tools',
+                [ToolsController::class, 'index'],
+            )->name('tools.index');
+
+            Route::post(
+                '/partnership/ownership/chapter/scenarios',
+                [OwnershipChapterController::class, 'createScenario'],
+            )->name('partnership.ownership.chapter.scenarios.store');
+
+            Route::put(
+                '/partnership/ownership/chapter/scenarios/{scenario}/share-classes/{shareClass}',
+                [OwnershipChapterController::class, 'saveShareRights'],
+            )->name('partnership.ownership.chapter.share-classes.update');
+
+            Route::put(
+                '/partnership/ownership/chapter/scenarios/{scenario}/positions/{position}/vesting',
+                [OwnershipChapterController::class, 'saveVesting'],
+            )->name('partnership.ownership.chapter.vesting.update');
+
+            Route::put(
+                '/partnership/ownership/chapter/scenarios/{scenario}/capacity',
+                [OwnershipChapterController::class, 'saveCapacity'],
+            )->name('partnership.ownership.chapter.capacity.update');
+
+            Route::put(
+                '/partnership/ownership/chapter/scenarios/{scenario}/issuance-rule',
+                [OwnershipChapterController::class, 'saveIssuanceRule'],
+            )->name('partnership.ownership.chapter.issuance-rule.update');
+
+            Route::post(
+                '/partnership/ownership/chapter/decision-record',
+                [OwnershipChapterController::class, 'createDecisionRecord'],
+            )->name('partnership.ownership.chapter.decision-record');
+
+            Route::post(
+                '/partnership/ownership/chapter/actions/suggested',
+                [OwnershipChapterController::class, 'createSuggestedAction'],
+            )->name('partnership.ownership.chapter.actions.suggested');
+
+            Route::post(
+                '/partnership/ownership/chapter/actions/custom',
+                [OwnershipChapterController::class, 'createCustomAction'],
+            )->name('partnership.ownership.chapter.actions.custom');
+
+            Route::put(
+                '/partnership/ownership/chapter/actions/{action}',
+                [OwnershipChapterController::class, 'updateActionStatus'],
+            )->name('partnership.ownership.chapter.actions.update');
 
             Route::post(
                 '/partnership/ownership/scenarios',
