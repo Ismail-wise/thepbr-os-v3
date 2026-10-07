@@ -101,6 +101,7 @@ test(
             page.getByRole('heading', {
                 name: 'Finance & Control',
                 exact: true,
+                level: 1,
             }),
         ).toBeVisible();
 

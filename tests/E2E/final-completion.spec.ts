@@ -162,6 +162,7 @@ test('Final Hybrid localization modes stay usable on key surfaces', async ({
             page.getByRole('heading', {
                 name: mode.finance,
                 exact: true,
+                level: 1,
             }),
         ).toBeVisible();
         await verifyRoute(page, '/finance');

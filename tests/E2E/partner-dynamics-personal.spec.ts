@@ -35,6 +35,7 @@ test('Partner Dynamics personal assessment starts and resumes privately', async 
         page.getByRole('heading', {
             name: 'Partner Dynamics',
             exact: true,
+            level: 1,
         }),
     ).toBeVisible();
 
