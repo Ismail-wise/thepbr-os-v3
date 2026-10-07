@@ -59,11 +59,34 @@ test(
         // Business path without forcing historical Business Valuation.
         await page.goto('/overview');
 
-        await page
-            .getByText('View full Business journey', { exact: true })
-            .click();
+        const fullJourney = page
+            .locator('details')
+            .filter({
+                has: page.getByText(
+                    'View full Business journey',
+                    { exact: true },
+                ),
+            })
+            .first();
 
-        const masterJourney = page.getByRole('navigation', {
+        await expect(fullJourney).toBeVisible();
+
+        const journeyIsOpen = await fullJourney.evaluate(
+            (element) => (
+                element as HTMLDetailsElement
+            ).open,
+        );
+
+        if (!journeyIsOpen) {
+            await fullJourney
+                .getByText(
+                    'View full Business journey',
+                    { exact: true },
+                )
+                .click();
+        }
+
+        const masterJourney = fullJourney.getByRole('navigation', {
             name: 'Master Business Journey',
             exact: true,
         });
@@ -1341,14 +1364,39 @@ test(
         // Signature and formal Effectivity remain separate.
         await page.goto('/overview');
 
-        await page
-            .getByText('View full Business journey', { exact: true })
-            .click();
+        const postApprovalFullJourney = page
+            .locator('details')
+            .filter({
+                has: page.getByText(
+                    'View full Business journey',
+                    { exact: true },
+                ),
+            })
+            .first();
 
-        const postApprovalJourney = page.getByRole('navigation', {
-            name: 'Master Business Journey',
-            exact: true,
-        });
+        await expect(postApprovalFullJourney).toBeVisible();
+
+        const postApprovalJourneyIsOpen =
+            await postApprovalFullJourney.evaluate(
+                (element) => (
+                    element as HTMLDetailsElement
+                ).open,
+            );
+
+        if (!postApprovalJourneyIsOpen) {
+            await postApprovalFullJourney
+                .getByText(
+                    'View full Business journey',
+                    { exact: true },
+                )
+                .click();
+        }
+
+        const postApprovalJourney =
+            postApprovalFullJourney.getByRole('navigation', {
+                name: 'Master Business Journey',
+                exact: true,
+            });
 
         const capitalJourneyStep = postApprovalJourney.getByRole(
             'button',
@@ -1359,7 +1407,7 @@ test(
 
         await expect(capitalJourneyStep).toBeVisible();
         await expect(capitalJourneyStep).toContainText(
-            'Information already recorded',
+            'Completed — information is recorded',
         );
 
         // Saved draft, Decision Record and Action Plan survive normal reload. Explicit zero remains distinct
